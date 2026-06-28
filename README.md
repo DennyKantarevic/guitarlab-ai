@@ -1,22 +1,41 @@
 # GuitarLab AI
 
-Monorepo for a Next.js TypeScript frontend and FastAPI Python backend.
+GuitarLab AI is a monorepo for guitar-focused web tools.
 
-## Repository Layout
+Current focus:
 
-- `apps/frontend` - Next.js TypeScript frontend
-- `apps/backend` - FastAPI backend
+* **Valeton GP-200 Tone Maker**: generate structured GP-200 patches from a tone request.
+* **Practice Coach**: upload `.wav` guitar audio and return basic audio-analysis metrics.
 
-## Running Locally in VS Code
+The app uses:
 
-### 1. Open the repo in VS Code
+* **Frontend**: Next.js + TypeScript
+* **Backend**: FastAPI + Python
 
-- Open VS Code.
-- Choose **File > Open Folder**.
-- Select the `guitarlab-ai` repo folder.
-- Open the integrated terminal with **Terminal > New Terminal**.
+---
 
-### 2. Set up the backend environment
+## Project Structure
+
+```text
+apps/
+  frontend/   Next.js frontend
+  backend/    FastAPI backend
+
+docs/         Project notes and API docs
+```
+
+---
+
+## Run the Project Locally
+
+Open the repo in VS Code or Cursor, then use two terminals:
+
+* one for the backend
+* one for the frontend
+
+---
+
+## 1. Set Up the Backend
 
 From the repo root:
 
@@ -27,39 +46,99 @@ python -m pip install --upgrade pip
 pip install -r apps/backend/requirements.txt
 ```
 
-After activation, the terminal prompt should show `(.venv)`.
-
-If `.venv` setup was interrupted or looks broken, delete it and recreate it:
+If the virtual environment ever breaks, delete it and recreate it:
 
 ```bash
 rm -rf .venv
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r apps/backend/requirements.txt
 ```
 
-### 3. Run backend tests
+---
 
-From the repo root:
+## 2. Start the Backend
 
-```bash
-PYTHONPATH=apps/backend python -m pytest apps/backend/tests -v
-```
-
-The current expected result is the backend test suite passing.
-
-### 4. Start the backend server
-
-From the repo root:
+From the repo root, with `.venv` activated:
 
 ```bash
 PYTHONPATH=apps/backend python -m uvicorn app.main:app --reload --app-dir apps/backend
 ```
 
-The backend runs at http://127.0.0.1:8000.
+The backend runs at:
 
-Opening http://127.0.0.1:8000 may show `404` because there is no homepage route. API docs are available at http://127.0.0.1:8000/docs.
+```text
+http://127.0.0.1:8000
+```
 
-The GP-200 endpoint is `POST /tone-maker/gp200`.
+API docs are available at:
 
-### 5. Test the GP-200 API manually
+```text
+http://127.0.0.1:8000/docs
+```
+
+If opening `http://127.0.0.1:8000` shows this:
+
+```json
+{"detail": "Not Found"}
+```
+
+that is normal. The backend does not currently have a homepage route.
+
+---
+
+## 3. Start the Frontend
+
+Open a second terminal:
+
+```bash
+cd apps/frontend
+npm install
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev
+```
+
+The frontend runs at:
+
+```text
+http://localhost:3000
+```
+
+The GP-200 Tone Maker page is:
+
+```text
+http://localhost:3000/tone-maker/gp200
+```
+
+The root page may still show the default Next.js starter page. That is expected until the final homepage is designed.
+
+---
+
+## 4. Run Backend Tests
+
+From the repo root, with `.venv` activated:
+
+```bash
+PYTHONPATH=apps/backend python -m pytest apps/backend/tests -v
+```
+
+---
+
+## 5. Run Frontend Checks
+
+From the repo root:
+
+```bash
+npm run test --prefix apps/frontend
+npm run lint --prefix apps/frontend
+npm run build --prefix apps/frontend
+```
+
+---
+
+## Manual API Tests
+
+### GP-200 Tone Maker
 
 With the backend running:
 
@@ -75,69 +154,154 @@ curl -X POST http://127.0.0.1:8000/tone-maker/gp200 \
 
 The response should include:
 
-- `device`: `Valeton`
-- `model`: `GP-200`
-- `style`
-- `tone_intent`
-- `modules`
-- `dial_in_instructions`
-- `warnings`
-- `valid`
-- `errors`
+* `device`
+* `model`
+* `style`
+* `tone_intent`
+* `modules`
+* `dial_in_instructions`
+* `warnings`
+* `valid`
+* `errors`
 
-### 6. Set up and run the frontend
+---
 
-```bash
-cd apps/frontend
-npm install
-NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev
-```
+### Practice Coach
 
-The frontend runs at http://127.0.0.1:3000.
-
-The GP-200 page is http://127.0.0.1:3000/tone-maker/gp200.
-
-The frontend currently provides a basic testable interface, not the final designed UI.
-
-### 7. Run frontend checks
-
-From the repo root:
+With the backend running:
 
 ```bash
-npm run test --prefix apps/frontend
-npm run lint --prefix apps/frontend
-npm run build --prefix apps/frontend
+curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
+  -F "audio_file=@practice.wav"
 ```
 
-## Current MVP Status
+Current limitation:
 
-The current completed MVP is the Valeton GP-200 Tone Maker backend and basic frontend route. The backend accepts a tone goal, pickup type, and connection mode. It generates a deterministic GP-200 patch using verified GP-200 effects where available.
+```text
+.wav files only
+```
 
-The backend includes tone intent matching, connection-mode rules, patch validation, warnings, errors, and dial-in instructions. It does not use LLM calls or agents yet, does not generate `.prst` files yet, and does not include the final UI design yet. Practice Coach, riff-to-tab, and audio upload are not implemented yet.
+The response should include:
 
-## Future Product Direction
+* `filename`
+* `duration_seconds`
+* `sample_rate`
+* `tempo_bpm`
+* `onset_count`
+* `rms_energy_mean`
+* `spectral_centroid_mean`
+* `zero_crossing_rate_mean`
+* `analysis_warnings`
+* `practice_metrics`
+* `valid`
+* `errors`
 
-The long-term goal is for the website UI to be interactive. A user should be able to type a prompt like "make me a tight metal rhythm tone for my Valeton GP-200."
+---
 
-Then the app should:
+## Current Status
 
-- generate a GP-200 patch
-- show the selected effects, modules, warnings, and dial-in instructions
-- allow the user to tweak the patch conversationally or through controls
+### GP-200 Tone Maker
 
-Example future interactions:
+Implemented:
 
-- "make it less fizzy"
-- "add more chorus"
-- "turn this into a cleaner indie tone"
-- "adjust it for headphones"
-- "adjust it for going into the front of my amp"
-- "make the patch more like grunge"
-- "reduce gain and add room reverb"
+* tone goal input
+* pickup type input
+* connection mode input
+* deterministic GP-200 patch generation
+* verified GP-200 effects where available
+* patch validation
+* warnings and errors
+* dial-in instructions
+* basic frontend test page
 
-Future interactive responses should still be grounded in the structured GP-200 backend. The system should not become a generic GPT wrapper. The UI should call backend patch-generation and validation logic. LLM or agent features, if added later, should explain and modify structured patch data rather than invent unsupported GP-200 effects.
+Not implemented yet:
 
-GP-200 API examples and demo requests:
+* `.prst` file export
+* final UI design
+* conversational patch editing
+* LLM or agent features
 
-- [docs/gp200_api_examples.md](docs/gp200_api_examples.md)
-- [docs/gp200_backend_demo_status.md](docs/gp200_backend_demo_status.md)
+---
+
+### Practice Coach
+
+Implemented:
+
+* `.wav` upload endpoint
+* audio feature extraction
+* basic deterministic scoring metrics
+
+Not implemented yet:
+
+* frontend upload page
+* pitch scoring
+* note correctness
+* riff-to-tab
+* full coaching feedback
+* LLM or agent features
+
+---
+
+## Troubleshooting
+
+### Backend shows `{"detail":"Not Found"}`
+
+That is normal. Use:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+or test a real endpoint with `curl`.
+
+---
+
+### Next.js shows an `allowedDevOrigins` warning
+
+Use the frontend through:
+
+```text
+http://localhost:3000/tone-maker/gp200
+```
+
+instead of:
+
+```text
+http://127.0.0.1:3000/tone-maker/gp200
+```
+
+---
+
+### Generate Patch changes the URL instead of creating a patch
+
+If clicking **Generate Patch** changes the URL to something like:
+
+```text
+/tone-maker/gp200?tone_goal=...
+```
+
+then the frontend form is submitting as a normal HTML GET request.
+
+The form should instead call the backend with:
+
+```text
+POST http://127.0.0.1:8000/tone-maker/gp200
+```
+
+When working correctly, the backend terminal should show:
+
+```text
+POST /tone-maker/gp200
+```
+
+---
+
+## Product Direction
+
+GuitarLab AI should stay grounded in structured backend logic.
+
+The GP-200 Tone Maker should use real GP-200 effect data, validation rules, and connection-mode logic. It should not invent unsupported GP-200 effects.
+
+The Practice Coach should build from measurable audio analysis first. More advanced coaching, pitch tracking, riff-to-tab, and AI explanations can be added later.
+
+The project should not become a generic GPT wrapper.
