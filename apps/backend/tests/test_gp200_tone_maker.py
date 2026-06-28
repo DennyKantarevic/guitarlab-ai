@@ -34,6 +34,10 @@ def test_headphones_keeps_amp_and_cab_enabled():
     assert patch["modules"]["AMP"]["enabled"] is True
     assert patch["modules"]["CAB"]["enabled"] is True
     assert patch["valid"] is True
+    assert patch["tone_intent"]["selected_style"] == "metal"
+    assert patch["tone_intent"]["connection_rules_applied"] == [
+        "Headphones mode keeps AMP and CAB enabled for full-range output."
+    ]
 
 
 def test_direct_usb_keeps_amp_and_cab_enabled():

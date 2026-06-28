@@ -1,6 +1,6 @@
 styles:
   grunge:
-    keywords: [grunge, nirvana, dirty, sludge]
+    keywords: [grunge, nirvana, alternative, dirty, 90s]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: medium_high
     eq_character: low_mid_forward
@@ -20,7 +20,7 @@ styles:
       RVB: { enabled: true, effect: room_reverb, parameters: { decay: 30, tone: 45, mix: 14 } }
       VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
   metal:
-    keywords: [metal, djent, chug, modern, tight, high gain]
+    keywords: [metal, tight, chug, high gain, heavy]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: high
     eq_character: tight_scooped
@@ -40,7 +40,7 @@ styles:
       RVB: { enabled: true, effect: room_reverb, parameters: { decay: 20, tone: 50, mix: 10 } }
       VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
   blues:
-    keywords: [blues, edge of breakup, texas, warm]
+    keywords: [blues, warm, breakup, overdrive]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: low_medium
     eq_character: warm_midrange
@@ -60,7 +60,7 @@ styles:
       RVB: { enabled: true, effect: room_reverb, parameters: { decay: 34, tone: 48, mix: 16 } }
       VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
   shoegaze:
-    keywords: [shoegaze, ambient, wash, dream, wall of sound]
+    keywords: [shoegaze, ambient, wash, dreamy]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: medium
     eq_character: wide_soft_top
@@ -80,7 +80,7 @@ styles:
       RVB: { enabled: true, effect: plate_reverb, parameters: { decay: 72, tone: 62, mix: 38 } }
       VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
   punk:
-    keywords: [punk, raw, fast, garage]
+    keywords: [punk, raw, aggressive]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: medium_high
     eq_character: bright_mid_push
@@ -100,7 +100,7 @@ styles:
       RVB: { enabled: true, effect: room_reverb, parameters: { decay: 22, tone: 52, mix: 10 } }
       VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
   classic_rock:
-    keywords: [classic rock, rock lead, plexi, vintage rock]
+    keywords: [classic rock, crunch, vintage]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: medium
     eq_character: upper_mid_crunch
@@ -120,7 +120,7 @@ styles:
       RVB: { enabled: true, effect: room_reverb, parameters: { decay: 28, tone: 52, mix: 14 } }
       VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
   clean_indie:
-    keywords: [clean indie, jangle, clean, indie]
+    keywords: [clean, indie, bright, jangly]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: low
     eq_character: bright_clear
@@ -140,7 +140,7 @@ styles:
       RVB: { enabled: true, effect: plate_reverb, parameters: { decay: 42, tone: 58, mix: 20 } }
       VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
   funk:
-    keywords: [funk, quack, choppy, clean rhythm]
+    keywords: [funk, quack, percussive]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: low
     eq_character: tight_bright

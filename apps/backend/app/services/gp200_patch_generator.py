@@ -22,6 +22,36 @@ STYLE_KEYWORDS = {
     style_name: tuple(template["keywords"])
     for style_name, template in load_style_templates().items()
 }
+DEFAULT_STYLE = "clean_indie"
+PICKUP_ADJUSTMENT_EXPLANATIONS = {
+    "humbucker": (
+        "Humbucker input detected; keep high-gain patches controlled with noise "
+        "reduction and avoid excessive low-end buildup."
+    ),
+    "single_coil": (
+        "Single-coil input detected; preserve brightness and watch for noise on "
+        "higher-gain patches."
+    ),
+    "default": "No specific pickup adjustment applied.",
+}
+CONNECTION_RULE_EXPLANATIONS = {
+    "headphones": "Headphones mode keeps AMP and CAB enabled for full-range output.",
+    "direct_usb": (
+        "Direct USB mode keeps AMP and CAB enabled for recording/full-range playback."
+    ),
+    "guitar_amp_input": (
+        "Guitar amp input mode disables AMP and CAB to avoid stacking modeled "
+        "amp/cab tone into a real amp input."
+    ),
+    "fx_return": (
+        "FX return mode keeps AMP enabled and disables CAB for use into a power "
+        "amp/speaker section."
+    ),
+    "four_cable_method": (
+        "Four-cable method disables AMP and CAB and expects routing around the "
+        "real amp preamp."
+    ),
+}
 
 
 def generate_gp200_patch(
@@ -32,7 +62,8 @@ def generate_gp200_patch(
     mode = normalize_connection_mode(connection_mode)
     profile = load_gp200_profile()
     connection_rules = load_connection_rules()
-    template_name = select_style_template(tone_goal)
+    tone_intent = build_tone_intent(tone_goal, pickup_type, mode)
+    template_name = tone_intent["selected_style"]
     template = load_style_templates()[template_name]
 
     modules = deepcopy(template["modules"])
@@ -51,6 +82,7 @@ def generate_gp200_patch(
         "modules": modules,
         "warnings": dedupe(warnings),
         "summary": build_summary(template_name, pickup_type, mode),
+        "tone_intent": tone_intent,
         "valid": True,
         "errors": [],
     }
@@ -63,16 +95,60 @@ def generate_gp200_patch(
 
 
 def select_style_template(tone_goal: str) -> str:
+    return analyze_style_match(tone_goal)["selected_style"]
+
+
+def build_tone_intent(
+    tone_goal: str,
+    pickup_type: str,
+    connection_mode: str,
+) -> dict[str, Any]:
+    style_match = analyze_style_match(tone_goal)
+    return {
+        **style_match,
+        "pickup_adjustments": explain_pickup_adjustments(pickup_type),
+        "connection_rules_applied": [CONNECTION_RULE_EXPLANATIONS[connection_mode]],
+    }
+
+
+def analyze_style_match(tone_goal: str) -> dict[str, Any]:
     goal = tone_goal.lower()
-    matches: list[tuple[int, int, str]] = []
+    selected_style = DEFAULT_STYLE
+    matched_keywords: list[str] = []
+
     for style_name, keywords in STYLE_KEYWORDS.items():
-        for keyword in keywords:
-            position = goal.find(keyword)
-            if position >= 0:
-                matches.append((position, -len(keyword), style_name))
-    if matches:
-        return sorted(matches)[0][2]
-    return "classic_rock"
+        style_matches = [keyword for keyword in keywords if keyword in goal]
+        if len(style_matches) > len(matched_keywords):
+            selected_style = style_name
+            matched_keywords = style_matches
+
+    fallback_used = not matched_keywords
+    if fallback_used:
+        selected_style = DEFAULT_STYLE
+
+    return {
+        "selected_style": selected_style,
+        "matched_keywords": matched_keywords,
+        "fallback_used": fallback_used,
+        "confidence": determine_confidence(len(matched_keywords), fallback_used),
+    }
+
+
+def determine_confidence(match_count: int, fallback_used: bool) -> str:
+    if fallback_used:
+        return "low"
+    if match_count >= 2:
+        return "high"
+    return "medium"
+
+
+def explain_pickup_adjustments(pickup_type: str) -> list[str]:
+    pickup = pickup_type.lower()
+    if "humbucker" in pickup:
+        return [PICKUP_ADJUSTMENT_EXPLANATIONS["humbucker"]]
+    if "single-coil" in pickup or "single coil" in pickup or "single coils" in pickup:
+        return [PICKUP_ADJUSTMENT_EXPLANATIONS["single_coil"]]
+    return [PICKUP_ADJUSTMENT_EXPLANATIONS["default"]]
 
 
 def apply_pickup_adjustments(

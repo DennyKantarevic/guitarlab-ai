@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,6 +22,15 @@ class Gp200ToneRequest(BaseModel):
     connection_mode: ConnectionMode
 
 
+class Gp200ToneIntent(BaseModel):
+    selected_style: str
+    matched_keywords: list[str]
+    fallback_used: bool
+    pickup_adjustments: list[str]
+    connection_rules_applied: list[str]
+    confidence: Literal["low", "medium", "high"]
+
+
 class Gp200PatchResponse(BaseModel):
     device: str
     model: str
@@ -33,6 +42,7 @@ class Gp200PatchResponse(BaseModel):
     modules: dict[str, dict[str, Any]]
     warnings: list[str]
     summary: str
+    tone_intent: Gp200ToneIntent
     valid: bool
     errors: list[str] = Field(default_factory=list)
 
