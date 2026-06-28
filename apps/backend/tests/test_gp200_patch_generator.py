@@ -81,6 +81,73 @@ def test_pickup_adjustments_are_applied_to_generated_patch():
     assert any("single coil" in warning.lower() for warning in patch["warnings"])
 
 
+@pytest.mark.parametrize(
+    ("pickup_type", "expected_warning", "parameter_checks"),
+    [
+        (
+            "humbucker bridge",
+            "Humbucker pickup detected: trimmed amp gain slightly.",
+            (("AMP", "gain", "decreased"),),
+        ),
+        (
+            "single coil bridge",
+            "Single coil pickup detected: added gain and drive level.",
+            (("AMP", "gain", "increased"), ("DST", "level", "increased")),
+        ),
+        (
+            "p90 bridge",
+            "P-90 pickup detected: emphasized midrange.",
+            (("AMP", "mid", "increased"),),
+        ),
+    ],
+)
+def test_pickup_change_warnings_match_generated_parameter_changes(
+    pickup_type,
+    expected_warning,
+    parameter_checks,
+):
+    patch = generate_gp200_patch(
+        tone_goal="metal tight rhythm",
+        pickup_type=pickup_type,
+        connection_mode=ConnectionMode.HEADPHONES,
+    )
+    template_modules = load_style_templates()[patch["style"]]["modules"]
+
+    assert expected_warning in patch["warnings"]
+    for module_name, parameter_name, direction in parameter_checks:
+        generated_value = patch["modules"][module_name]["parameters"][parameter_name]
+        template_value = template_modules[module_name]["parameters"][parameter_name]
+        if direction == "increased":
+            assert generated_value > template_value
+        else:
+            assert generated_value < template_value
+
+
+def test_pickup_explanations_do_not_claim_parameter_changes():
+    humbucker_patch = generate_gp200_patch(
+        tone_goal="metal tight rhythm",
+        pickup_type="humbucker bridge",
+        connection_mode=ConnectionMode.HEADPHONES,
+    )
+    single_coil_patch = generate_gp200_patch(
+        tone_goal="clean bright jangle",
+        pickup_type="single coil neck",
+        connection_mode=ConnectionMode.HEADPHONES,
+    )
+
+    explanations = [
+        *humbucker_patch["tone_intent"]["pickup_adjustments"],
+        *single_coil_patch["tone_intent"]["pickup_adjustments"],
+    ]
+    parameter_change_claims = ("trimmed", "added", "emphasized", "changed")
+
+    assert not any(
+        claim in explanation.lower()
+        for explanation in explanations
+        for claim in parameter_change_claims
+    )
+
+
 def test_generated_patch_contains_no_copied_non_valeton_references():
     patch = generate_gp200_patch(
         tone_goal="shoegaze ambient wash",

@@ -70,6 +70,7 @@ curl -X POST http://127.0.0.1:8000/tone-maker/gp200 \
 GP-200 API examples and demo requests:
 
 - [docs/gp200_api_examples.md](docs/gp200_api_examples.md)
+- [docs/gp200_backend_demo_status.md](docs/gp200_backend_demo_status.md)
 
 Run the backend test suite from the repo root:
 
