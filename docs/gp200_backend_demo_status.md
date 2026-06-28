@@ -11,7 +11,8 @@
 
 ## Current Limitations
 
-- Effects are still project seed-profile names, not manually verified official Valeton GP-200 effect names.
+- Verified effect batch 001 has been added; the profile now contains 47 manually verified GP-200 effect names.
+- Effects not included in verified batch 001 are still project seed-profile placeholders.
 - Parameter values are deterministic placeholders for backend/API validation and demo use.
 - Patch output is JSON only.
 
