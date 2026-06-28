@@ -61,13 +61,21 @@ def test_gp200_demo_requests_return_valid_verified_patch_responses(fixture_name)
     patch = build_gp200_patch(Gp200ToneRequest(**demo_requests[fixture_name])).model_dump(
         mode="json"
     )
+    instructions = patch["dial_in_instructions"]
 
     assert patch["device"] == "Valeton"
     assert patch["model"] == "GP-200"
     assert patch["valid"] is True
     assert patch["errors"] == []
     assert set(patch["tone_intent"]) == TONE_INTENT_FIELDS
+    assert instructions
+    assert any("Valeton GP-200" in instruction for instruction in instructions)
+    assert (
+        f"Set the signal chain to: {' > '.join(patch['signal_chain'])}."
+        in instructions
+    )
     assert UNVERIFIED_EFFECT_WARNING not in patch["warnings"]
+    assert not any(UNVERIFIED_EFFECT_WARNING in instruction for instruction in instructions)
 
 
 def test_gp200_demo_requests_select_expected_styles_and_explanations():
@@ -124,3 +132,16 @@ def test_gp200_demo_requests_use_configured_verified_effects():
             effect = profile["modules"][module_name]["effects"][effect_id]
             assert patch["modules"][module_name]["effect"] == effect_id
             assert effect["verified"] is True
+
+
+def test_gp200_demo_dial_in_instructions_use_verified_amp_names():
+    demo_requests = load_demo_requests()
+    grunge_patch = build_gp200_patch(
+        Gp200ToneRequest(**demo_requests["grunge_humbucker_headphones"])
+    ).model_dump(mode="json")
+    metal_patch = build_gp200_patch(
+        Gp200ToneRequest(**demo_requests["metal_direct_usb"])
+    ).model_dump(mode="json")
+
+    assert "Enable AMP and select UK 800." in grunge_patch["dial_in_instructions"]
+    assert "Enable AMP and select Mess DualM." in metal_patch["dial_in_instructions"]

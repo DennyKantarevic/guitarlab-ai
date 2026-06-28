@@ -304,6 +304,58 @@ def test_generated_patches_use_only_verified_effects_after_template_update():
             assert effect["verified"] is True
 
 
+@pytest.mark.parametrize(
+    ("connection_mode", "expected_instruction"),
+    [
+        (
+            ConnectionMode.HEADPHONES,
+            "Keep AMP and CAB enabled for full-range output.",
+        ),
+        (
+            ConnectionMode.DIRECT_USB,
+            "Keep AMP and CAB enabled for full-range output.",
+        ),
+        (
+            ConnectionMode.GUITAR_AMP_INPUT,
+            "Keep AMP and CAB disabled when running into a guitar amp input.",
+        ),
+        (
+            ConnectionMode.FX_RETURN,
+            "Keep AMP enabled and CAB disabled when running into an FX return.",
+        ),
+        (
+            ConnectionMode.FOUR_CABLE_METHOD,
+            (
+                "Keep AMP and CAB disabled and route drive/front-end effects before "
+                "the amp preamp, with time/modulation effects in the loop."
+            ),
+        ),
+    ],
+)
+def test_dial_in_instructions_include_connection_mode_rules(
+    connection_mode,
+    expected_instruction,
+):
+    patch = generate_gp200_patch(
+        tone_goal="metal tight rhythm",
+        pickup_type="humbucker bridge",
+        connection_mode=connection_mode,
+    )
+
+    assert expected_instruction in patch["dial_in_instructions"]
+
+
+def test_dial_in_instructions_include_disabled_module_guidance():
+    patch = generate_gp200_patch(
+        tone_goal="punk raw rhythm",
+        pickup_type="p90 bridge",
+        connection_mode=ConnectionMode.GUITAR_AMP_INPUT,
+    )
+
+    assert "Keep AMP disabled for this connection mode." in patch["dial_in_instructions"]
+    assert "Keep CAB disabled for this connection mode." in patch["dial_in_instructions"]
+
+
 def test_style_keywords_match_tone_intent_spec():
     assert STYLE_KEYWORDS == EXPECTED_STYLE_KEYWORDS
 

@@ -52,6 +52,25 @@ CONNECTION_RULE_EXPLANATIONS = {
         "real amp preamp."
     ),
 }
+CONNECTION_MODE_DIAL_IN_EXPLANATIONS = {
+    "headphones": "headphones/full-range monitoring",
+    "direct_usb": "direct USB recording/full-range playback",
+    "guitar_amp_input": "guitar amp input/front-end routing",
+    "fx_return": "FX return/power amp input",
+    "four_cable_method": "four-cable method routing",
+}
+AMP_CAB_DIAL_IN_RULES = {
+    "headphones": "Keep AMP and CAB enabled for full-range output.",
+    "direct_usb": "Keep AMP and CAB enabled for full-range output.",
+    "guitar_amp_input": (
+        "Keep AMP and CAB disabled when running into a guitar amp input."
+    ),
+    "fx_return": "Keep AMP enabled and CAB disabled when running into an FX return.",
+    "four_cable_method": (
+        "Keep AMP and CAB disabled and route drive/front-end effects before "
+        "the amp preamp, with time/modulation effects in the loop."
+    ),
+}
 
 
 def generate_gp200_patch(
@@ -91,6 +110,7 @@ def generate_gp200_patch(
     patch["valid"] = result.valid
     patch["warnings"] = dedupe([*patch["warnings"], *result.warnings])
     patch["errors"] = result.errors
+    patch["dial_in_instructions"] = build_dial_in_instructions(patch, profile)
     return patch
 
 
@@ -199,6 +219,61 @@ def build_summary(style_name: str, pickup_type: str, connection_mode: str) -> st
     readable_style = style_name.replace("_", " ")
     readable_mode = connection_mode.replace("_", " ")
     return f"{readable_style.title()} GP-200 patch for {pickup_type} via {readable_mode}."
+
+
+def build_dial_in_instructions(
+    patch: dict[str, Any],
+    profile: dict[str, Any],
+) -> list[str]:
+    connection_mode = str(patch["connection_mode"])
+    instructions = [
+        f"Create a new patch on the {patch['device']} {patch['model']}.",
+        f"Use the {patch['style'].replace('_', ' ').title()} style as the patch starting point.",
+        (
+            "Set the connection mode for this patch to "
+            f"{CONNECTION_MODE_DIAL_IN_EXPLANATIONS[connection_mode]}."
+        ),
+        f"Set the signal chain to: {' > '.join(patch['signal_chain'])}.",
+    ]
+
+    for module_name in patch["signal_chain"]:
+        module_patch = patch["modules"].get(module_name)
+        if not isinstance(module_patch, dict):
+            continue
+
+        if module_patch.get("enabled") is True:
+            effect_name = resolve_effect_name(
+                profile,
+                module_name,
+                str(module_patch.get("effect", "")),
+            )
+            instructions.append(f"Enable {module_name} and select {effect_name}.")
+        else:
+            instructions.append(f"Keep {module_name} disabled for this connection mode.")
+
+    instructions.append(AMP_CAB_DIAL_IN_RULES[connection_mode])
+
+    for warning in patch["warnings"]:
+        instructions.append(f"Review warning: {warning}")
+    for error in patch["errors"]:
+        instructions.append(f"Resolve validation error before using this patch: {error}")
+
+    instructions.append(
+        "Start with the GP-200 output level low, then raise it after confirming "
+        "the patch is not too loud."
+    )
+    return instructions
+
+
+def resolve_effect_name(
+    profile: dict[str, Any],
+    module_name: str,
+    effect_id: str,
+) -> str:
+    effect = profile["modules"].get(module_name, {}).get("effects", {}).get(effect_id)
+    if not isinstance(effect, dict):
+        return effect_id
+    return effect.get("official_effect_name") or effect.get("display_name") or effect_id
 
 
 def normalize_connection_mode(connection_mode: str) -> str:

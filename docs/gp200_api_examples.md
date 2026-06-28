@@ -2,7 +2,7 @@
 
 The GP-200 tone maker endpoint returns deterministic, rule-based Valeton GP-200 patch JSON. It does not call an LLM yet.
 
-Current effect names are seed-profile names for the project. They are not yet manually verified official Valeton GP-200 effect names.
+Generated patches prefer manually verified Valeton GP-200 effect names where they are available. The profile still contains seed-profile placeholders for effects that have not been manually verified yet.
 
 ## Endpoint
 
@@ -34,9 +34,10 @@ http://127.0.0.1:8000/tone-maker/gp200
 - `connection_mode`: Requested output/routing mode.
 - `signal_chain`: Ordered GP-200 module list.
 - `modules`: Module settings keyed by module name, including `enabled`, `effect`, and `parameters`.
-- `warnings`: Setup and validation warnings. Seed-profile effects currently add an unverified-effect warning.
+- `warnings`: Setup, pickup, and validation warnings. Seed-profile effects add an unverified-effect warning only when a generated patch uses one.
 - `summary`: Short human-readable patch summary.
 - `tone_intent`: Deterministic explanation of style selection and applied rules.
+- `dial_in_instructions`: Deterministic GP-200 setup steps generated from the validated patch JSON.
 - `valid`: Whether the generated patch passed backend validation.
 - `errors`: Validation errors. Demo requests should return an empty list.
 
@@ -128,28 +129,38 @@ Shortened response:
   "modules": {
     "AMP": {
       "enabled": true,
-      "effect": "high_gain_amp",
+      "effect": "amp_mess_dualm",
       "parameters": {
         "gain": 70,
+        "presence": 58,
+        "volume": 62,
         "bass": 52,
-        "mid": 38,
-        "treble": 62,
-        "master": 62
+        "middle": 38,
+        "treble": 62
       }
     },
     "CAB": {
       "enabled": true,
-      "effect": "matched_cab",
+      "effect": "cab_uk_ld",
       "parameters": {
-        "mic_position": 54,
-        "low_cut_hz": 90,
-        "high_cut_hz": 7200
+        "volume": 52,
+        "low_cut": 90,
+        "hi_cut": 72
       }
     }
   },
+  "dial_in_instructions": [
+    "Create a new patch on the Valeton GP-200.",
+    "Use the Metal style as the patch starting point.",
+    "Set the connection mode for this patch to direct USB recording/full-range playback.",
+    "Set the signal chain to: PRE > WAH > DST > AMP > NR > CAB > EQ > MOD > DLY > RVB > VOL.",
+    "Enable AMP and select Mess DualM.",
+    "Enable CAB and select UK LD.",
+    "Keep AMP and CAB enabled for full-range output.",
+    "Start with the GP-200 output level low, then raise it after confirming the patch is not too loud."
+  ],
   "warnings": [
-    "Humbucker pickup detected: trimmed amp gain slightly.",
-    "This patch uses seed-profile effect names that have not yet been manually verified against the official Valeton GP-200 effect list."
+    "Humbucker pickup detected: trimmed amp gain slightly."
   ],
   "valid": true,
   "errors": []

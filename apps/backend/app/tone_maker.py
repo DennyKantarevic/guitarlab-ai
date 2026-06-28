@@ -43,6 +43,7 @@ class Gp200PatchResponse(BaseModel):
     warnings: list[str]
     summary: str
     tone_intent: Gp200ToneIntent
+    dial_in_instructions: list[str]
     valid: bool
     errors: list[str] = Field(default_factory=list)
 
