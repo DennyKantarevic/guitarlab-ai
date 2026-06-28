@@ -3,7 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from app.services.gp200_patch_validator import UNVERIFIED_EFFECT_WARNING
+from app.services.gp200_patch_validator import (
+    UNVERIFIED_EFFECT_WARNING,
+    load_gp200_profile,
+)
 from app.tone_maker import Gp200ToneRequest, build_gp200_patch
 
 
@@ -51,7 +54,7 @@ def load_demo_requests():
 
 
 @pytest.mark.parametrize("fixture_name", sorted(EXPECTED_DEMO_REQUESTS))
-def test_gp200_demo_requests_return_valid_seed_patch_responses(fixture_name):
+def test_gp200_demo_requests_return_valid_verified_patch_responses(fixture_name):
     demo_requests = load_demo_requests()
     assert demo_requests == EXPECTED_DEMO_REQUESTS
 
@@ -64,7 +67,7 @@ def test_gp200_demo_requests_return_valid_seed_patch_responses(fixture_name):
     assert patch["valid"] is True
     assert patch["errors"] == []
     assert set(patch["tone_intent"]) == TONE_INTENT_FIELDS
-    assert UNVERIFIED_EFFECT_WARNING in patch["warnings"]
+    assert UNVERIFIED_EFFECT_WARNING not in patch["warnings"]
 
 
 def test_gp200_demo_requests_select_expected_styles_and_explanations():
@@ -96,3 +99,28 @@ def test_gp200_demo_requests_select_expected_styles_and_explanations():
     assert fallback_intent["selected_style"] == "clean_indie"
     assert fallback_intent["fallback_used"] is True
     assert fallback_intent["confidence"] == "low"
+
+
+def test_gp200_demo_requests_use_configured_verified_effects():
+    profile = load_gp200_profile()
+    demo_requests = load_demo_requests()
+    patches = {
+        fixture_name: build_gp200_patch(Gp200ToneRequest(**payload)).model_dump(
+            mode="json"
+        )
+        for fixture_name, payload in demo_requests.items()
+    }
+
+    expected_effects = {
+        "grunge_humbucker_headphones": {"AMP": "amp_uk_800"},
+        "metal_direct_usb": {"AMP": "amp_mess_dualm", "DST": "dst_precise_od"},
+        "funk_four_cable": {"WAH": "wah_v_wah", "AMP": "amp_bellman_59n"},
+        "unknown_fallback": {"AMP": "amp_dark_twin", "MOD": "mod_g_chorus"},
+    }
+
+    for fixture_name, module_expectations in expected_effects.items():
+        patch = patches[fixture_name]
+        for module_name, effect_id in module_expectations.items():
+            effect = profile["modules"][module_name]["effects"][effect_id]
+            assert patch["modules"][module_name]["effect"] == effect_id
+            assert effect["verified"] is True

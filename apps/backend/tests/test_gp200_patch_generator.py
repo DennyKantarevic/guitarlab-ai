@@ -22,6 +22,10 @@ FOUR_CABLE_METHOD_INTENT = (
     "Four-cable method disables AMP and CAB and expects routing around the "
     "real amp preamp."
 )
+SEED_WARNING = (
+    "This patch uses seed-profile effect names that have not yet been "
+    "manually verified against the official Valeton GP-200 effect list."
+)
 
 EXPECTED_STYLE_KEYWORDS = {
     "grunge": ("grunge", "nirvana", "alternative", "dirty", "90s"),
@@ -32,6 +36,69 @@ EXPECTED_STYLE_KEYWORDS = {
     "classic_rock": ("classic rock", "crunch", "vintage"),
     "clean_indie": ("clean", "indie", "bright", "jangly"),
     "funk": ("funk", "quack", "percussive"),
+}
+EXPECTED_VERIFIED_STYLE_EFFECTS = {
+    "grunge": {
+        "DST": "dst_revolt",
+        "AMP": "amp_uk_800",
+        "NR": "nr_gate_2",
+        "CAB": "cab_uk_ld",
+        "EQ": "eq_guitar_eq_1",
+        "MOD": "mod_a_chorus",
+        "RVB": "rvb_room",
+    },
+    "metal": {
+        "DST": "dst_precise_od",
+        "AMP": "amp_mess_dualm",
+        "NR": "nr_gate_3",
+        "CAB": "cab_uk_ld",
+        "EQ": "eq_hyper_eq",
+        "RVB": "rvb_room",
+    },
+    "blues": {
+        "DST": "dst_od_9",
+        "AMP": "amp_tweedy",
+        "CAB": "cab_uk_ld",
+        "EQ": "eq_guitar_eq_1",
+        "RVB": "rvb_tube_spring",
+    },
+    "shoegaze": {
+        "AMP": "amp_dark_twin",
+        "CAB": "cab_uk_ld",
+        "EQ": "eq_guitar_eq_1",
+        "MOD": "mod_g_chorus",
+        "DLY": "dly_bbd_delay_s",
+        "RVB": "rvb_plate",
+    },
+    "punk": {
+        "DST": "dst_revolt",
+        "AMP": "amp_uk_800",
+        "NR": "nr_gate_1",
+        "CAB": "cab_uk_ld",
+        "RVB": "rvb_room",
+    },
+    "classic_rock": {
+        "DST": "dst_green_od",
+        "AMP": "amp_uk_800",
+        "CAB": "cab_uk_ld",
+        "EQ": "eq_guitar_eq_1",
+        "RVB": "rvb_plate",
+    },
+    "clean_indie": {
+        "AMP": "amp_dark_twin",
+        "CAB": "cab_uk_ld",
+        "EQ": "eq_guitar_eq_1",
+        "MOD": "mod_g_chorus",
+        "DLY": "dly_analog_delay",
+        "RVB": "rvb_room",
+    },
+    "funk": {
+        "WAH": "wah_v_wah",
+        "AMP": "amp_bellman_59n",
+        "CAB": "cab_uk_ld",
+        "EQ": "eq_guitar_eq_1",
+        "RVB": "rvb_room",
+    },
 }
 
 
@@ -68,6 +135,7 @@ def test_generated_patches_validate_successfully_for_all_style_templates(
     assert patch["valid"] is True
     assert result.valid is True
     assert result.errors == []
+    assert SEED_WARNING not in patch["warnings"]
 
 
 def test_pickup_adjustments_are_applied_to_generated_patch():
@@ -76,8 +144,12 @@ def test_pickup_adjustments_are_applied_to_generated_patch():
         pickup_type="single coil bridge",
         connection_mode=ConnectionMode.DIRECT_USB,
     )
+    template = load_style_templates()[patch["style"]]
 
-    assert patch["modules"]["AMP"]["parameters"]["gain"] > 70
+    assert (
+        patch["modules"]["AMP"]["parameters"]["gain"]
+        > template["modules"]["AMP"]["parameters"]["gain"]
+    )
     assert any("single coil" in warning.lower() for warning in patch["warnings"])
 
 
@@ -91,13 +163,13 @@ def test_pickup_adjustments_are_applied_to_generated_patch():
         ),
         (
             "single coil bridge",
-            "Single coil pickup detected: added gain and drive level.",
-            (("AMP", "gain", "increased"), ("DST", "level", "increased")),
+            "Single coil pickup detected: added amp gain and drive output.",
+            (("AMP", "gain", "increased"), ("DST", "volume", "increased")),
         ),
         (
             "p90 bridge",
             "P-90 pickup detected: emphasized midrange.",
-            (("AMP", "mid", "increased"),),
+            (("AMP", "middle", "increased"),),
         ),
     ],
 )
@@ -176,20 +248,60 @@ def test_all_generated_effects_exist_in_gp200_profile():
             assert module_patch["effect"] in profile["modules"][module_name]["effects"]
 
 
-def test_generated_patch_warns_once_for_unverified_seed_effects():
+def test_generated_patch_omits_seed_warning_when_all_effects_are_verified():
     patch = generate_gp200_patch(
         tone_goal="metal tight rhythm",
         pickup_type="humbucker bridge",
         connection_mode=ConnectionMode.HEADPHONES,
     )
 
-    seed_warning = (
-        "This patch uses seed-profile effect names that have not yet been "
-        "manually verified against the official Valeton GP-200 effect list."
-    )
-
     assert patch["valid"] is True
-    assert patch["warnings"].count(seed_warning) == 1
+    assert SEED_WARNING not in patch["warnings"]
+
+
+def test_seed_warning_still_appears_for_seed_fallback_effects():
+    patch = generate_gp200_patch(
+        tone_goal="metal tight rhythm",
+        pickup_type="humbucker bridge",
+        connection_mode=ConnectionMode.HEADPHONES,
+    )
+    patch["modules"]["PRE"] = {
+        "enabled": True,
+        "effect": "compressor",
+        "parameters": {"sustain": 44, "attack": 34, "level": 58},
+    }
+
+    result = validate_gp200_patch(patch)
+
+    assert result.valid is True
+    assert result.warnings.count(SEED_WARNING) == 1
+
+
+def test_style_templates_prefer_verified_effects_where_configured():
+    profile = load_gp200_profile()
+
+    for style_name, expected_modules in EXPECTED_VERIFIED_STYLE_EFFECTS.items():
+        template = load_style_templates()[style_name]
+        for module_name, effect_id in expected_modules.items():
+            effect = profile["modules"][module_name]["effects"][effect_id]
+            assert template["modules"][module_name]["effect"] == effect_id
+            assert effect["verified"] is True
+
+
+def test_generated_patches_use_only_verified_effects_after_template_update():
+    profile = load_gp200_profile()
+
+    for style_name in load_style_templates():
+        patch = generate_gp200_patch(
+            tone_goal=f"{style_name.replace('_', ' ')} test",
+            pickup_type="humbucker bridge",
+            connection_mode=ConnectionMode.HEADPHONES,
+        )
+
+        assert patch["valid"] is True
+        for module_name, module_patch in patch["modules"].items():
+            effect = profile["modules"][module_name]["effects"][module_patch["effect"]]
+            assert effect["verified"] is True
 
 
 def test_style_keywords_match_tone_intent_spec():

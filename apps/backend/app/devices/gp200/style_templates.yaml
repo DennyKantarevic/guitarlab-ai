@@ -8,17 +8,17 @@ styles:
     delay_reverb_choice: room_reverb
     noise_reduction_recommendation: light
     modules:
-      PRE: { enabled: true, effect: compressor, parameters: { sustain: 36, attack: 46, level: 54 } }
-      WAH: { enabled: false, effect: auto_wah, parameters: { sensitivity: 48, depth: 32 } }
-      DST: { enabled: true, effect: distortion, parameters: { gain: 58, tone: 48, level: 56 } }
-      AMP: { enabled: true, effect: driven_amp, parameters: { gain: 58, bass: 56, mid: 60, treble: 48, master: 60 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 32, release: 48 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 48, low_cut_hz: 75, high_cut_hz: 7600 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 54, mid_freq: 700, mid_gain: 58, high_gain: 46, level: 50 } }
-      MOD: { enabled: true, effect: chorus, parameters: { rate: 28, depth: 32, mix: 18 } }
-      DLY: { enabled: false, effect: analog_delay, parameters: { time_ms: 360, feedback: 16, mix: 10 } }
-      RVB: { enabled: true, effect: room_reverb, parameters: { decay: 30, tone: 45, mix: 14 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: true, effect: pre_comp, parameters: { sustain: 36, volume: 54 } }
+      WAH: { enabled: false, effect: wah_v_wah, parameters: { range: 48, q: 32, volume: 50 } }
+      DST: { enabled: true, effect: dst_revolt, parameters: { gain: 58, tone: 48, volume: 56, mode: 50 } }
+      AMP: { enabled: true, effect: amp_uk_800, parameters: { gain: 58, presence: 50, volume: 60, bass: 56, middle: 60, treble: 48 } }
+      NR: { enabled: true, effect: nr_gate_2, parameters: { threshold: 32, attack: 45, release: 48 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 50, low_cut: 75, hi_cut: 76 } }
+      EQ: { enabled: true, effect: eq_guitar_eq_1, parameters: { band_1: 54, band_2: 52, band_3: 58, band_4: 46, band_5: 48, volume: 50 } }
+      MOD: { enabled: true, effect: mod_a_chorus, parameters: { depth: 32, rate: 28, tone: 50, sync: 0 } }
+      DLY: { enabled: false, effect: dly_analog_delay, parameters: { mix: 10, feedback: 16, time: 36, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_room, parameters: { mix: 14, pre_delay: 20, decay: 30, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }
   metal:
     keywords: [metal, tight, chug, high gain, heavy]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
@@ -28,17 +28,17 @@ styles:
     delay_reverb_choice: short_room
     noise_reduction_recommendation: strong
     modules:
-      PRE: { enabled: true, effect: compressor, parameters: { sustain: 44, attack: 34, level: 58 } }
-      WAH: { enabled: false, effect: auto_wah, parameters: { sensitivity: 50, depth: 25 } }
-      DST: { enabled: true, effect: overdrive, parameters: { gain: 16, tone: 62, level: 68 } }
-      AMP: { enabled: true, effect: high_gain_amp, parameters: { gain: 72, bass: 52, mid: 38, treble: 62, master: 62 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 58, release: 34 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 54, low_cut_hz: 90, high_cut_hz: 7200 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 52, mid_freq: 900, mid_gain: 40, high_gain: 58, level: 50 } }
-      MOD: { enabled: false, effect: chorus, parameters: { rate: 30, depth: 25, mix: 0 } }
-      DLY: { enabled: false, effect: digital_delay, parameters: { time_ms: 320, feedback: 18, mix: 10 } }
-      RVB: { enabled: true, effect: room_reverb, parameters: { decay: 20, tone: 50, mix: 10 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: true, effect: pre_comp4, parameters: { sustain: 44, attack: 34, volume: 58, clipping: 45 } }
+      WAH: { enabled: false, effect: wah_v_wah, parameters: { range: 50, q: 30, volume: 50 } }
+      DST: { enabled: true, effect: dst_precise_od, parameters: { gain: 16, tone: 62, volume: 68, attack: 55, gate: 54 } }
+      AMP: { enabled: true, effect: amp_mess_dualm, parameters: { gain: 72, presence: 58, volume: 62, bass: 52, middle: 38, treble: 62 } }
+      NR: { enabled: true, effect: nr_gate_3, parameters: { threshold: 58, ratio: 62, attack: 34, release: 34, hold: 45, hysteresis: 42 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 52, low_cut: 90, hi_cut: 72 } }
+      EQ: { enabled: true, effect: eq_hyper_eq, parameters: { band_1: 50, band_2: 52, band_3: 48, band_4: 44, band_5: 40, band_6: 42, band_7: 48, band_8: 54, band_9: 58, band_10: 56, volume: 50 } }
+      MOD: { enabled: false, effect: mod_a_chorus, parameters: { depth: 25, rate: 30, tone: 50, sync: 0 } }
+      DLY: { enabled: false, effect: dly_digital_delay_s, parameters: { mix: 10, feedback: 18, time: 32, time_r_percent: 50, spread: 20, level: 50, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_room, parameters: { mix: 10, pre_delay: 18, decay: 20, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }
   blues:
     keywords: [blues, warm, breakup, overdrive]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
@@ -48,17 +48,17 @@ styles:
     delay_reverb_choice: analog_delay_room
     noise_reduction_recommendation: light
     modules:
-      PRE: { enabled: false, effect: compressor, parameters: { sustain: 24, attack: 54, level: 50 } }
-      WAH: { enabled: false, effect: auto_wah, parameters: { sensitivity: 44, depth: 28 } }
-      DST: { enabled: true, effect: overdrive, parameters: { gain: 28, tone: 48, level: 55 } }
-      AMP: { enabled: true, effect: driven_amp, parameters: { gain: 42, bass: 50, mid: 58, treble: 56, master: 58 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 24, release: 55 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 48, low_cut_hz: 65, high_cut_hz: 8200 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 50, mid_freq: 650, mid_gain: 60, high_gain: 52, level: 50 } }
-      MOD: { enabled: true, effect: phaser, parameters: { rate: 36, depth: 28, mix: 18 } }
-      DLY: { enabled: true, effect: analog_delay, parameters: { time_ms: 420, feedback: 18, mix: 14 } }
-      RVB: { enabled: true, effect: room_reverb, parameters: { decay: 34, tone: 48, mix: 16 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: false, effect: pre_comp, parameters: { sustain: 24, volume: 50 } }
+      WAH: { enabled: false, effect: wah_v_wah, parameters: { range: 44, q: 28, volume: 50 } }
+      DST: { enabled: true, effect: dst_od_9, parameters: { gain: 28, tone: 48, volume: 55 } }
+      AMP: { enabled: true, effect: amp_tweedy, parameters: { gain: 42, tone: 56, volume: 58 } }
+      NR: { enabled: true, effect: nr_gate_2, parameters: { threshold: 24, attack: 48, release: 55 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 50, low_cut: 65, hi_cut: 82 } }
+      EQ: { enabled: true, effect: eq_guitar_eq_1, parameters: { band_1: 50, band_2: 54, band_3: 60, band_4: 52, band_5: 50, volume: 50 } }
+      MOD: { enabled: true, effect: mod_o_phase, parameters: { rate: 36, sync: 0 } }
+      DLY: { enabled: true, effect: dly_analog_delay, parameters: { mix: 14, feedback: 18, time: 42, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_tube_spring, parameters: { mix: 16, pre_delay: 22, decay: 34, low_damp: 45, hi_damp: 48, mod: 20, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }
   shoegaze:
     keywords: [shoegaze, ambient, wash, dreamy]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
@@ -68,17 +68,17 @@ styles:
     delay_reverb_choice: analog_delay_and_plate
     noise_reduction_recommendation: medium
     modules:
-      PRE: { enabled: true, effect: compressor, parameters: { sustain: 58, attack: 42, level: 58 } }
-      WAH: { enabled: false, effect: auto_wah, parameters: { sensitivity: 44, depth: 24 } }
-      DST: { enabled: true, effect: fuzz, parameters: { gain: 48, tone: 42, level: 54 } }
-      AMP: { enabled: true, effect: clean_amp, parameters: { gain: 30, bass: 48, mid: 48, treble: 58, master: 64 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 30, release: 60 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 45, low_cut_hz: 70, high_cut_hz: 8800 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 48, mid_freq: 1200, mid_gain: 46, high_gain: 56, level: 50 } }
-      MOD: { enabled: true, effect: chorus, parameters: { rate: 24, depth: 58, mix: 38 } }
-      DLY: { enabled: true, effect: analog_delay, parameters: { time_ms: 620, feedback: 48, mix: 32 } }
-      RVB: { enabled: true, effect: plate_reverb, parameters: { decay: 72, tone: 62, mix: 38 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: true, effect: pre_s_comp, parameters: { threshold: 42, ratio: 50, volume: 58, attack: 42, release: 55, blend: 58, tone: 50 } }
+      WAH: { enabled: false, effect: wah_v_wah, parameters: { range: 44, q: 24, volume: 50 } }
+      DST: { enabled: true, effect: dst_red_haze, parameters: { fuzz: 48, volume: 54 } }
+      AMP: { enabled: true, effect: amp_dark_twin, parameters: { gain: 30, volume: 64, bass: 48, middle: 48, treble: 58, bright: 58 } }
+      NR: { enabled: true, effect: nr_gate_2, parameters: { threshold: 30, attack: 48, release: 60 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 50, low_cut: 70, hi_cut: 88 } }
+      EQ: { enabled: true, effect: eq_guitar_eq_1, parameters: { band_1: 48, band_2: 48, band_3: 46, band_4: 52, band_5: 56, volume: 50 } }
+      MOD: { enabled: true, effect: mod_g_chorus, parameters: { depth: 58, rate: 24, volume: 56, sync: 0 } }
+      DLY: { enabled: true, effect: dly_bbd_delay_s, parameters: { mix: 32, feedback: 48, time: 62, time_r_percent: 50, spread: 55, level: 50, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_plate, parameters: { mix: 38, decay: 72, high_damp: 62, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }
   punk:
     keywords: [punk, raw, aggressive]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
@@ -88,17 +88,17 @@ styles:
     delay_reverb_choice: minimal_room
     noise_reduction_recommendation: medium
     modules:
-      PRE: { enabled: false, effect: compressor, parameters: { sustain: 20, attack: 48, level: 50 } }
-      WAH: { enabled: false, effect: auto_wah, parameters: { sensitivity: 42, depth: 26 } }
-      DST: { enabled: true, effect: distortion, parameters: { gain: 62, tone: 58, level: 58 } }
-      AMP: { enabled: true, effect: driven_amp, parameters: { gain: 60, bass: 48, mid: 62, treble: 60, master: 62 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 42, release: 38 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 50, low_cut_hz: 85, high_cut_hz: 7800 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 48, mid_freq: 900, mid_gain: 60, high_gain: 58, level: 50 } }
-      MOD: { enabled: false, effect: phaser, parameters: { rate: 30, depth: 20, mix: 0 } }
-      DLY: { enabled: false, effect: digital_delay, parameters: { time_ms: 280, feedback: 12, mix: 8 } }
-      RVB: { enabled: true, effect: room_reverb, parameters: { decay: 22, tone: 52, mix: 10 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: false, effect: pre_comp, parameters: { sustain: 20, volume: 50 } }
+      WAH: { enabled: false, effect: wah_v_wah, parameters: { range: 42, q: 26, volume: 50 } }
+      DST: { enabled: true, effect: dst_revolt, parameters: { gain: 62, tone: 58, volume: 58, mode: 50 } }
+      AMP: { enabled: true, effect: amp_uk_800, parameters: { gain: 60, presence: 54, volume: 62, bass: 48, middle: 62, treble: 60 } }
+      NR: { enabled: true, effect: nr_gate_1, parameters: { threshold: 42 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 50, low_cut: 85, hi_cut: 78 } }
+      EQ: { enabled: true, effect: eq_guitar_eq_1, parameters: { band_1: 48, band_2: 50, band_3: 60, band_4: 58, band_5: 56, volume: 50 } }
+      MOD: { enabled: false, effect: mod_o_phase, parameters: { rate: 30, sync: 0 } }
+      DLY: { enabled: false, effect: dly_digital_delay_s, parameters: { mix: 8, feedback: 12, time: 28, time_r_percent: 50, spread: 15, level: 50, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_room, parameters: { mix: 10, pre_delay: 18, decay: 22, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }
   classic_rock:
     keywords: [classic rock, crunch, vintage]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
@@ -108,17 +108,17 @@ styles:
     delay_reverb_choice: analog_delay_room
     noise_reduction_recommendation: light
     modules:
-      PRE: { enabled: true, effect: compressor, parameters: { sustain: 34, attack: 48, level: 54 } }
-      WAH: { enabled: false, effect: auto_wah, parameters: { sensitivity: 46, depth: 26 } }
-      DST: { enabled: true, effect: overdrive, parameters: { gain: 22, tone: 54, level: 58 } }
-      AMP: { enabled: true, effect: driven_amp, parameters: { gain: 54, bass: 52, mid: 60, treble: 56, master: 62 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 30, release: 48 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 50, low_cut_hz: 80, high_cut_hz: 8000 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 50, mid_freq: 850, mid_gain: 58, high_gain: 54, level: 50 } }
-      MOD: { enabled: true, effect: phaser, parameters: { rate: 28, depth: 32, mix: 18 } }
-      DLY: { enabled: true, effect: analog_delay, parameters: { time_ms: 410, feedback: 22, mix: 16 } }
-      RVB: { enabled: true, effect: room_reverb, parameters: { decay: 28, tone: 52, mix: 14 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: true, effect: pre_comp, parameters: { sustain: 34, volume: 54 } }
+      WAH: { enabled: false, effect: wah_v_wah, parameters: { range: 46, q: 26, volume: 50 } }
+      DST: { enabled: true, effect: dst_green_od, parameters: { gain: 22, tone: 54, volume: 58 } }
+      AMP: { enabled: true, effect: amp_uk_800, parameters: { gain: 54, presence: 52, volume: 62, bass: 52, middle: 60, treble: 56 } }
+      NR: { enabled: true, effect: nr_gate_2, parameters: { threshold: 30, attack: 48, release: 48 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 50, low_cut: 80, hi_cut: 80 } }
+      EQ: { enabled: true, effect: eq_guitar_eq_1, parameters: { band_1: 50, band_2: 52, band_3: 58, band_4: 56, band_5: 54, volume: 50 } }
+      MOD: { enabled: true, effect: mod_o_phase, parameters: { rate: 28, sync: 0 } }
+      DLY: { enabled: true, effect: dly_analog_delay, parameters: { mix: 16, feedback: 22, time: 41, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_plate, parameters: { mix: 14, decay: 28, high_damp: 52, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }
   clean_indie:
     keywords: [clean, indie, bright, jangly]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
@@ -128,34 +128,34 @@ styles:
     delay_reverb_choice: digital_delay_plate
     noise_reduction_recommendation: light
     modules:
-      PRE: { enabled: true, effect: compressor, parameters: { sustain: 44, attack: 52, level: 56 } }
-      WAH: { enabled: false, effect: auto_wah, parameters: { sensitivity: 46, depth: 30 } }
-      DST: { enabled: false, effect: overdrive, parameters: { gain: 8, tone: 52, level: 50 } }
-      AMP: { enabled: true, effect: clean_amp, parameters: { gain: 24, bass: 48, mid: 46, treble: 64, master: 64 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 24, release: 58 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 46, low_cut_hz: 70, high_cut_hz: 9000 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 46, mid_freq: 1100, mid_gain: 48, high_gain: 62, level: 50 } }
-      MOD: { enabled: true, effect: chorus, parameters: { rate: 26, depth: 32, mix: 22 } }
-      DLY: { enabled: true, effect: digital_delay, parameters: { time_ms: 360, feedback: 24, mix: 18 } }
-      RVB: { enabled: true, effect: plate_reverb, parameters: { decay: 42, tone: 58, mix: 20 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: true, effect: pre_comp, parameters: { sustain: 44, volume: 56 } }
+      WAH: { enabled: false, effect: wah_v_wah, parameters: { range: 46, q: 30, volume: 50 } }
+      DST: { enabled: false, effect: dst_green_od, parameters: { gain: 8, tone: 52, volume: 50 } }
+      AMP: { enabled: true, effect: amp_dark_twin, parameters: { gain: 24, volume: 64, bass: 48, middle: 46, treble: 64, bright: 62 } }
+      NR: { enabled: true, effect: nr_gate_2, parameters: { threshold: 24, attack: 48, release: 58 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 50, low_cut: 70, hi_cut: 90 } }
+      EQ: { enabled: true, effect: eq_guitar_eq_1, parameters: { band_1: 46, band_2: 48, band_3: 48, band_4: 56, band_5: 62, volume: 50 } }
+      MOD: { enabled: true, effect: mod_g_chorus, parameters: { depth: 32, rate: 26, volume: 54, sync: 0 } }
+      DLY: { enabled: true, effect: dly_analog_delay, parameters: { mix: 18, feedback: 24, time: 36, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_room, parameters: { mix: 20, pre_delay: 20, decay: 42, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }
   funk:
     keywords: [funk, quack, percussive]
     signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
     gain_level: low
     eq_character: tight_bright
-    modulation_choice: auto_wah
+    modulation_choice: wah
     delay_reverb_choice: minimal_room
     noise_reduction_recommendation: light
     modules:
-      PRE: { enabled: true, effect: compressor, parameters: { sustain: 38, attack: 36, level: 50 } }
-      WAH: { enabled: true, effect: auto_wah, parameters: { sensitivity: 58, depth: 44 } }
-      DST: { enabled: false, effect: overdrive, parameters: { gain: 6, tone: 58, level: 48 } }
-      AMP: { enabled: true, effect: clean_amp, parameters: { gain: 22, bass: 46, mid: 50, treble: 66, master: 64 } }
-      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 28, release: 42 } }
-      CAB: { enabled: true, effect: matched_cab, parameters: { mic_position: 44, low_cut_hz: 75, high_cut_hz: 9200 } }
-      EQ: { enabled: true, effect: parametric_eq, parameters: { low_gain: 44, mid_freq: 1300, mid_gain: 50, high_gain: 64, level: 50 } }
-      MOD: { enabled: false, effect: phaser, parameters: { rate: 32, depth: 28, mix: 0 } }
-      DLY: { enabled: false, effect: digital_delay, parameters: { time_ms: 260, feedback: 10, mix: 8 } }
-      RVB: { enabled: true, effect: room_reverb, parameters: { decay: 20, tone: 55, mix: 8 } }
-      VOL: { enabled: true, effect: volume, parameters: { level: 100 } }
+      PRE: { enabled: true, effect: pre_comp, parameters: { sustain: 38, volume: 50 } }
+      WAH: { enabled: true, effect: wah_v_wah, parameters: { range: 58, q: 44, volume: 52 } }
+      DST: { enabled: false, effect: dst_green_od, parameters: { gain: 6, tone: 58, volume: 48 } }
+      AMP: { enabled: true, effect: amp_bellman_59n, parameters: { gain: 22, presence: 54, volume: 64, bass: 46, middle: 50, treble: 66 } }
+      NR: { enabled: true, effect: nr_gate_1, parameters: { threshold: 28 } }
+      CAB: { enabled: true, effect: cab_uk_ld, parameters: { volume: 50, low_cut: 75, hi_cut: 92 } }
+      EQ: { enabled: true, effect: eq_guitar_eq_1, parameters: { band_1: 44, band_2: 46, band_3: 50, band_4: 58, band_5: 64, volume: 50 } }
+      MOD: { enabled: false, effect: mod_o_phase, parameters: { rate: 32, sync: 0 } }
+      DLY: { enabled: false, effect: dly_digital_delay_s, parameters: { mix: 8, feedback: 10, time: 26, time_r_percent: 50, spread: 15, level: 50, sync: 0, trail: 0 } }
+      RVB: { enabled: true, effect: rvb_room, parameters: { mix: 8, pre_delay: 18, decay: 20, trail: 0 } }
+      VOL: { enabled: true, effect: vol_volume, parameters: { volume: 100 } }

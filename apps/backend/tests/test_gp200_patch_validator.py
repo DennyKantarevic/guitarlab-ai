@@ -273,14 +273,17 @@ def test_validator_catches_unknown_parameter():
     patch = valid_patch()
     patch["modules"]["AMP"]["parameters"]["sparkle"] = 100
 
-    assert_invalid_with_error(patch, "Unknown parameter for AMP.high_gain_amp: sparkle")
+    assert_invalid_with_error(patch, "Unknown parameter for AMP.amp_mess_dualm: sparkle")
 
 
 def test_validator_catches_out_of_range_parameter_value():
     patch = valid_patch()
     patch["modules"]["AMP"]["parameters"]["gain"] = 150
 
-    assert_invalid_with_error(patch, "Parameter out of range for AMP.high_gain_amp.gain")
+    assert_invalid_with_error(
+        patch,
+        "Parameter out of range for AMP.amp_mess_dualm.gain",
+    )
 
 
 def test_validator_catches_amp_cab_state_against_connection_rules():
@@ -384,8 +387,13 @@ def test_verified_effect_accepts_non_empty_official_effect_name():
     assert result.errors == []
 
 
-def test_unverified_seed_effects_warn_without_invalidating_patch():
+def test_seed_fallback_effects_warn_without_invalidating_patch():
     patch = valid_patch()
+    patch["modules"]["PRE"] = {
+        "enabled": True,
+        "effect": "compressor",
+        "parameters": {"sustain": 44, "attack": 34, "level": 58},
+    }
     result = validate_gp200_patch(patch)
 
     assert result.valid is True

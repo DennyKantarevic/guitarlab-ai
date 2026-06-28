@@ -161,15 +161,26 @@ def apply_pickup_adjustments(
     dst_parameters = modules["DST"]["parameters"]
 
     if "single" in pickup:
-        amp_parameters["gain"] = clamp(amp_parameters["gain"] + 6)
-        dst_parameters["level"] = clamp(dst_parameters.get("level", 50) + 4)
-        warnings.append("Single coil pickup detected: added gain and drive level.")
+        adjust_first_existing_parameter(amp_parameters, ("gain",), 6)
+        adjust_first_existing_parameter(dst_parameters, ("level", "volume"), 4)
+        warnings.append("Single coil pickup detected: added amp gain and drive output.")
     elif "humbucker" in pickup:
-        amp_parameters["gain"] = clamp(amp_parameters["gain"] - 2)
+        adjust_first_existing_parameter(amp_parameters, ("gain",), -2)
         warnings.append("Humbucker pickup detected: trimmed amp gain slightly.")
     elif "p90" in pickup or "p-90" in pickup:
-        amp_parameters["mid"] = clamp(amp_parameters.get("mid", 50) + 4)
+        adjust_first_existing_parameter(amp_parameters, ("mid", "middle"), 4)
         warnings.append("P-90 pickup detected: emphasized midrange.")
+
+
+def adjust_first_existing_parameter(
+    parameters: dict[str, Any],
+    names: tuple[str, ...],
+    delta: int,
+) -> None:
+    for name in names:
+        if name in parameters:
+            parameters[name] = clamp(parameters[name] + delta)
+            return
 
 
 def apply_connection_rules(
