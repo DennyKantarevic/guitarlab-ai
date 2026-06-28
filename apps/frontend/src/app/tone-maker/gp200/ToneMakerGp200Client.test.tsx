@@ -5,8 +5,8 @@ import ToneMakerGp200Client from "./ToneMakerGp200Client";
 import type { Gp200ToneRequest } from "@/lib/gp200";
 
 const patchResponse = {
-  device: "Mooer",
-  model: "GE Labs GP-200",
+  device: "Valeton",
+  model: "GP-200",
   tone_goal: "tight modern rhythm",
   pickup_type: "humbucker bridge",
   connection_mode: "fx_return" as const,
@@ -66,7 +66,7 @@ describe("ToneMakerGp200Client", () => {
     resolvePatch(patchResponse);
 
     await waitFor(() => {
-      expect(screen.getByText("GE Labs GP-200")).toBeDefined();
+      expect(screen.getByText("GP-200")).toBeDefined();
     });
     expect(screen.getByText("noise_gate -> drive -> amp -> cab")).toBeDefined();
     expect(screen.getByText("Cab disabled for FX return into a power amp or amp return.")).toBeDefined();

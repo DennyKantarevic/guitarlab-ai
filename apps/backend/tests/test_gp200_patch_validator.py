@@ -42,14 +42,14 @@ def test_validator_catches_unknown_parameter():
     patch = valid_patch()
     patch["modules"]["AMP"]["parameters"]["sparkle"] = 100
 
-    assert_invalid_with_error(patch, "Unknown parameter for AMP.us_hi_gain: sparkle")
+    assert_invalid_with_error(patch, "Unknown parameter for AMP.high_gain_amp: sparkle")
 
 
 def test_validator_catches_out_of_range_parameter_value():
     patch = valid_patch()
     patch["modules"]["AMP"]["parameters"]["gain"] = 150
 
-    assert_invalid_with_error(patch, "Parameter out of range for AMP.us_hi_gain.gain")
+    assert_invalid_with_error(patch, "Parameter out of range for AMP.high_gain_amp.gain")
 
 
 def test_validator_catches_amp_cab_state_against_connection_rules():

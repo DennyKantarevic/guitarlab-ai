@@ -7,8 +7,8 @@ describe("createGp200Patch", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        device: "Mooer",
-        model: "GE Labs GP-200",
+        device: "Valeton",
+        model: "GP-200",
         tone_goal: "tight rhythm",
         pickup_type: "humbucker",
         connection_mode: "direct_usb",
@@ -47,8 +47,8 @@ describe("createGp200Patch", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        device: "Mooer",
-        model: "GE Labs GP-200",
+        device: "Valeton",
+        model: "GP-200",
         tone_goal: "clean delay",
         pickup_type: "single coil",
         connection_mode: "headphones",
