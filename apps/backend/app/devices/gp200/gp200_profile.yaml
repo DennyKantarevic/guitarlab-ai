@@ -20,7 +20,12 @@ modules:
     label: Pre effect
     effects:
       compressor:
-        label: Compressor
+        id: compressor
+        display_name: Compressor
+        category: pre
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           sustain: { min: 0, max: 100, default: 42 }
           attack: { min: 0, max: 100, default: 48 }
@@ -29,7 +34,12 @@ modules:
     label: Wah
     effects:
       auto_wah:
-        label: Auto Wah
+        id: auto_wah
+        display_name: Auto Wah
+        category: wah
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           sensitivity: { min: 0, max: 100, default: 52 }
           depth: { min: 0, max: 100, default: 48 }
@@ -37,19 +47,34 @@ modules:
     label: Drive
     effects:
       overdrive:
-        label: Overdrive
+        id: overdrive
+        display_name: Overdrive
+        category: drive
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           gain: { min: 0, max: 100, default: 18 }
           tone: { min: 0, max: 100, default: 55 }
           level: { min: 0, max: 100, default: 58 }
       distortion:
-        label: Distortion
+        id: distortion
+        display_name: Distortion
+        category: drive
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           gain: { min: 0, max: 100, default: 52 }
           tone: { min: 0, max: 100, default: 54 }
           level: { min: 0, max: 100, default: 56 }
       fuzz:
-        label: Fuzz
+        id: fuzz
+        display_name: Fuzz
+        category: drive
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           gain: { min: 0, max: 100, default: 62 }
           tone: { min: 0, max: 100, default: 45 }
@@ -58,7 +83,12 @@ modules:
     label: Amp
     effects:
       clean_amp:
-        label: Clean Amp
+        id: clean_amp
+        display_name: Clean Amp
+        category: amp
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           gain: { min: 0, max: 100, default: 24 }
           bass: { min: 0, max: 100, default: 50 }
@@ -66,7 +96,12 @@ modules:
           treble: { min: 0, max: 100, default: 60 }
           master: { min: 0, max: 100, default: 64 }
       driven_amp:
-        label: Driven Amp
+        id: driven_amp
+        display_name: Driven Amp
+        category: amp
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           gain: { min: 0, max: 100, default: 48 }
           bass: { min: 0, max: 100, default: 52 }
@@ -74,7 +109,12 @@ modules:
           treble: { min: 0, max: 100, default: 54 }
           master: { min: 0, max: 100, default: 60 }
       high_gain_amp:
-        label: High Gain Amp
+        id: high_gain_amp
+        display_name: High Gain Amp
+        category: amp
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           gain: { min: 0, max: 100, default: 72 }
           bass: { min: 0, max: 100, default: 52 }
@@ -85,7 +125,12 @@ modules:
     label: Noise reduction
     effects:
       noise_gate:
-        label: Noise Gate
+        id: noise_gate
+        display_name: Noise Gate
+        category: noise_reduction
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           threshold: { min: 0, max: 100, default: 38 }
           release: { min: 0, max: 100, default: 45 }
@@ -93,7 +138,12 @@ modules:
     label: Cab
     effects:
       matched_cab:
-        label: Matched Cab
+        id: matched_cab
+        display_name: Matched Cab
+        category: cab
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           mic_position: { min: 0, max: 100, default: 52 }
           low_cut_hz: { min: 20, max: 250, default: 80 }
@@ -102,7 +152,12 @@ modules:
     label: EQ
     effects:
       parametric_eq:
-        label: Parametric EQ
+        id: parametric_eq
+        display_name: Parametric EQ
+        category: eq
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           low_gain: { min: 0, max: 100, default: 50 }
           mid_freq: { min: 100, max: 5000, default: 800 }
@@ -113,13 +168,23 @@ modules:
     label: Modulation
     effects:
       chorus:
-        label: Chorus
+        id: chorus
+        display_name: Chorus
+        category: modulation
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           rate: { min: 0, max: 100, default: 32 }
           depth: { min: 0, max: 100, default: 38 }
           mix: { min: 0, max: 100, default: 24 }
       phaser:
-        label: Phaser
+        id: phaser
+        display_name: Phaser
+        category: modulation
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           rate: { min: 0, max: 100, default: 42 }
           depth: { min: 0, max: 100, default: 35 }
@@ -128,13 +193,23 @@ modules:
     label: Delay
     effects:
       analog_delay:
-        label: Analog Delay
+        id: analog_delay
+        display_name: Analog Delay
+        category: delay
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           time_ms: { min: 1, max: 2000, default: 420 }
           feedback: { min: 0, max: 100, default: 28 }
           mix: { min: 0, max: 100, default: 20 }
       digital_delay:
-        label: Digital Delay
+        id: digital_delay
+        display_name: Digital Delay
+        category: delay
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           time_ms: { min: 1, max: 2000, default: 380 }
           feedback: { min: 0, max: 100, default: 22 }
@@ -143,13 +218,23 @@ modules:
     label: Reverb
     effects:
       room_reverb:
-        label: Room Reverb
+        id: room_reverb
+        display_name: Room Reverb
+        category: reverb
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           decay: { min: 0, max: 100, default: 26 }
           tone: { min: 0, max: 100, default: 50 }
           mix: { min: 0, max: 100, default: 12 }
       plate_reverb:
-        label: Plate Reverb
+        id: plate_reverb
+        display_name: Plate Reverb
+        category: reverb
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           decay: { min: 0, max: 100, default: 42 }
           tone: { min: 0, max: 100, default: 56 }
@@ -158,6 +243,11 @@ modules:
     label: Volume
     effects:
       volume:
-        label: Volume
+        id: volume
+        display_name: Volume
+        category: volume
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
         parameters:
           level: { min: 0, max: 100, default: 100 }

@@ -7,6 +7,10 @@ import yaml
 
 
 GP200_DATA_DIR = Path(__file__).resolve().parents[1] / "devices" / "gp200"
+UNVERIFIED_EFFECT_WARNING = (
+    "This patch uses seed-profile effect names that have not yet been manually "
+    "verified against the official Valeton GP-200 effect list."
+)
 
 
 @dataclass(frozen=True)
@@ -61,7 +65,13 @@ def validate_gp200_patch(patch: dict[str, Any]) -> ValidationResult:
         if module_name not in profile_modules:
             errors.append(f"Unknown module: {module_name}")
             continue
-        validate_module(module_name, module_patch, profile_modules[module_name], errors)
+        validate_module(
+            module_name,
+            module_patch,
+            profile_modules[module_name],
+            warnings,
+            errors,
+        )
 
     connection_mode = str(patch.get("connection_mode", ""))
     if connection_mode not in rules:
@@ -76,6 +86,7 @@ def validate_module(
     module_name: str,
     module_patch: dict[str, Any],
     module_profile: dict[str, Any],
+    warnings: list[str],
     errors: list[str],
 ) -> None:
     for field in ["enabled", "effect", "parameters"]:
@@ -88,11 +99,15 @@ def validate_module(
         errors.append(f"Unknown effect for {module_name}: {effect}")
         return
 
+    effect_profile = effects[effect]
+    if effect_profile.get("verified") is False and UNVERIFIED_EFFECT_WARNING not in warnings:
+        warnings.append(UNVERIFIED_EFFECT_WARNING)
+
     parameters = module_patch.get("parameters")
     if not isinstance(parameters, dict):
         return
 
-    parameter_rules = effects[effect]["parameters"]
+    parameter_rules = effect_profile["parameters"]
     for parameter_name, value in parameters.items():
         if parameter_name not in parameter_rules:
             errors.append(f"Unknown parameter for {module_name}.{effect}: {parameter_name}")
@@ -105,6 +120,27 @@ def validate_module(
                 f"Parameter out of range for {module_name}.{effect}.{parameter_name}: "
                 f"{value} not in {min_value}..{max_value}"
             )
+
+
+def get_gp200_effect_coverage(profile: dict[str, Any]) -> dict[str, Any]:
+    total_effects = 0
+    verified_effects = 0
+    sources: dict[str, int] = {}
+
+    for module in profile["modules"].values():
+        for effect in module["effects"].values():
+            total_effects += 1
+            if effect.get("verified") is True:
+                verified_effects += 1
+            source = str(effect.get("source", "unknown"))
+            sources[source] = sources.get(source, 0) + 1
+
+    return {
+        "total_effects": total_effects,
+        "verified_effects": verified_effects,
+        "unverified_effects": total_effects - verified_effects,
+        "sources": sources,
+    }
 
 
 def validate_connection_mode_states(

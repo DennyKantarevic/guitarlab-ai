@@ -83,3 +83,19 @@ def test_all_generated_effects_exist_in_gp200_profile():
         for module_name, module_patch in patch["modules"].items():
             assert module_name in profile["modules"]
             assert module_patch["effect"] in profile["modules"][module_name]["effects"]
+
+
+def test_generated_patch_warns_once_for_unverified_seed_effects():
+    patch = generate_gp200_patch(
+        tone_goal="metal tight rhythm",
+        pickup_type="humbucker bridge",
+        connection_mode=ConnectionMode.HEADPHONES,
+    )
+
+    seed_warning = (
+        "This patch uses seed-profile effect names that have not yet been "
+        "manually verified against the official Valeton GP-200 effect list."
+    )
+
+    assert patch["valid"] is True
+    assert patch["warnings"].count(seed_warning) == 1

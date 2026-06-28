@@ -1,8 +1,21 @@
 from copy import deepcopy
 
 from app.services.gp200_patch_generator import generate_gp200_patch
-from app.services.gp200_patch_validator import validate_gp200_patch
+from app.services.gp200_patch_validator import (
+    get_gp200_effect_coverage,
+    load_gp200_profile,
+    validate_gp200_patch,
+)
 from app.tone_maker import ConnectionMode
+
+SEED_WARNING = (
+    "This patch uses seed-profile effect names that have not yet been "
+    "manually verified against the official Valeton GP-200 effect list."
+)
+SEED_SOURCE_NOTE = (
+    "Initial internal seed effect. Not yet verified against the official "
+    "Valeton GP-200 effect list."
+)
 
 
 def valid_patch():
@@ -71,3 +84,38 @@ def test_validator_catches_missing_required_fields():
     del patch["modules"]["AMP"]["parameters"]
 
     assert_invalid_with_error(patch, "Missing parameters for module: AMP")
+
+
+def test_every_effect_has_seed_metadata_fields():
+    profile = load_gp200_profile()
+
+    for module_name, module in profile["modules"].items():
+        for effect_id, effect in module["effects"].items():
+            assert effect["id"] == effect_id
+            assert effect["display_name"]
+            assert effect["category"]
+            assert effect["verified"] is False
+            assert effect["source"] == "seed_profile"
+            assert effect["source_note"] == SEED_SOURCE_NOTE
+            assert isinstance(effect["parameters"], dict)
+            assert effect["parameters"]
+
+
+def test_unverified_seed_effects_warn_without_invalidating_patch():
+    patch = valid_patch()
+    result = validate_gp200_patch(patch)
+
+    assert result.valid is True
+    assert result.errors == []
+    assert result.warnings.count(SEED_WARNING) == 1
+
+
+def test_gp200_effect_coverage_counts_seed_profile_effects():
+    coverage = get_gp200_effect_coverage(load_gp200_profile())
+
+    assert coverage == {
+        "total_effects": 18,
+        "verified_effects": 0,
+        "unverified_effects": 18,
+        "sources": {"seed_profile": 18},
+    }
