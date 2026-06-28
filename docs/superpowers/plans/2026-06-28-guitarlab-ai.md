@@ -15,7 +15,6 @@
 **Files:**
 - Create: `.gitignore`
 - Create: `README.md`
-- Create: `apps/.gitkeep`
 
 - [ ] **Step 1: Create root ignore rules**
 
@@ -52,7 +51,7 @@ Monorepo for the GuitarLab AI frontend and backend.
 - [ ] **Step 3: Commit planning and skeleton files**
 
 ```bash
-git add .gitignore README.md docs apps/.gitkeep
+git add .gitignore README.md docs
 git commit -m "chore: add monorepo plan"
 ```
 
@@ -78,16 +77,22 @@ httpx
 Create `apps/backend/tests/test_health.py`:
 
 ```python
-from fastapi.testclient import TestClient
+import asyncio
+
+import httpx
 
 from app.main import app
 
 
-client = TestClient(app)
-
-
 def test_health_endpoint_returns_ok():
-    response = client.get("/health")
+    async def request_health():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://testserver"
+        ) as client:
+            return await client.get("/health")
+
+    response = asyncio.run(request_health())
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "service": "guitarlab-ai-backend"}
@@ -97,7 +102,7 @@ def test_health_endpoint_returns_ok():
 
 Run: `python3 -m venv .venv && .venv/bin/pip install -r apps/backend/requirements.txt && PYTHONPATH=apps/backend .venv/bin/pytest apps/backend/tests/test_health.py -v`
 
-Expected: FAIL because `app.main` does not exist yet.
+Expected: FAIL with a missing `app.main` import. Add a minimal FastAPI app shell without `/health`, then rerun to get `assert 404 == 200`.
 
 - [ ] **Step 3: Implement the FastAPI app**
 
