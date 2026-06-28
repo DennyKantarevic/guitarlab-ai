@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, File, UploadFile
 from pydantic import BaseModel, Field
 
@@ -5,6 +7,17 @@ from app.services.practice_audio_analysis import analyze_uploaded_audio
 
 
 router = APIRouter()
+
+
+class PracticeMetrics(BaseModel):
+    overall_score: int
+    timing_activity_score: int
+    recording_quality_score: int
+    onset_density_per_second: float
+    energy_level: Literal["low", "medium", "high"]
+    brightness_level: Literal["dark", "balanced", "bright"]
+    attack_activity: Literal["sparse", "moderate", "busy"]
+    recommendations: list[str] = Field(default_factory=list)
 
 
 class PracticeAudioAnalysisResponse(BaseModel):
@@ -19,6 +32,7 @@ class PracticeAudioAnalysisResponse(BaseModel):
     analysis_warnings: list[str] = Field(default_factory=list)
     valid: bool
     errors: list[str] = Field(default_factory=list)
+    practice_metrics: PracticeMetrics | None = None
 
 
 @router.post("/practice/analyze-audio", response_model=PracticeAudioAnalysisResponse)
