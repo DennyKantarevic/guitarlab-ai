@@ -7,53 +7,53 @@ Monorepo for a Next.js TypeScript frontend and FastAPI Python backend.
 - `apps/frontend` - Next.js TypeScript frontend
 - `apps/backend` - FastAPI backend
 
-## How to Run
+## Running Locally in VS Code
 
-### Backend
+### 1. Open the repo in VS Code
 
-From the repo root, install backend dependencies once if needed:
+- Open VS Code.
+- Choose **File > Open Folder**.
+- Select the `guitarlab-ai` repo folder.
+- Open the integrated terminal with **Terminal > New Terminal**.
+
+### 2. Set up the backend environment
+
+From the repo root:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r apps/backend/requirements.txt
 ```
 
-Start the FastAPI backend:
+After activation, the terminal prompt should show `(.venv)`.
+
+### 3. Run backend tests
+
+From the repo root:
 
 ```bash
-cd apps/backend
-source ../../.venv/bin/activate
-PYTHONPATH=. uvicorn app.main:app --reload
+PYTHONPATH=apps/backend python -m pytest apps/backend/tests -v
+```
+
+The current expected result is the backend test suite passing.
+
+### 4. Start the backend server
+
+From the repo root:
+
+```bash
+PYTHONPATH=apps/backend python -m uvicorn app.main:app --reload --app-dir apps/backend
 ```
 
 The backend runs at http://127.0.0.1:8000.
 
-### Frontend
+Opening http://127.0.0.1:8000 may show `404` because there is no homepage route. API docs are available at http://127.0.0.1:8000/docs.
 
-Install frontend dependencies once if needed:
+The GP-200 endpoint is `POST /tone-maker/gp200`.
 
-```bash
-cd apps/frontend
-npm install
-```
-
-Start the Next.js frontend:
-
-```bash
-cd apps/frontend
-NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev
-```
-
-The frontend runs at http://127.0.0.1:3000.
-
-GP-200 page:
-
-```text
-http://127.0.0.1:3000/tone-maker/gp200
-```
-
-### Manual API Test
+### 5. Test the GP-200 API manually
 
 With the backend running:
 
@@ -79,17 +79,51 @@ The response should include:
 - `valid`
 - `errors`
 
-### Tests
+### 6. Set up and run the frontend
+
+```bash
+cd apps/frontend
+npm install
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev
+```
+
+The frontend runs at http://127.0.0.1:3000.
+
+The GP-200 page is http://127.0.0.1:3000/tone-maker/gp200.
+
+The frontend currently provides a basic testable interface, not the final designed UI.
+
+### 7. Run frontend checks
 
 From the repo root:
 
 ```bash
-PYTHONPATH=apps/backend .venv/bin/pytest apps/backend/tests -v
-
 npm run test --prefix apps/frontend
 npm run lint --prefix apps/frontend
 npm run build --prefix apps/frontend
 ```
+
+## Current MVP Status
+
+The current completed MVP is the Valeton GP-200 Tone Maker backend and basic frontend route. The backend accepts a tone goal, pickup type, and connection mode. It generates a deterministic GP-200 patch using verified GP-200 effects where available.
+
+The backend includes tone intent matching, connection-mode rules, patch validation, warnings, and dial-in instructions. It does not use LLM calls or agents yet, does not generate `.prst` files yet, and does not include the final UI design yet.
+
+## Future Product Direction
+
+The long-term goal is for the website UI to feel interactive. A user should be able to type a prompt such as "make me a tight metal rhythm tone for my Valeton GP-200," receive a generated patch, then continue tweaking it conversationally or through controls.
+
+Example future interactions:
+
+- "make it less fizzy"
+- "add more chorus"
+- "turn this into a cleaner indie tone"
+- "adjust it for headphones"
+- "adjust it for going into the front of my amp"
+- "make the patch more like grunge"
+- "reduce gain and add room reverb"
+
+Future interactive responses should still be grounded in the structured GP-200 backend. The system should not become a generic GPT wrapper. The UI should call backend patch-generation and validation logic. LLM or agent features, if added later, should explain and modify structured patch data rather than invent unsupported GP-200 effects.
 
 GP-200 API examples and demo requests:
 
