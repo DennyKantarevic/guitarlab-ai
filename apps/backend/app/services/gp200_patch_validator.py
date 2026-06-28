@@ -11,6 +11,22 @@ UNVERIFIED_EFFECT_WARNING = (
     "This patch uses seed-profile effect names that have not yet been manually "
     "verified against the official Valeton GP-200 effect list."
 )
+ALLOWED_EFFECT_SOURCES = {
+    "seed_profile",
+    "manual",
+    "editor_export",
+    "user_verified",
+    "unknown",
+}
+REQUIRED_EFFECT_METADATA_FIELDS = [
+    "id",
+    "display_name",
+    "category",
+    "verified",
+    "source",
+    "source_note",
+    "parameters",
+]
 
 
 @dataclass(frozen=True)
@@ -35,6 +51,9 @@ def validate_gp200_patch(patch: dict[str, Any]) -> ValidationResult:
     rules = load_connection_rules()
     errors: list[str] = []
     warnings = list(patch.get("warnings", []))
+    profile_result = validate_gp200_profile(profile)
+    errors.extend(profile_result.errors)
+    warnings.extend(profile_result.warnings)
 
     required_fields = [
         "device",
@@ -82,6 +101,59 @@ def validate_gp200_patch(patch: dict[str, Any]) -> ValidationResult:
     return ValidationResult(valid=len(errors) == 0, warnings=warnings, errors=errors)
 
 
+def validate_gp200_profile(profile: dict[str, Any]) -> ValidationResult:
+    errors: list[str] = []
+    warnings: list[str] = []
+    modules = profile.get("modules")
+
+    if not isinstance(modules, dict):
+        return ValidationResult(
+            valid=False,
+            warnings=warnings,
+            errors=["Missing required profile field: modules"],
+        )
+
+    for module_name, module in modules.items():
+        effects = module.get("effects") if isinstance(module, dict) else None
+        if not isinstance(effects, dict):
+            errors.append(f"Missing effects for profile module: {module_name}")
+            continue
+
+        for effect_id, effect in effects.items():
+            validate_effect_profile(module_name, effect_id, effect, errors)
+
+    return ValidationResult(valid=len(errors) == 0, warnings=warnings, errors=errors)
+
+
+def validate_effect_profile(
+    module_name: str,
+    effect_id: str,
+    effect: dict[str, Any],
+    errors: list[str],
+) -> None:
+    effect_path = f"{module_name}.{effect_id}"
+
+    for field in REQUIRED_EFFECT_METADATA_FIELDS:
+        if field not in effect:
+            errors.append(f"Missing {field} for effect: {effect_path}")
+
+    if effect.get("id") != effect_id:
+        errors.append(f"Effect id does not match profile key for: {effect_path}")
+
+    if effect.get("source") not in ALLOWED_EFFECT_SOURCES:
+        errors.append(f"Unknown source for effect: {effect_path}")
+
+    official_effect_name = effect.get("official_effect_name")
+    if effect.get("verified") is True and not is_non_empty_string(official_effect_name):
+        errors.append(
+            f"official_effect_name is required for verified effect: {effect_path}"
+        )
+    if effect.get("verified") is False and official_effect_name is not None:
+        errors.append(
+            f"official_effect_name must be null or omitted for unverified effect: {effect_path}"
+        )
+
+
 def validate_module(
     module_name: str,
     module_patch: dict[str, Any],
@@ -120,6 +192,10 @@ def validate_module(
                 f"Parameter out of range for {module_name}.{effect}.{parameter_name}: "
                 f"{value} not in {min_value}..{max_value}"
             )
+
+
+def is_non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
 
 
 def get_gp200_effect_coverage(profile: dict[str, Any]) -> dict[str, Any]:

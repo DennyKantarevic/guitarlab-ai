@@ -4,6 +4,7 @@ from app.services.gp200_patch_generator import generate_gp200_patch
 from app.services.gp200_patch_validator import (
     get_gp200_effect_coverage,
     load_gp200_profile,
+    validate_gp200_profile,
     validate_gp200_patch,
 )
 from app.tone_maker import ConnectionMode
@@ -97,8 +98,44 @@ def test_every_effect_has_seed_metadata_fields():
             assert effect["verified"] is False
             assert effect["source"] == "seed_profile"
             assert effect["source_note"] == SEED_SOURCE_NOTE
+            assert effect.get("official_effect_name") is None
             assert isinstance(effect["parameters"], dict)
             assert effect["parameters"]
+
+
+def test_existing_seed_effects_validate_without_official_effect_name():
+    result = validate_gp200_profile(load_gp200_profile())
+
+    assert result.valid is True
+    assert result.errors == []
+
+
+def test_verified_effect_requires_official_effect_name():
+    profile = deepcopy(load_gp200_profile())
+    effect = profile["modules"]["PRE"]["effects"]["compressor"]
+    effect["verified"] = True
+    effect.pop("official_effect_name", None)
+
+    result = validate_gp200_profile(profile)
+
+    assert result.valid is False
+    assert (
+        "official_effect_name is required for verified effect: PRE.compressor"
+        in result.errors
+    )
+
+
+def test_verified_effect_accepts_non_empty_official_effect_name():
+    profile = deepcopy(load_gp200_profile())
+    effect = profile["modules"]["PRE"]["effects"]["compressor"]
+    effect["verified"] = True
+    effect["official_effect_name"] = "TEST_ONLY_SOURCE_NAME_DO_NOT_USE_AS_GP200_EFFECT"
+    effect["source"] = "user_verified"
+
+    result = validate_gp200_profile(profile)
+
+    assert result.valid is True
+    assert result.errors == []
 
 
 def test_unverified_seed_effects_warn_without_invalidating_patch():

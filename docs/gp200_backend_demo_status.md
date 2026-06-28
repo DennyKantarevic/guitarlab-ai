@@ -15,6 +15,10 @@
 - Parameter values are deterministic placeholders for backend/API validation and demo use.
 - Patch output is JSON only.
 
+## Next Verification Step
+
+Exact GP-200 effect names still need manual verification. Use [gp200_verified_effect_intake_template.md](gp200_verified_effect_intake_template.md) to record source-checked names. Verified effects should not be created from AI guesses.
+
 ## Intentionally Not Implemented Yet
 
 - LLM calls or agents.

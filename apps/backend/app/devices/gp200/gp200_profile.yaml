@@ -1,6 +1,12 @@
 # Small project seed profile for Valeton GP-200.
 # This is not the complete official GP-200 effect list. Replace or expand these
 # manually as verified GP-200 effect names and parameter maps are collected.
+#
+# Effect metadata:
+# - verified: false means this is a seed/internal effect name.
+# - verified: true means the effect was manually checked against a source.
+# - source may be seed_profile, manual, editor_export, user_verified, or unknown.
+# - official_effect_name is optional and should only be filled when manually verified.
 device: Valeton
 model: GP-200
 module_order:
