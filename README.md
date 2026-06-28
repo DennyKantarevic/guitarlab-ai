@@ -7,73 +7,91 @@ Monorepo for a Next.js TypeScript frontend and FastAPI Python backend.
 - `apps/frontend` - Next.js TypeScript frontend
 - `apps/backend` - FastAPI backend
 
-## Frontend Setup
+## How to Run
+
+### Backend
+
+From the repo root, install backend dependencies once if needed:
 
 ```bash
-cd apps/frontend
-npm install
-npm run dev
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r apps/backend/requirements.txt
 ```
 
-The frontend runs at http://localhost:3000.
-
-Set `NEXT_PUBLIC_BACKEND_URL` if your FastAPI backend is not running at the default:
-
-```bash
-NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev
-```
-
-Useful commands:
-
-```bash
-npm run test
-npm run lint
-npm run build
-```
-
-## Backend Setup
+Start the FastAPI backend:
 
 ```bash
 cd apps/backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+source ../../.venv/bin/activate
+PYTHONPATH=. uvicorn app.main:app --reload
 ```
 
 The backend runs at http://127.0.0.1:8000.
 
-Useful commands:
+### Frontend
+
+Install frontend dependencies once if needed:
 
 ```bash
-PYTHONPATH=. pytest
+cd apps/frontend
+npm install
 ```
 
-Health check:
+Start the Next.js frontend:
 
 ```bash
-curl http://127.0.0.1:8000/health
+cd apps/frontend
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev
 ```
 
-GP-200 tone maker request:
+The frontend runs at http://127.0.0.1:3000.
+
+GP-200 page:
+
+```text
+http://127.0.0.1:3000/tone-maker/gp200
+```
+
+### Manual API Test
+
+With the backend running:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/tone-maker/gp200 \
   -H "Content-Type: application/json" \
   -d '{
-    "tone_goal": "tight modern rhythm",
+    "tone_goal": "metal tight chug heavy rhythm",
     "pickup_type": "humbucker bridge",
-    "connection_mode": "fx_return"
+    "connection_mode": "direct_usb"
   }'
+```
+
+The response should include:
+
+- `device`: `Valeton`
+- `model`: `GP-200`
+- `style`
+- `tone_intent`
+- `modules`
+- `dial_in_instructions`
+- `warnings`
+- `valid`
+- `errors`
+
+### Tests
+
+From the repo root:
+
+```bash
+PYTHONPATH=apps/backend .venv/bin/pytest apps/backend/tests -v
+
+npm run test --prefix apps/frontend
+npm run lint --prefix apps/frontend
+npm run build --prefix apps/frontend
 ```
 
 GP-200 API examples and demo requests:
 
 - [docs/gp200_api_examples.md](docs/gp200_api_examples.md)
 - [docs/gp200_backend_demo_status.md](docs/gp200_backend_demo_status.md)
-
-Run the backend test suite from the repo root:
-
-```bash
-PYTHONPATH=apps/backend .venv/bin/pytest apps/backend/tests -v
-```
