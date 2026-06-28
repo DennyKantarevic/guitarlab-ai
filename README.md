@@ -57,7 +57,7 @@ The backend runs at http://127.0.0.1:8000.
 
 Opening http://127.0.0.1:8000 may show `404` because there is no homepage route. API docs are available at http://127.0.0.1:8000/docs.
 
-The GP-200 endpoint is `POST /tone-maker/gp200`.
+The GP-200 endpoint is `POST /tone-maker/gp200`. The Practice Coach audio-analysis endpoint is `POST /practice/analyze-audio`.
 
 ### 5. Test the GP-200 API manually
 
@@ -113,7 +113,7 @@ npm run build --prefix apps/frontend
 
 The current completed MVP is the Valeton GP-200 Tone Maker backend and basic frontend route. The backend accepts a tone goal, pickup type, and connection mode. It generates a deterministic GP-200 patch using verified GP-200 effects where available.
 
-The backend includes tone intent matching, connection-mode rules, patch validation, warnings, errors, and dial-in instructions. It does not use LLM calls or agents yet, does not generate `.prst` files yet, and does not include the final UI design yet. Practice Coach, riff-to-tab, and audio upload are not implemented yet.
+The backend includes tone intent matching, connection-mode rules, patch validation, warnings, errors, and dial-in instructions. It also includes the first Practice Coach audio-analysis endpoint for uploaded `.wav` files. It does not use LLM calls or agents yet, does not generate `.prst` files yet, and does not include the final UI design yet. Full Practice Coach feedback, riff-to-tab, and broad audio upload support are not implemented yet.
 
 ## Future Product Direction
 
@@ -141,3 +141,4 @@ GP-200 API examples and demo requests:
 
 - [docs/gp200_api_examples.md](docs/gp200_api_examples.md)
 - [docs/gp200_backend_demo_status.md](docs/gp200_backend_demo_status.md)
+- [docs/practice_coach_audio_analysis.md](docs/practice_coach_audio_analysis.md)

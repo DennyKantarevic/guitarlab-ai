@@ -1,4 +1,7 @@
 fastapi
+librosa
+numpy
+python-multipart
 PyYAML
 uvicorn[standard]
 pytest
