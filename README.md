@@ -29,6 +29,12 @@ pip install -r apps/backend/requirements.txt
 
 After activation, the terminal prompt should show `(.venv)`.
 
+If `.venv` setup was interrupted or looks broken, delete it and recreate it:
+
+```bash
+rm -rf .venv
+```
+
 ### 3. Run backend tests
 
 From the repo root:
@@ -107,11 +113,17 @@ npm run build --prefix apps/frontend
 
 The current completed MVP is the Valeton GP-200 Tone Maker backend and basic frontend route. The backend accepts a tone goal, pickup type, and connection mode. It generates a deterministic GP-200 patch using verified GP-200 effects where available.
 
-The backend includes tone intent matching, connection-mode rules, patch validation, warnings, and dial-in instructions. It does not use LLM calls or agents yet, does not generate `.prst` files yet, and does not include the final UI design yet.
+The backend includes tone intent matching, connection-mode rules, patch validation, warnings, errors, and dial-in instructions. It does not use LLM calls or agents yet, does not generate `.prst` files yet, and does not include the final UI design yet. Practice Coach, riff-to-tab, and audio upload are not implemented yet.
 
 ## Future Product Direction
 
-The long-term goal is for the website UI to feel interactive. A user should be able to type a prompt such as "make me a tight metal rhythm tone for my Valeton GP-200," receive a generated patch, then continue tweaking it conversationally or through controls.
+The long-term goal is for the website UI to be interactive. A user should be able to type a prompt like "make me a tight metal rhythm tone for my Valeton GP-200."
+
+Then the app should:
+
+- generate a GP-200 patch
+- show the selected effects, modules, warnings, and dial-in instructions
+- allow the user to tweak the patch conversationally or through controls
 
 Example future interactions:
 
