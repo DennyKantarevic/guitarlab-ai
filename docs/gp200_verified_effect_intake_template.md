@@ -2,6 +2,8 @@
 
 Use this template when manually adding verified Valeton GP-200 effect names to the backend profile.
 
+Seed-profile effects are internal placeholders only. Do not treat them as official GP-200 names until a source has been manually checked.
+
 ## Rules
 
 - Only mark `verified: true` after checking the GP-200 manual, GP-200 editor, or a real GP-200 export.

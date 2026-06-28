@@ -40,11 +40,11 @@ def test_headphones_keeps_amp_and_cab_enabled():
     ]
 
 
-def test_direct_usb_keeps_amp_and_cab_enabled():
+def test_metal_direct_usb_smoke_response_includes_dial_in_instructions():
     response = post_gp200(
         {
-            "tone_goal": "clean indie chorus",
-            "pickup_type": "single coil neck",
+            "tone_goal": "metal tight chug heavy rhythm",
+            "pickup_type": "humbucker bridge",
             "connection_mode": "direct_usb",
         }
     )
@@ -56,6 +56,7 @@ def test_direct_usb_keeps_amp_and_cab_enabled():
     assert patch["modules"]["AMP"]["enabled"] is True
     assert patch["modules"]["CAB"]["enabled"] is True
     assert patch["valid"] is True
+    assert patch["dial_in_instructions"]
 
 
 def test_guitar_amp_input_disables_amp_and_cab():

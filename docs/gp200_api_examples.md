@@ -4,6 +4,13 @@ The GP-200 tone maker endpoint returns deterministic, rule-based Valeton GP-200 
 
 Generated patches prefer manually verified Valeton GP-200 effect names where they are available. The profile still contains seed-profile placeholders for effects that have not been manually verified yet.
 
+## Behavior Notes
+
+- Effects marked `verified: true` in the backend profile have been manually checked against a source.
+- Seed-profile effects are internal placeholders and are not official verified GP-200 effect names.
+- Connection mode rules control AMP/CAB enabled state.
+- Dial-in instructions are generated deterministically from the validated patch JSON and connection mode.
+
 ## Endpoint
 
 `POST /tone-maker/gp200`
@@ -40,6 +47,14 @@ http://127.0.0.1:8000/tone-maker/gp200
 - `dial_in_instructions`: Deterministic GP-200 setup steps generated from the validated patch JSON.
 - `valid`: Whether the generated patch passed backend validation.
 - `errors`: Validation errors. Demo requests should return an empty list.
+
+## Connection Mode Rules
+
+- `headphones`: AMP on, CAB on.
+- `direct_usb`: AMP on, CAB on.
+- `guitar_amp_input`: AMP off, CAB off.
+- `fx_return`: AMP on, CAB off.
+- `four_cable_method`: AMP off, CAB off, with routing warnings.
 
 ## Demo Requests
 
