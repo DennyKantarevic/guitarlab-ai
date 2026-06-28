@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+.venv/
+__pycache__/
+.pytest_cache/
+
+# build output
+.next/
+out/
+dist/
+build/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# system
+.DS_Store
