@@ -1,0 +1,248 @@
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+GP200_DATA_DIR = Path(__file__).resolve().parents[1] / "devices" / "gp200"
+UNVERIFIED_EFFECT_WARNING = (
+    "This patch uses seed-profile effect names that have not yet been manually "
+    "verified against the official Valeton GP-200 effect list."
+)
+ALLOWED_EFFECT_SOURCES = {
+    "seed_profile",
+    "manual",
+    "editor_export",
+    "user_verified",
+    "unknown",
+}
+REQUIRED_EFFECT_METADATA_FIELDS = [
+    "id",
+    "display_name",
+    "category",
+    "verified",
+    "source",
+    "source_note",
+    "parameters",
+]
+
+
+@dataclass(frozen=True)
+class ValidationResult:
+    valid: bool
+    warnings: list[str]
+    errors: list[str]
+
+
+@lru_cache
+def load_gp200_profile() -> dict[str, Any]:
+    return load_yaml("gp200_profile.yaml")
+
+
+@lru_cache
+def load_connection_rules() -> dict[str, Any]:
+    return load_yaml("connection_rules.yaml")["connection_modes"]
+
+
+def validate_gp200_patch(patch: dict[str, Any]) -> ValidationResult:
+    profile = load_gp200_profile()
+    rules = load_connection_rules()
+    errors: list[str] = []
+    warnings = list(patch.get("warnings", []))
+    profile_result = validate_gp200_profile(profile)
+    errors.extend(profile_result.errors)
+    warnings.extend(profile_result.warnings)
+
+    required_fields = [
+        "device",
+        "model",
+        "tone_goal",
+        "pickup_type",
+        "connection_mode",
+        "signal_chain",
+        "modules",
+        "warnings",
+        "summary",
+    ]
+    for field in required_fields:
+        if field not in patch:
+            errors.append(f"Missing required field: {field}")
+
+    modules = patch.get("modules")
+    if not isinstance(modules, dict):
+        errors.append("Missing required field: modules")
+        return ValidationResult(valid=False, warnings=warnings, errors=errors)
+
+    profile_modules = profile["modules"]
+    for module_name in patch.get("signal_chain", []):
+        if module_name not in profile_modules:
+            errors.append(f"Unknown module in signal chain: {module_name}")
+
+    for module_name, module_patch in modules.items():
+        if module_name not in profile_modules:
+            errors.append(f"Unknown module: {module_name}")
+            continue
+        validate_module(
+            module_name,
+            module_patch,
+            profile_modules[module_name],
+            warnings,
+            errors,
+        )
+
+    connection_mode = str(patch.get("connection_mode", ""))
+    if connection_mode not in rules:
+        errors.append(f"Unknown connection mode: {connection_mode}")
+    else:
+        validate_connection_mode_states(connection_mode, modules, rules, errors)
+
+    return ValidationResult(valid=len(errors) == 0, warnings=warnings, errors=errors)
+
+
+def validate_gp200_profile(profile: dict[str, Any]) -> ValidationResult:
+    errors: list[str] = []
+    warnings: list[str] = []
+    modules = profile.get("modules")
+
+    if not isinstance(modules, dict):
+        return ValidationResult(
+            valid=False,
+            warnings=warnings,
+            errors=["Missing required profile field: modules"],
+        )
+
+    for module_name, module in modules.items():
+        effects = module.get("effects") if isinstance(module, dict) else None
+        if not isinstance(effects, dict):
+            errors.append(f"Missing effects for profile module: {module_name}")
+            continue
+
+        for effect_id, effect in effects.items():
+            validate_effect_profile(module_name, effect_id, effect, errors)
+
+    return ValidationResult(valid=len(errors) == 0, warnings=warnings, errors=errors)
+
+
+def validate_effect_profile(
+    module_name: str,
+    effect_id: str,
+    effect: dict[str, Any],
+    errors: list[str],
+) -> None:
+    effect_path = f"{module_name}.{effect_id}"
+
+    for field in REQUIRED_EFFECT_METADATA_FIELDS:
+        if field not in effect:
+            errors.append(f"Missing {field} for effect: {effect_path}")
+
+    if effect.get("id") != effect_id:
+        errors.append(f"Effect id does not match profile key for: {effect_path}")
+
+    if effect.get("source") not in ALLOWED_EFFECT_SOURCES:
+        errors.append(f"Unknown source for effect: {effect_path}")
+
+    official_effect_name = effect.get("official_effect_name")
+    if effect.get("verified") is True and not is_non_empty_string(official_effect_name):
+        errors.append(
+            f"official_effect_name is required for verified effect: {effect_path}"
+        )
+    if effect.get("verified") is False and official_effect_name is not None:
+        errors.append(
+            f"official_effect_name must be null or omitted for unverified effect: {effect_path}"
+        )
+
+
+def validate_module(
+    module_name: str,
+    module_patch: dict[str, Any],
+    module_profile: dict[str, Any],
+    warnings: list[str],
+    errors: list[str],
+) -> None:
+    for field in ["enabled", "effect", "parameters"]:
+        if field not in module_patch:
+            errors.append(f"Missing {field} for module: {module_name}")
+
+    effect = module_patch.get("effect")
+    effects = module_profile["effects"]
+    if effect not in effects:
+        errors.append(f"Unknown effect for {module_name}: {effect}")
+        return
+
+    effect_profile = effects[effect]
+    if effect_profile.get("verified") is False and UNVERIFIED_EFFECT_WARNING not in warnings:
+        warnings.append(UNVERIFIED_EFFECT_WARNING)
+
+    parameters = module_patch.get("parameters")
+    if not isinstance(parameters, dict):
+        return
+
+    parameter_rules = effect_profile["parameters"]
+    for parameter_name, value in parameters.items():
+        if parameter_name not in parameter_rules:
+            errors.append(f"Unknown parameter for {module_name}.{effect}: {parameter_name}")
+            continue
+
+        min_value = parameter_rules[parameter_name]["min"]
+        max_value = parameter_rules[parameter_name]["max"]
+        if not isinstance(value, (int, float)) or not min_value <= value <= max_value:
+            errors.append(
+                f"Parameter out of range for {module_name}.{effect}.{parameter_name}: "
+                f"{value} not in {min_value}..{max_value}"
+            )
+
+
+def is_non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def get_gp200_effect_coverage(profile: dict[str, Any]) -> dict[str, Any]:
+    total_effects = 0
+    verified_effects = 0
+    sources: dict[str, int] = {}
+
+    for module in profile["modules"].values():
+        for effect in module["effects"].values():
+            total_effects += 1
+            if effect.get("verified") is True:
+                verified_effects += 1
+            source = str(effect.get("source", "unknown"))
+            sources[source] = sources.get(source, 0) + 1
+
+    return {
+        "total_effects": total_effects,
+        "verified_effects": verified_effects,
+        "unverified_effects": total_effects - verified_effects,
+        "sources": sources,
+    }
+
+
+def validate_connection_mode_states(
+    connection_mode: str,
+    modules: dict[str, dict[str, Any]],
+    rules: dict[str, Any],
+    errors: list[str],
+) -> None:
+    connection_rule = rules[connection_mode]
+    expected_states = {
+        "AMP": connection_rule["amp_enabled"],
+        "CAB": connection_rule["cab_enabled"],
+    }
+
+    for module_name, expected_enabled in expected_states.items():
+        module_patch = modules.get(module_name)
+        if module_patch is None:
+            errors.append(f"Missing required module for connection rule: {module_name}")
+            continue
+        if module_patch.get("enabled") is not expected_enabled:
+            errors.append(
+                f"{module_name} enabled state does not match connection rule "
+                f"for {connection_mode}: expected {expected_enabled}"
+            )
+
+
+def load_yaml(filename: str) -> dict[str, Any]:
+    with (GP200_DATA_DIR / filename).open() as file:
+        return yaml.safe_load(file)

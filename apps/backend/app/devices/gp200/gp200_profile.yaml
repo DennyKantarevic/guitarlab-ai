@@ -1,0 +1,931 @@
+# Small project seed profile for Valeton GP-200.
+# This is not the complete official GP-200 effect list. Replace or expand these
+# manually as verified GP-200 effect names and parameter maps are collected.
+#
+# Effect metadata:
+# - verified: false means this is a seed/internal effect name.
+# - verified: true means the effect was manually checked against a source.
+# - source may be seed_profile, manual, editor_export, user_verified, or unknown.
+# - official_effect_name is optional and should only be filled when manually verified.
+device: Valeton
+model: GP-200
+module_order:
+  - PRE
+  - WAH
+  - DST
+  - AMP
+  - NR
+  - CAB
+  - EQ
+  - MOD
+  - DLY
+  - RVB
+  - VOL
+modules:
+  PRE:
+    label: Pre effect
+    effects:
+      compressor:
+        id: compressor
+        display_name: Compressor
+        category: pre
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          sustain: { min: 0, max: 100, default: 42 }
+          attack: { min: 0, max: 100, default: 48 }
+          level: { min: 0, max: 100, default: 55 }
+      pre_comp:
+        id: pre_comp
+        display_name: COMP
+        official_effect_name: COMP
+        category: compressor
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 26"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          sustain: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      pre_comp4:
+        id: pre_comp4
+        display_name: COMP4
+        official_effect_name: COMP4
+        category: compressor
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 26"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          sustain: { min: 0, max: 100, default: 50 }
+          attack: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          clipping: { min: 0, max: 100, default: 50 }
+      pre_s_comp:
+        id: pre_s_comp
+        display_name: S-Comp
+        official_effect_name: S-Comp
+        category: compressor
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 26"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          threshold: { min: 0, max: 100, default: 50 }
+          ratio: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          attack: { min: 0, max: 100, default: 50 }
+          release: { min: 0, max: 100, default: 50 }
+          blend: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+      pre_micro_boost:
+        id: pre_micro_boost
+        display_name: Micro Boost
+        official_effect_name: Micro Boost
+        category: boost
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 26"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+      pre_ac_boost:
+        id: pre_ac_boost
+        display_name: AC Boost
+        official_effect_name: AC Boost
+        category: boost
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 26"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          bass: { min: 0, max: 100, default: 50 }
+          treble: { min: 0, max: 100, default: 50 }
+      pre_od_9:
+        id: pre_od_9
+        display_name: OD 9
+        official_effect_name: OD 9
+        category: overdrive
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 28"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      pre_yellow_od:
+        id: pre_yellow_od
+        display_name: Yellow OD
+        official_effect_name: Yellow OD
+        category: overdrive
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 28"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      pre_penesas:
+        id: pre_penesas
+        display_name: Penesas
+        official_effect_name: Penesas
+        category: overdrive
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 28"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Preserve spelling exactly as shown in the manual."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      pre_t_wah:
+        id: pre_t_wah
+        display_name: T-Wah
+        official_effect_name: T-Wah
+        category: filter
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 29"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual PRE effect table."
+        parameters:
+          sens: { min: 0, max: 100, default: 50 }
+          range: { min: 0, max: 100, default: 50 }
+          q: { min: 0, max: 100, default: 50 }
+          mix: { min: 0, max: 100, default: 50 }
+          mode: { min: 0, max: 100, default: 50 }
+      pre_a_wah:
+        id: pre_a_wah
+        display_name: A-WAH
+        official_effect_name: A-WAH
+        category: filter
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, PRE, page 29"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Preserve capitalization exactly as shown in the manual."
+        parameters:
+          depth: { min: 0, max: 100, default: 50 }
+          rate: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          low: { min: 0, max: 100, default: 50 }
+          high: { min: 0, max: 100, default: 50 }
+          q: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+  WAH:
+    label: Wah
+    effects:
+      auto_wah:
+        id: auto_wah
+        display_name: Auto Wah
+        category: wah
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          sensitivity: { min: 0, max: 100, default: 52 }
+          depth: { min: 0, max: 100, default: 48 }
+      wah_v_wah:
+        id: wah_v_wah
+        display_name: V-Wah
+        official_effect_name: V-Wah
+        category: wah
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, WAH, page 32"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual WAH effect table."
+        parameters:
+          range: { min: 0, max: 100, default: 50 }
+          q: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      wah_c_wah:
+        id: wah_c_wah
+        display_name: C-Wah
+        official_effect_name: C-Wah
+        category: wah
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, WAH, page 32"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual WAH effect table."
+        parameters:
+          range: { min: 0, max: 100, default: 50 }
+          q: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      wah_p_wah:
+        id: wah_p_wah
+        display_name: P-Wah
+        official_effect_name: P-Wah
+        category: wah
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, WAH, page 32"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual WAH effect table."
+        parameters:
+          range: { min: 0, max: 100, default: 50 }
+          q: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          eq: { min: 0, max: 100, default: 50 }
+      wah_s_wah:
+        id: wah_s_wah
+        display_name: S-Wah
+        official_effect_name: S-Wah
+        category: wah
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, WAH, page 32"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual WAH effect table."
+        parameters:
+          range: { min: 0, max: 100, default: 50 }
+          q: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      wah_hammy:
+        id: wah_hammy
+        display_name: Hammy
+        official_effect_name: Hammy
+        category: pitch
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, WAH, page 32"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual WAH effect table."
+        parameters:
+          range: { min: 0, max: 100, default: 50 }
+          harmony: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          position: { min: 0, max: 100, default: 50 }
+  DST:
+    label: Drive
+    effects:
+      overdrive:
+        id: overdrive
+        display_name: Overdrive
+        category: drive
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          gain: { min: 0, max: 100, default: 18 }
+          tone: { min: 0, max: 100, default: 55 }
+          level: { min: 0, max: 100, default: 58 }
+      distortion:
+        id: distortion
+        display_name: Distortion
+        category: drive
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          gain: { min: 0, max: 100, default: 52 }
+          tone: { min: 0, max: 100, default: 54 }
+          level: { min: 0, max: 100, default: 56 }
+      fuzz:
+        id: fuzz
+        display_name: Fuzz
+        category: drive
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          gain: { min: 0, max: 100, default: 62 }
+          tone: { min: 0, max: 100, default: 45 }
+          level: { min: 0, max: 100, default: 56 }
+      dst_green_od:
+        id: dst_green_od
+        display_name: Green OD
+        official_effect_name: Green OD
+        category: overdrive
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 33"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      dst_od_9:
+        id: dst_od_9
+        display_name: OD 9
+        official_effect_name: OD 9
+        category: overdrive
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 33"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      dst_tube:
+        id: dst_tube
+        display_name: Tube
+        official_effect_name: Tube
+        category: overdrive
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 34"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table shows Tube as an OD type effect."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          bass: { min: 0, max: 100, default: 50 }
+          treble: { min: 0, max: 100, default: 50 }
+      dst_precise_od:
+        id: dst_precise_od
+        display_name: Precise OD
+        official_effect_name: Precise OD
+        category: overdrive
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 35"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          attack: { min: 0, max: 100, default: 50 }
+          gate: { min: 0, max: 100, default: 50 }
+      dst_lazaro:
+        id: dst_lazaro
+        display_name: Lazaro
+        official_effect_name: Lazaro
+        category: fuzz
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 36"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          sustain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      dst_red_haze:
+        id: dst_red_haze
+        display_name: Red Haze
+        official_effect_name: Red Haze
+        category: fuzz
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 36"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          fuzz: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      dst_plustortion:
+        id: dst_plustortion
+        display_name: Plustortion
+        official_effect_name: Plustortion
+        category: distortion
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 36"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      dst_chief:
+        id: dst_chief
+        display_name: Chief
+        official_effect_name: Chief
+        category: distortion
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 37"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          bass: { min: 0, max: 100, default: 50 }
+          middle: { min: 0, max: 100, default: 50 }
+          treble: { min: 0, max: 100, default: 50 }
+      dst_revolt:
+        id: dst_revolt
+        display_name: Revolt
+        official_effect_name: Revolt
+        category: distortion
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DST, page 37"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DST effect table."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          mode: { min: 0, max: 100, default: 50 }
+  AMP:
+    label: Amp
+    effects:
+      clean_amp:
+        id: clean_amp
+        display_name: Clean Amp
+        category: amp
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          gain: { min: 0, max: 100, default: 24 }
+          bass: { min: 0, max: 100, default: 50 }
+          mid: { min: 0, max: 100, default: 48 }
+          treble: { min: 0, max: 100, default: 60 }
+          master: { min: 0, max: 100, default: 64 }
+      driven_amp:
+        id: driven_amp
+        display_name: Driven Amp
+        category: amp
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          gain: { min: 0, max: 100, default: 48 }
+          bass: { min: 0, max: 100, default: 52 }
+          mid: { min: 0, max: 100, default: 58 }
+          treble: { min: 0, max: 100, default: 54 }
+          master: { min: 0, max: 100, default: 60 }
+      high_gain_amp:
+        id: high_gain_amp
+        display_name: High Gain Amp
+        category: amp
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          gain: { min: 0, max: 100, default: 72 }
+          bass: { min: 0, max: 100, default: 52 }
+          mid: { min: 0, max: 100, default: 38 }
+          treble: { min: 0, max: 100, default: 62 }
+          master: { min: 0, max: 100, default: 62 }
+      amp_tweedy:
+        id: amp_tweedy
+        display_name: Tweedy
+        official_effect_name: Tweedy
+        category: clean_amp
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, AMP, page 40"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Tweedy as a Clean type amp."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      amp_bellman_59n:
+        id: amp_bellman_59n
+        display_name: Bellman 59N
+        official_effect_name: Bellman 59N
+        category: clean_amp
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, AMP, page 40"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Bellman 59N as a Clean type amp."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          presence: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          bass: { min: 0, max: 100, default: 50 }
+          middle: { min: 0, max: 100, default: 50 }
+          treble: { min: 0, max: 100, default: 50 }
+      amp_dark_twin:
+        id: amp_dark_twin
+        display_name: Dark Twin
+        official_effect_name: Dark Twin
+        category: clean_amp
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, AMP, page 40"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Dark Twin as a Clean type amp."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          bass: { min: 0, max: 100, default: 50 }
+          middle: { min: 0, max: 100, default: 50 }
+          treble: { min: 0, max: 100, default: 50 }
+          bright: { min: 0, max: 100, default: 50 }
+      amp_uk_800:
+        id: amp_uk_800
+        display_name: UK 800
+        official_effect_name: UK 800
+        category: drive_amp
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, AMP, page 47"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists UK 800 as a Drive type amp."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          presence: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          bass: { min: 0, max: 100, default: 50 }
+          middle: { min: 0, max: 100, default: 50 }
+          treble: { min: 0, max: 100, default: 50 }
+      amp_mess_dualm:
+        id: amp_mess_dualm
+        display_name: Mess DualM
+        official_effect_name: Mess DualM
+        category: high_gain_amp
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, AMP, page 50"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Mess DualM as a Hi Gain type amp."
+        parameters:
+          gain: { min: 0, max: 100, default: 50 }
+          presence: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          bass: { min: 0, max: 100, default: 50 }
+          middle: { min: 0, max: 100, default: 50 }
+          treble: { min: 0, max: 100, default: 50 }
+  NR:
+    label: Noise reduction
+    effects:
+      noise_gate:
+        id: noise_gate
+        display_name: Noise Gate
+        category: noise_reduction
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          threshold: { min: 0, max: 100, default: 38 }
+          release: { min: 0, max: 100, default: 45 }
+      nr_gate_1:
+        id: nr_gate_1
+        display_name: Gate 1
+        official_effect_name: Gate 1
+        category: noise_gate
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, NR, page 53"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual NR effect table."
+        parameters:
+          threshold: { min: 0, max: 100, default: 50 }
+      nr_gate_2:
+        id: nr_gate_2
+        display_name: Gate 2
+        official_effect_name: Gate 2
+        category: noise_gate
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, NR, page 53"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual NR effect table."
+        parameters:
+          threshold: { min: 0, max: 100, default: 50 }
+          attack: { min: 0, max: 100, default: 50 }
+          release: { min: 0, max: 100, default: 50 }
+      nr_gate_3:
+        id: nr_gate_3
+        display_name: Gate 3
+        official_effect_name: Gate 3
+        category: noise_gate
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, NR, page 54"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual NR effect table."
+        parameters:
+          threshold: { min: 0, max: 100, default: 50 }
+          ratio: { min: 0, max: 100, default: 50 }
+          attack: { min: 0, max: 100, default: 50 }
+          release: { min: 0, max: 100, default: 50 }
+          hold: { min: 0, max: 100, default: 50 }
+          hysteresis: { min: 0, max: 100, default: 50 }
+  CAB:
+    label: Cab
+    effects:
+      matched_cab:
+        id: matched_cab
+        display_name: Matched Cab
+        category: cab
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          mic_position: { min: 0, max: 100, default: 52 }
+          low_cut_hz: { min: 20, max: 250, default: 80 }
+          high_cut_hz: { min: 3000, max: 12000, default: 7500 }
+      cab_uk_ld:
+        id: cab_uk_ld
+        display_name: UK LD
+        official_effect_name: UK LD
+        category: cab
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, CAB, page 55"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Manual describes this as a 4 x 12 cabinet."
+        parameters:
+          volume: { min: 0, max: 100, default: 50 }
+          low_cut: { min: 0, max: 100, default: 50 }
+          hi_cut: { min: 0, max: 100, default: 50 }
+  EQ:
+    label: EQ
+    effects:
+      parametric_eq:
+        id: parametric_eq
+        display_name: Parametric EQ
+        category: eq
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          low_gain: { min: 0, max: 100, default: 50 }
+          mid_freq: { min: 100, max: 5000, default: 800 }
+          mid_gain: { min: 0, max: 100, default: 50 }
+          high_gain: { min: 0, max: 100, default: 50 }
+          level: { min: 0, max: 100, default: 50 }
+      eq_guitar_eq_1:
+        id: eq_guitar_eq_1
+        display_name: Guitar EQ 1
+        official_effect_name: Guitar EQ 1
+        category: eq
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, EQ, page 57"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Bands listed in manual as 125Hz, 400Hz, 800Hz, 1.6kHz, and 4kHz."
+        parameters:
+          band_1: { min: 0, max: 100, default: 50 }
+          band_2: { min: 0, max: 100, default: 50 }
+          band_3: { min: 0, max: 100, default: 50 }
+          band_4: { min: 0, max: 100, default: 50 }
+          band_5: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+      eq_hyper_eq:
+        id: eq_hyper_eq
+        display_name: Hyper EQ
+        official_effect_name: Hyper EQ
+        category: eq
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, EQ, page 57"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Manual describes this as a 10-band graphic EQ."
+        parameters:
+          band_1: { min: 0, max: 100, default: 50 }
+          band_2: { min: 0, max: 100, default: 50 }
+          band_3: { min: 0, max: 100, default: 50 }
+          band_4: { min: 0, max: 100, default: 50 }
+          band_5: { min: 0, max: 100, default: 50 }
+          band_6: { min: 0, max: 100, default: 50 }
+          band_7: { min: 0, max: 100, default: 50 }
+          band_8: { min: 0, max: 100, default: 50 }
+          band_9: { min: 0, max: 100, default: 50 }
+          band_10: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+  MOD:
+    label: Modulation
+    effects:
+      chorus:
+        id: chorus
+        display_name: Chorus
+        category: modulation
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          rate: { min: 0, max: 100, default: 32 }
+          depth: { min: 0, max: 100, default: 38 }
+          mix: { min: 0, max: 100, default: 24 }
+      phaser:
+        id: phaser
+        display_name: Phaser
+        category: modulation
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          rate: { min: 0, max: 100, default: 42 }
+          depth: { min: 0, max: 100, default: 35 }
+          mix: { min: 0, max: 100, default: 22 }
+      mod_a_chorus:
+        id: mod_a_chorus
+        display_name: A-Chorus
+        official_effect_name: A-Chorus
+        category: chorus
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, MOD, page 58"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual MOD effect table."
+        parameters:
+          depth: { min: 0, max: 100, default: 50 }
+          rate: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+      mod_g_chorus:
+        id: mod_g_chorus
+        display_name: G-Chorus
+        official_effect_name: G-Chorus
+        category: chorus
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, MOD, page 58"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual MOD effect table."
+        parameters:
+          depth: { min: 0, max: 100, default: 50 }
+          rate: { min: 0, max: 100, default: 50 }
+          volume: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+      mod_jet:
+        id: mod_jet
+        display_name: Jet
+        official_effect_name: Jet
+        category: flanger
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, MOD, page 58"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Jet as a Flanger type effect."
+        parameters:
+          depth: { min: 0, max: 100, default: 50 }
+          rate: { min: 0, max: 100, default: 50 }
+          pre_delay: { min: 0, max: 100, default: 50 }
+          feedback: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+      mod_o_phase:
+        id: mod_o_phase
+        display_name: O-Phase
+        official_effect_name: O-Phase
+        category: phaser
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, MOD, page 59"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual MOD effect table."
+        parameters:
+          rate: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+  DLY:
+    label: Delay
+    effects:
+      analog_delay:
+        id: analog_delay
+        display_name: Analog Delay
+        category: delay
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          time_ms: { min: 1, max: 2000, default: 420 }
+          feedback: { min: 0, max: 100, default: 28 }
+          mix: { min: 0, max: 100, default: 20 }
+      digital_delay:
+        id: digital_delay
+        display_name: Digital Delay
+        category: delay
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          time_ms: { min: 1, max: 2000, default: 380 }
+          feedback: { min: 0, max: 100, default: 22 }
+          mix: { min: 0, max: 100, default: 16 }
+      dly_bbd_delay_s:
+        id: dly_bbd_delay_s
+        display_name: BBD Delay S
+        official_effect_name: BBD Delay S
+        category: delay
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DLY, page 62"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DLY effect table."
+        parameters:
+          mix: { min: 0, max: 100, default: 50 }
+          feedback: { min: 0, max: 100, default: 50 }
+          time: { min: 0, max: 100, default: 50 }
+          time_r_percent: { min: 0, max: 100, default: 50 }
+          spread: { min: 0, max: 100, default: 50 }
+          level: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+          trail: { min: 0, max: 100, default: 50 }
+      dly_digital_delay_s:
+        id: dly_digital_delay_s
+        display_name: Digital Delay S
+        official_effect_name: Digital Delay S
+        category: delay
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DLY, page 63"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DLY effect table."
+        parameters:
+          mix: { min: 0, max: 100, default: 50 }
+          feedback: { min: 0, max: 100, default: 50 }
+          time: { min: 0, max: 100, default: 50 }
+          time_r_percent: { min: 0, max: 100, default: 50 }
+          spread: { min: 0, max: 100, default: 50 }
+          level: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+          trail: { min: 0, max: 100, default: 50 }
+      dly_analog_delay:
+        id: dly_analog_delay
+        display_name: Analog Delay
+        official_effect_name: Analog Delay
+        category: delay
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DLY, page 64"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DLY effect table."
+        parameters:
+          mix: { min: 0, max: 100, default: 50 }
+          feedback: { min: 0, max: 100, default: 50 }
+          time: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+          trail: { min: 0, max: 100, default: 50 }
+      dly_broken_delay:
+        id: dly_broken_delay
+        display_name: Broken Delay
+        official_effect_name: Broken Delay
+        category: delay
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, DLY, page 67"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual DLY effect table."
+        parameters:
+          mix: { min: 0, max: 100, default: 50 }
+          time: { min: 0, max: 100, default: 50 }
+          feedback: { min: 0, max: 100, default: 50 }
+          latch: { min: 0, max: 100, default: 50 }
+          cut: { min: 0, max: 100, default: 50 }
+          sync: { min: 0, max: 100, default: 50 }
+          trail: { min: 0, max: 100, default: 50 }
+  RVB:
+    label: Reverb
+    effects:
+      room_reverb:
+        id: room_reverb
+        display_name: Room Reverb
+        category: reverb
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          decay: { min: 0, max: 100, default: 26 }
+          tone: { min: 0, max: 100, default: 50 }
+          mix: { min: 0, max: 100, default: 12 }
+      plate_reverb:
+        id: plate_reverb
+        display_name: Plate Reverb
+        category: reverb
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          decay: { min: 0, max: 100, default: 42 }
+          tone: { min: 0, max: 100, default: 56 }
+          mix: { min: 0, max: 100, default: 20 }
+      rvb_room:
+        id: rvb_room
+        display_name: Room
+        official_effect_name: Room
+        category: reverb
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, RVB, page 68"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Room as a Reverb type effect."
+        parameters:
+          mix: { min: 0, max: 100, default: 50 }
+          pre_delay: { min: 0, max: 100, default: 50 }
+          decay: { min: 0, max: 100, default: 50 }
+          trail: { min: 0, max: 100, default: 50 }
+      rvb_plate:
+        id: rvb_plate
+        display_name: Plate
+        official_effect_name: Plate
+        category: reverb
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, RVB, page 68"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Plate as a Reverb type effect."
+        parameters:
+          mix: { min: 0, max: 100, default: 50 }
+          decay: { min: 0, max: 100, default: 50 }
+          high_damp: { min: 0, max: 100, default: 50 }
+          trail: { min: 0, max: 100, default: 50 }
+      rvb_tube_spring:
+        id: rvb_tube_spring
+        display_name: Tube Spring
+        official_effect_name: Tube Spring
+        category: reverb
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, RVB, page 68"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. The manual table lists Tube Spring as a Reverb type effect."
+        parameters:
+          mix: { min: 0, max: 100, default: 50 }
+          pre_delay: { min: 0, max: 100, default: 50 }
+          decay: { min: 0, max: 100, default: 50 }
+          low_damp: { min: 0, max: 100, default: 50 }
+          hi_damp: { min: 0, max: 100, default: 50 }
+          mod: { min: 0, max: 100, default: 50 }
+          trail: { min: 0, max: 100, default: 50 }
+  VOL:
+    label: Volume
+    effects:
+      volume:
+        id: volume
+        display_name: Volume
+        category: volume
+        verified: false
+        source: seed_profile
+        source_note: "Initial internal seed effect. Not yet verified against the official Valeton GP-200 effect list."
+        parameters:
+          level: { min: 0, max: 100, default: 100 }
+      vol_volume:
+        id: vol_volume
+        display_name: Volume
+        official_effect_name: Volume
+        category: volume
+        verified: true
+        source: manual
+        source_detail: "Valeton GP-200 Online Manual EN Firmware V1.8.0, Effect List, VOL, page 70"
+        source_note: "Parameter ranges use conservative 0-100 values; parameter details are pending verification. Based on the manual VOL effect table."
+        parameters:
+          volume: { min: 0, max: 100, default: 50 }

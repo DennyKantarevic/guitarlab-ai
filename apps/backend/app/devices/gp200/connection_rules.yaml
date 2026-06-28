@@ -1,0 +1,26 @@
+connection_modes:
+  headphones:
+    amp_enabled: true
+    cab_enabled: true
+    warnings: []
+  direct_usb:
+    amp_enabled: true
+    cab_enabled: true
+    warnings: []
+  guitar_amp_input:
+    amp_enabled: false
+    cab_enabled: false
+    warnings:
+      - Disable AMP and CAB when feeding a guitar amp input.
+      - Start with conservative output level into the amp front end.
+  fx_return:
+    amp_enabled: true
+    cab_enabled: false
+    warnings:
+      - Disable CAB for FX return into a power amp or amp return.
+  four_cable_method:
+    amp_enabled: false
+    cab_enabled: false
+    warnings:
+      - "Use four cable method routing: front-of-amp effects before the amp input and time effects in the loop."
+      - Disable AMP and CAB because the physical amplifier provides both stages.

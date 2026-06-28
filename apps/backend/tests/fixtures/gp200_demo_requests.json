@@ -1,0 +1,27 @@
+{
+  "grunge_humbucker_headphones": {
+    "tone_goal": "90s grunge like Nirvana but heavier",
+    "pickup_type": "humbucker bridge",
+    "connection_mode": "headphones"
+  },
+  "metal_direct_usb": {
+    "tone_goal": "metal tight chug heavy rhythm",
+    "pickup_type": "humbucker bridge",
+    "connection_mode": "direct_usb"
+  },
+  "funk_four_cable": {
+    "tone_goal": "funk clean quack percussive",
+    "pickup_type": "single coil bridge",
+    "connection_mode": "four_cable_method"
+  },
+  "blues_fx_return": {
+    "tone_goal": "warm blues breakup overdrive",
+    "pickup_type": "single coil neck",
+    "connection_mode": "fx_return"
+  },
+  "unknown_fallback": {
+    "tone_goal": "smooth glassy experimental tone",
+    "pickup_type": "unknown",
+    "connection_mode": "headphones"
+  }
+}
