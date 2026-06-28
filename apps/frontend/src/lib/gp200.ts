@@ -50,13 +50,16 @@ const DEFAULT_BACKEND_URL = "http://127.0.0.1:8000";
 export async function createGp200Patch(
   request: Gp200ToneRequest,
   fetcher: FetchLike = fetch,
-  backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? DEFAULT_BACKEND_URL,
+  backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_URL,
 ): Promise<Gp200PatchResponse> {
-  const response = await fetcher(`${normalizeBackendUrl(backendUrl)}/tone-maker/gp200`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
+  const response = await fetcher(
+    `${normalizeBackendUrl(backendUrl || DEFAULT_BACKEND_URL)}/tone-maker/gp200`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    },
+  );
 
   if (!response.ok) {
     const detail = await response.text();

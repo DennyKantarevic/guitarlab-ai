@@ -191,6 +191,10 @@ function PatchCard({ patch }: { patch: Gp200PatchResponse }) {
           </dd>
         </div>
         <div>
+          <dt className="text-neutral-500">Style</dt>
+          <dd className="font-medium text-neutral-100">{patch.style}</dd>
+        </div>
+        <div>
           <dt className="text-neutral-500">Signal chain</dt>
           <dd className="font-medium text-neutral-100">
             {patch.signal_chain.join(" -> ")}
@@ -217,6 +221,24 @@ function PatchCard({ patch }: { patch: Gp200PatchResponse }) {
         </div>
       </div>
 
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-neutral-200">Tone intent</h3>
+        <pre className="overflow-x-auto rounded border border-neutral-800 bg-neutral-950 p-3 text-xs leading-5 text-neutral-400">
+          {JSON.stringify(patch.tone_intent, null, 2)}
+        </pre>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-neutral-200">
+          Dial-in instructions
+        </h3>
+        <ol className="list-decimal space-y-1 pl-5 text-sm text-neutral-300">
+          {patch.dial_in_instructions.map((instruction) => (
+            <li key={instruction}>{instruction}</li>
+          ))}
+        </ol>
+      </div>
+
       {patch.warnings.length > 0 ? (
         <div className="space-y-2 rounded border border-amber-300/40 bg-amber-950/30 p-3">
           <h3 className="text-sm font-semibold text-amber-100">Warnings</h3>
@@ -227,6 +249,19 @@ function PatchCard({ patch }: { patch: Gp200PatchResponse }) {
           </ul>
         </div>
       ) : null}
+
+      <div className="space-y-2 rounded border border-neutral-800 bg-neutral-950 p-3">
+        <h3 className="text-sm font-semibold text-neutral-200">Errors</h3>
+        {patch.errors.length > 0 ? (
+          <ul className="space-y-1 text-sm text-neutral-300">
+            {patch.errors.map((patchError) => (
+              <li key={patchError}>{patchError}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-neutral-400">No errors.</p>
+        )}
+      </div>
     </article>
   );
 }

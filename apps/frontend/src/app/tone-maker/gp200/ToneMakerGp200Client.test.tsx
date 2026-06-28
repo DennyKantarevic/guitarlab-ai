@@ -86,6 +86,69 @@ describe("ToneMakerGp200Client", () => {
     expect(screen.getByText("Cab disabled for FX return into a power amp or amp return.")).toBeDefined();
   });
 
+  test("submitting the form prevents query-string navigation and calls the API client", async () => {
+    const createPatch = vi.fn().mockResolvedValue(patchResponse);
+    const { container } = render(<ToneMakerGp200Client createPatch={createPatch} />);
+
+    fireEvent.change(screen.getByLabelText("Tone goal"), {
+      target: { value: "tight modern rhythm" },
+    });
+    fireEvent.change(screen.getByLabelText("Pickup type"), {
+      target: { value: "humbucker bridge" },
+    });
+
+    const form = container.querySelector("form");
+    expect(form).not.toBeNull();
+    expect(form?.getAttribute("method")).toBeNull();
+    expect(form?.getAttribute("action")).toBeNull();
+    const initialHref = window.location.href;
+    const submitWasNotCanceled = fireEvent.submit(form as HTMLFormElement);
+
+    expect(submitWasNotCanceled).toBe(false);
+    await waitFor(() => {
+      expect(createPatch).toHaveBeenCalledWith({
+        tone_goal: "tight modern rhythm",
+        pickup_type: "humbucker bridge",
+        connection_mode: "headphones",
+      } satisfies Gp200ToneRequest);
+    });
+    expect(window.location.href).toBe(initialHref);
+    expect(window.location.search).not.toContain("tone_goal=");
+  });
+
+  test("renders successful response fields including tone intent, dial-in instructions, and errors", async () => {
+    const createPatch = vi.fn().mockResolvedValue({
+      ...patchResponse,
+      valid: false,
+      errors: ["AMP and CAB state does not match connection mode."],
+    } satisfies Gp200PatchResponse);
+
+    render(<ToneMakerGp200Client createPatch={createPatch} />);
+
+    fireEvent.change(screen.getByLabelText("Tone goal"), {
+      target: { value: "tight modern rhythm" },
+    });
+    fireEvent.change(screen.getByLabelText("Pickup type"), {
+      target: { value: "humbucker bridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate patch" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("GP-200")).toBeDefined();
+    });
+
+    expect(screen.getByText("Valeton")).toBeDefined();
+    expect(screen.getByText("classic_rock")).toBeDefined();
+    expect(screen.getByText(/classic rock/)).toBeDefined();
+    expect(screen.getByText(/medium/)).toBeDefined();
+    expect(
+      screen.getByText("Create a new patch on the Valeton GP-200."),
+    ).toBeDefined();
+    expect(
+      screen.getByText("AMP and CAB state does not match connection mode."),
+    ).toBeDefined();
+  });
+
   test("shows an error message when the backend request fails", async () => {
     const createPatch = vi.fn().mockRejectedValue(new Error("Backend offline"));
 

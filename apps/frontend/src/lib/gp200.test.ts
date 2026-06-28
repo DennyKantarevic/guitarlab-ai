@@ -102,6 +102,50 @@ describe("createGp200Patch", () => {
     );
   });
 
+  test("falls back to localhost when the backend URL is empty", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        device: "Valeton",
+        model: "GP-200",
+        style: "clean_indie",
+        tone_goal: "clean delay",
+        pickup_type: "single coil",
+        connection_mode: "headphones",
+        signal_chain: [],
+        modules: {},
+        warnings: [],
+        summary: "Clean Indie GP-200 patch for single coil via headphones.",
+        tone_intent: {
+          selected_style: "clean_indie",
+          matched_keywords: ["clean"],
+          fallback_used: false,
+          pickup_adjustments: [],
+          connection_rules_applied: [],
+          confidence: "medium",
+        },
+        dial_in_instructions: ["Create a new patch on the Valeton GP-200."],
+        valid: true,
+        errors: [],
+      }),
+    });
+
+    await createGp200Patch(
+      {
+        tone_goal: "clean delay",
+        pickup_type: "single coil",
+        connection_mode: "headphones",
+      },
+      fetchMock,
+      "",
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/tone-maker/gp200",
+      expect.any(Object),
+    );
+  });
+
   test("throws a useful error when the backend rejects the request", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
