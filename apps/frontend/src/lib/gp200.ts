@@ -17,13 +17,16 @@ export type Gp200ToneRequest = {
 export type Gp200PatchResponse = {
   device: string;
   model: string;
+  style?: string;
   tone_goal: string;
   pickup_type: string;
   connection_mode: Gp200ConnectionMode;
   signal_chain: string[];
   modules: Record<string, Record<string, unknown>>;
   warnings: string[];
+  summary?: string;
   valid: boolean;
+  errors?: string[];
 };
 
 type FetchLike = (

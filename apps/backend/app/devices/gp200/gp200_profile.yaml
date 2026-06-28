@@ -1,0 +1,200 @@
+device: Mooer
+model: GE Labs GP-200
+module_order:
+  - PRE
+  - WAH
+  - DST
+  - AMP
+  - NR
+  - CAB
+  - EQ
+  - MOD
+  - DLY
+  - RVB
+  - VOL
+modules:
+  PRE:
+    label: Pre effect
+    effects:
+      clean_boost:
+        label: Clean Boost
+        parameters:
+          level: { min: 0, max: 100, default: 50 }
+          tone: { min: 0, max: 100, default: 50 }
+      studio_pre:
+        label: Studio Pre
+        parameters:
+          gain: { min: 0, max: 100, default: 35 }
+          level: { min: 0, max: 100, default: 55 }
+  WAH:
+    label: Wah
+    effects:
+      cry_wah:
+        label: Cry Wah
+        parameters:
+          position: { min: 0, max: 100, default: 50 }
+          resonance: { min: 0, max: 100, default: 45 }
+      auto_wah:
+        label: Auto Wah
+        parameters:
+          sensitivity: { min: 0, max: 100, default: 52 }
+          depth: { min: 0, max: 100, default: 48 }
+  DST:
+    label: Drive
+    effects:
+      808_od:
+        label: 808 OD
+        parameters:
+          gain: { min: 0, max: 100, default: 18 }
+          tone: { min: 0, max: 100, default: 55 }
+          level: { min: 0, max: 100, default: 58 }
+      distortion_plus:
+        label: Distortion Plus
+        parameters:
+          gain: { min: 0, max: 100, default: 52 }
+          tone: { min: 0, max: 100, default: 54 }
+          level: { min: 0, max: 100, default: 56 }
+      fuzz_face:
+        label: Fuzz Face
+        parameters:
+          fuzz: { min: 0, max: 100, default: 62 }
+          tone: { min: 0, max: 100, default: 45 }
+          level: { min: 0, max: 100, default: 56 }
+  AMP:
+    label: Amp
+    effects:
+      us_hi_gain:
+        label: US Hi Gain
+        parameters:
+          gain: { min: 0, max: 100, default: 46 }
+          bass: { min: 0, max: 100, default: 50 }
+          mid: { min: 0, max: 100, default: 45 }
+          treble: { min: 0, max: 100, default: 56 }
+          master: { min: 0, max: 100, default: 62 }
+      british_crunch:
+        label: British Crunch
+        parameters:
+          gain: { min: 0, max: 100, default: 48 }
+          bass: { min: 0, max: 100, default: 52 }
+          mid: { min: 0, max: 100, default: 58 }
+          treble: { min: 0, max: 100, default: 54 }
+          master: { min: 0, max: 100, default: 60 }
+      us_tweed:
+        label: US Tweed
+        parameters:
+          gain: { min: 0, max: 100, default: 38 }
+          bass: { min: 0, max: 100, default: 48 }
+          mid: { min: 0, max: 100, default: 54 }
+          treble: { min: 0, max: 100, default: 58 }
+          master: { min: 0, max: 100, default: 58 }
+      clean_twin:
+        label: Clean Twin
+        parameters:
+          gain: { min: 0, max: 100, default: 24 }
+          bass: { min: 0, max: 100, default: 50 }
+          mid: { min: 0, max: 100, default: 48 }
+          treble: { min: 0, max: 100, default: 60 }
+          master: { min: 0, max: 100, default: 64 }
+  NR:
+    label: Noise reduction
+    effects:
+      noise_gate:
+        label: Noise Gate
+        parameters:
+          threshold: { min: 0, max: 100, default: 38 }
+          release: { min: 0, max: 100, default: 45 }
+  CAB:
+    label: Cab
+    effects:
+      v30_412:
+        label: 4x12 Modern V30
+        parameters:
+          mic_position: { min: 0, max: 100, default: 52 }
+          low_cut_hz: { min: 20, max: 250, default: 80 }
+          high_cut_hz: { min: 3000, max: 12000, default: 7500 }
+      open_back_212:
+        label: 2x12 Open Back
+        parameters:
+          mic_position: { min: 0, max: 100, default: 48 }
+          low_cut_hz: { min: 20, max: 250, default: 70 }
+          high_cut_hz: { min: 3000, max: 12000, default: 8200 }
+  EQ:
+    label: EQ
+    effects:
+      graphic_eq:
+        label: Graphic EQ
+        parameters:
+          low: { min: 0, max: 100, default: 50 }
+          mid: { min: 0, max: 100, default: 50 }
+          high: { min: 0, max: 100, default: 50 }
+          presence: { min: 0, max: 100, default: 50 }
+  MOD:
+    label: Modulation
+    effects:
+      chorus:
+        label: Chorus
+        parameters:
+          rate: { min: 0, max: 100, default: 32 }
+          depth: { min: 0, max: 100, default: 38 }
+          mix: { min: 0, max: 100, default: 24 }
+      phaser:
+        label: Phaser
+        parameters:
+          rate: { min: 0, max: 100, default: 42 }
+          depth: { min: 0, max: 100, default: 35 }
+          mix: { min: 0, max: 100, default: 22 }
+      tremolo:
+        label: Tremolo
+        parameters:
+          rate: { min: 0, max: 100, default: 44 }
+          depth: { min: 0, max: 100, default: 48 }
+          mix: { min: 0, max: 100, default: 34 }
+  DLY:
+    label: Delay
+    effects:
+      digital_delay:
+        label: Digital Delay
+        parameters:
+          time_ms: { min: 1, max: 2000, default: 380 }
+          feedback: { min: 0, max: 100, default: 22 }
+          mix: { min: 0, max: 100, default: 16 }
+      analog_delay:
+        label: Analog Delay
+        parameters:
+          time_ms: { min: 1, max: 2000, default: 420 }
+          feedback: { min: 0, max: 100, default: 28 }
+          mix: { min: 0, max: 100, default: 20 }
+      tape_echo:
+        label: Tape Echo
+        parameters:
+          time_ms: { min: 1, max: 2000, default: 480 }
+          feedback: { min: 0, max: 100, default: 35 }
+          mix: { min: 0, max: 100, default: 24 }
+  RVB:
+    label: Reverb
+    effects:
+      room:
+        label: Room
+        parameters:
+          decay: { min: 0, max: 100, default: 26 }
+          tone: { min: 0, max: 100, default: 50 }
+          mix: { min: 0, max: 100, default: 12 }
+      hall:
+        label: Hall
+        parameters:
+          decay: { min: 0, max: 100, default: 52 }
+          tone: { min: 0, max: 100, default: 56 }
+          mix: { min: 0, max: 100, default: 24 }
+      shimmer:
+        label: Shimmer
+        parameters:
+          decay: { min: 0, max: 100, default: 68 }
+          tone: { min: 0, max: 100, default: 62 }
+          mix: { min: 0, max: 100, default: 30 }
+  VOL:
+    label: Volume
+    effects:
+      volume_pedal:
+        label: Volume Pedal
+        parameters:
+          level: { min: 0, max: 100, default: 100 }

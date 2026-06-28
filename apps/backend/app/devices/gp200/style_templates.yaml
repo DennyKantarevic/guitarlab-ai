@@ -1,0 +1,161 @@
+styles:
+  grunge:
+    keywords: [grunge, nirvana, dirty, sludge]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: medium_high
+    eq_character: low_mid_forward
+    modulation_choice: chorus
+    delay_reverb_choice: room_reverb
+    noise_reduction_recommendation: light
+    modules:
+      PRE: { enabled: true, effect: clean_boost, parameters: { level: 52, tone: 48 } }
+      WAH: { enabled: false, effect: cry_wah, parameters: { position: 50, resonance: 45 } }
+      DST: { enabled: true, effect: distortion_plus, parameters: { gain: 58, tone: 48, level: 56 } }
+      AMP: { enabled: true, effect: british_crunch, parameters: { gain: 58, bass: 56, mid: 60, treble: 48, master: 60 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 32, release: 48 } }
+      CAB: { enabled: true, effect: v30_412, parameters: { mic_position: 48, low_cut_hz: 75, high_cut_hz: 7600 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 54, mid: 58, high: 46, presence: 48 } }
+      MOD: { enabled: true, effect: chorus, parameters: { rate: 28, depth: 32, mix: 18 } }
+      DLY: { enabled: false, effect: analog_delay, parameters: { time_ms: 360, feedback: 16, mix: 10 } }
+      RVB: { enabled: true, effect: room, parameters: { decay: 30, tone: 45, mix: 14 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }
+  metal:
+    keywords: [metal, djent, chug, modern, tight, high gain]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: high
+    eq_character: tight_scooped
+    modulation_choice: none
+    delay_reverb_choice: short_room
+    noise_reduction_recommendation: strong
+    modules:
+      PRE: { enabled: true, effect: clean_boost, parameters: { level: 58, tone: 56 } }
+      WAH: { enabled: false, effect: cry_wah, parameters: { position: 50, resonance: 45 } }
+      DST: { enabled: true, effect: 808_od, parameters: { gain: 16, tone: 62, level: 68 } }
+      AMP: { enabled: true, effect: us_hi_gain, parameters: { gain: 72, bass: 52, mid: 38, treble: 62, master: 62 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 58, release: 34 } }
+      CAB: { enabled: true, effect: v30_412, parameters: { mic_position: 54, low_cut_hz: 90, high_cut_hz: 7200 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 52, mid: 40, high: 58, presence: 60 } }
+      MOD: { enabled: false, effect: chorus, parameters: { rate: 30, depth: 25, mix: 0 } }
+      DLY: { enabled: false, effect: digital_delay, parameters: { time_ms: 320, feedback: 18, mix: 10 } }
+      RVB: { enabled: true, effect: room, parameters: { decay: 20, tone: 50, mix: 10 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }
+  blues:
+    keywords: [blues, edge of breakup, texas, warm]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: low_medium
+    eq_character: warm_midrange
+    modulation_choice: tremolo
+    delay_reverb_choice: spring_like_room
+    noise_reduction_recommendation: light
+    modules:
+      PRE: { enabled: false, effect: clean_boost, parameters: { level: 50, tone: 50 } }
+      WAH: { enabled: false, effect: cry_wah, parameters: { position: 50, resonance: 45 } }
+      DST: { enabled: true, effect: 808_od, parameters: { gain: 28, tone: 48, level: 55 } }
+      AMP: { enabled: true, effect: us_tweed, parameters: { gain: 42, bass: 50, mid: 58, treble: 56, master: 58 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 24, release: 55 } }
+      CAB: { enabled: true, effect: open_back_212, parameters: { mic_position: 48, low_cut_hz: 65, high_cut_hz: 8200 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 50, mid: 60, high: 52, presence: 50 } }
+      MOD: { enabled: true, effect: tremolo, parameters: { rate: 36, depth: 28, mix: 18 } }
+      DLY: { enabled: true, effect: analog_delay, parameters: { time_ms: 420, feedback: 18, mix: 14 } }
+      RVB: { enabled: true, effect: room, parameters: { decay: 34, tone: 48, mix: 16 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }
+  shoegaze:
+    keywords: [shoegaze, ambient, wash, dream, wall of sound]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: medium
+    eq_character: wide_soft_top
+    modulation_choice: chorus
+    delay_reverb_choice: tape_echo_and_shimmer
+    noise_reduction_recommendation: medium
+    modules:
+      PRE: { enabled: true, effect: studio_pre, parameters: { gain: 32, level: 58 } }
+      WAH: { enabled: false, effect: cry_wah, parameters: { position: 50, resonance: 45 } }
+      DST: { enabled: true, effect: fuzz_face, parameters: { fuzz: 48, tone: 42, level: 54 } }
+      AMP: { enabled: true, effect: clean_twin, parameters: { gain: 30, bass: 48, mid: 48, treble: 58, master: 64 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 30, release: 60 } }
+      CAB: { enabled: true, effect: open_back_212, parameters: { mic_position: 45, low_cut_hz: 70, high_cut_hz: 8800 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 48, mid: 46, high: 56, presence: 50 } }
+      MOD: { enabled: true, effect: chorus, parameters: { rate: 24, depth: 58, mix: 38 } }
+      DLY: { enabled: true, effect: tape_echo, parameters: { time_ms: 620, feedback: 48, mix: 32 } }
+      RVB: { enabled: true, effect: shimmer, parameters: { decay: 72, tone: 62, mix: 38 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }
+  punk:
+    keywords: [punk, raw, fast, garage]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: medium_high
+    eq_character: bright_mid_push
+    modulation_choice: none
+    delay_reverb_choice: minimal_room
+    noise_reduction_recommendation: medium
+    modules:
+      PRE: { enabled: false, effect: clean_boost, parameters: { level: 50, tone: 50 } }
+      WAH: { enabled: false, effect: cry_wah, parameters: { position: 50, resonance: 45 } }
+      DST: { enabled: true, effect: distortion_plus, parameters: { gain: 62, tone: 58, level: 58 } }
+      AMP: { enabled: true, effect: british_crunch, parameters: { gain: 60, bass: 48, mid: 62, treble: 60, master: 62 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 42, release: 38 } }
+      CAB: { enabled: true, effect: v30_412, parameters: { mic_position: 50, low_cut_hz: 85, high_cut_hz: 7800 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 48, mid: 60, high: 58, presence: 58 } }
+      MOD: { enabled: false, effect: phaser, parameters: { rate: 30, depth: 20, mix: 0 } }
+      DLY: { enabled: false, effect: digital_delay, parameters: { time_ms: 280, feedback: 12, mix: 8 } }
+      RVB: { enabled: true, effect: room, parameters: { decay: 22, tone: 52, mix: 10 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }
+  classic_rock:
+    keywords: [classic rock, rock lead, plexi, vintage rock]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: medium
+    eq_character: upper_mid_crunch
+    modulation_choice: phaser
+    delay_reverb_choice: analog_delay_room
+    noise_reduction_recommendation: light
+    modules:
+      PRE: { enabled: true, effect: clean_boost, parameters: { level: 54, tone: 52 } }
+      WAH: { enabled: false, effect: cry_wah, parameters: { position: 50, resonance: 45 } }
+      DST: { enabled: true, effect: 808_od, parameters: { gain: 22, tone: 54, level: 58 } }
+      AMP: { enabled: true, effect: british_crunch, parameters: { gain: 54, bass: 52, mid: 60, treble: 56, master: 62 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 30, release: 48 } }
+      CAB: { enabled: true, effect: v30_412, parameters: { mic_position: 50, low_cut_hz: 80, high_cut_hz: 8000 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 50, mid: 58, high: 54, presence: 54 } }
+      MOD: { enabled: true, effect: phaser, parameters: { rate: 28, depth: 32, mix: 18 } }
+      DLY: { enabled: true, effect: analog_delay, parameters: { time_ms: 410, feedback: 22, mix: 16 } }
+      RVB: { enabled: true, effect: room, parameters: { decay: 28, tone: 52, mix: 14 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }
+  clean_indie:
+    keywords: [clean indie, jangle, clean, indie]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: low
+    eq_character: bright_clear
+    modulation_choice: chorus
+    delay_reverb_choice: digital_delay_hall
+    noise_reduction_recommendation: light
+    modules:
+      PRE: { enabled: true, effect: studio_pre, parameters: { gain: 24, level: 56 } }
+      WAH: { enabled: false, effect: cry_wah, parameters: { position: 50, resonance: 45 } }
+      DST: { enabled: false, effect: 808_od, parameters: { gain: 8, tone: 52, level: 50 } }
+      AMP: { enabled: true, effect: clean_twin, parameters: { gain: 24, bass: 48, mid: 46, treble: 64, master: 64 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 24, release: 58 } }
+      CAB: { enabled: true, effect: open_back_212, parameters: { mic_position: 46, low_cut_hz: 70, high_cut_hz: 9000 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 46, mid: 48, high: 62, presence: 58 } }
+      MOD: { enabled: true, effect: chorus, parameters: { rate: 26, depth: 32, mix: 22 } }
+      DLY: { enabled: true, effect: digital_delay, parameters: { time_ms: 360, feedback: 24, mix: 18 } }
+      RVB: { enabled: true, effect: hall, parameters: { decay: 42, tone: 58, mix: 20 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }
+  funk:
+    keywords: [funk, quack, choppy, clean rhythm]
+    signal_chain: [PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB, VOL]
+    gain_level: low
+    eq_character: tight_bright
+    modulation_choice: auto_wah
+    delay_reverb_choice: minimal_room
+    noise_reduction_recommendation: light
+    modules:
+      PRE: { enabled: true, effect: clean_boost, parameters: { level: 50, tone: 58 } }
+      WAH: { enabled: true, effect: auto_wah, parameters: { sensitivity: 58, depth: 44 } }
+      DST: { enabled: false, effect: 808_od, parameters: { gain: 6, tone: 58, level: 48 } }
+      AMP: { enabled: true, effect: clean_twin, parameters: { gain: 22, bass: 46, mid: 50, treble: 66, master: 64 } }
+      NR: { enabled: true, effect: noise_gate, parameters: { threshold: 28, release: 42 } }
+      CAB: { enabled: true, effect: open_back_212, parameters: { mic_position: 44, low_cut_hz: 75, high_cut_hz: 9200 } }
+      EQ: { enabled: true, effect: graphic_eq, parameters: { low: 44, mid: 50, high: 64, presence: 60 } }
+      MOD: { enabled: false, effect: phaser, parameters: { rate: 32, depth: 28, mix: 0 } }
+      DLY: { enabled: false, effect: digital_delay, parameters: { time_ms: 260, feedback: 10, mix: 8 } }
+      RVB: { enabled: true, effect: room, parameters: { decay: 20, tone: 55, mix: 8 } }
+      VOL: { enabled: true, effect: volume_pedal, parameters: { level: 100 } }

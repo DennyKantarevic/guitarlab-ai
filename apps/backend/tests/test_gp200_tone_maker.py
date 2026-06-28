@@ -16,12 +16,12 @@ def post_gp200(payload):
     return asyncio.run(send_request())
 
 
-def test_gp200_tone_maker_returns_valid_placeholder_patch():
+def test_headphones_keeps_amp_and_cab_enabled():
     response = post_gp200(
         {
-            "tone_goal": "tight modern rhythm",
+            "tone_goal": "metal rhythm",
             "pickup_type": "humbucker bridge",
-            "connection_mode": "fx_return",
+            "connection_mode": "headphones",
         }
     )
 
@@ -29,21 +29,77 @@ def test_gp200_tone_maker_returns_valid_placeholder_patch():
     patch = response.json()
     assert patch["device"] == "Mooer"
     assert patch["model"] == "GE Labs GP-200"
-    assert patch["tone_goal"] == "tight modern rhythm"
-    assert patch["pickup_type"] == "humbucker bridge"
-    assert patch["connection_mode"] == "fx_return"
-    assert patch["signal_chain"] == [
-        "noise_gate",
-        "drive",
-        "amp",
-        "cab",
-        "eq",
-        "delay",
-        "reverb",
-    ]
-    assert patch["modules"]["amp"]["model"] == "US Hi Gain"
-    assert patch["modules"]["cab"]["enabled"] is False
-    assert "Cab disabled for FX return into a power amp or amp return." in patch["warnings"]
+    assert patch["connection_mode"] == "headphones"
+    assert patch["modules"]["AMP"]["enabled"] is True
+    assert patch["modules"]["CAB"]["enabled"] is True
+    assert patch["valid"] is True
+
+
+def test_direct_usb_keeps_amp_and_cab_enabled():
+    response = post_gp200(
+        {
+            "tone_goal": "clean indie chorus",
+            "pickup_type": "single coil neck",
+            "connection_mode": "direct_usb",
+        }
+    )
+
+    assert response.status_code == 200
+    patch = response.json()
+    assert patch["modules"]["AMP"]["enabled"] is True
+    assert patch["modules"]["CAB"]["enabled"] is True
+    assert patch["valid"] is True
+
+
+def test_guitar_amp_input_disables_amp_and_cab():
+    response = post_gp200(
+        {
+            "tone_goal": "punk rhythm",
+            "pickup_type": "p90 bridge",
+            "connection_mode": "guitar_amp_input",
+        }
+    )
+
+    assert response.status_code == 200
+    patch = response.json()
+    assert patch["modules"]["AMP"]["enabled"] is False
+    assert patch["modules"]["CAB"]["enabled"] is False
+    assert "Disable AMP and CAB when feeding a guitar amp input." in patch["warnings"]
+    assert patch["valid"] is True
+
+
+def test_fx_return_enables_amp_and_disables_cab():
+    response = post_gp200(
+        {
+            "tone_goal": "classic rock lead",
+            "pickup_type": "humbucker bridge",
+            "connection_mode": "fx_return",
+        }
+    )
+
+    assert response.status_code == 200
+    patch = response.json()
+    assert patch["modules"]["AMP"]["enabled"] is True
+    assert patch["modules"]["CAB"]["enabled"] is False
+    assert "Disable CAB for FX return into a power amp or amp return." in patch["warnings"]
+    assert patch["valid"] is True
+
+
+def test_four_cable_method_disables_amp_and_cab_and_returns_routing_warning():
+    response = post_gp200(
+        {
+            "tone_goal": "blues edge of breakup",
+            "pickup_type": "single coil bridge",
+            "connection_mode": "four_cable_method",
+        }
+    )
+
+    assert response.status_code == 200
+    patch = response.json()
+    assert patch["modules"]["AMP"]["enabled"] is False
+    assert patch["modules"]["CAB"]["enabled"] is False
+    assert any("four cable method" in warning.lower() for warning in patch["warnings"])
+    assert patch["summary"]
     assert patch["valid"] is True
 
 
