@@ -2,11 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import ToneMakerGp200Client from "./ToneMakerGp200Client";
-import type { Gp200ToneRequest } from "@/lib/gp200";
+import type { Gp200PatchResponse, Gp200ToneRequest } from "@/lib/gp200";
 
-const patchResponse = {
+const patchResponse: Gp200PatchResponse = {
   device: "Valeton",
   model: "GP-200",
+  style: "classic_rock",
   tone_goal: "tight modern rhythm",
   pickup_type: "humbucker bridge",
   connection_mode: "fx_return" as const,
@@ -16,7 +17,20 @@ const patchResponse = {
     cab: { enabled: false, model: "4x12 Modern V30" },
   },
   warnings: ["Cab disabled for FX return into a power amp or amp return."],
+  summary: "Classic Rock GP-200 patch for humbucker bridge via fx return.",
+  tone_intent: {
+    selected_style: "classic_rock",
+    matched_keywords: ["classic rock"],
+    fallback_used: false,
+    pickup_adjustments: [],
+    connection_rules_applied: [
+      "FX return mode keeps AMP enabled and disables CAB for use into a power amp/speaker section.",
+    ],
+    confidence: "medium",
+  },
+  dial_in_instructions: ["Create a new patch on the Valeton GP-200."],
   valid: true,
+  errors: [],
 };
 
 afterEach(() => {

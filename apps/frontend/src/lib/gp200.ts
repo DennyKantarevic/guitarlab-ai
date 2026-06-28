@@ -14,19 +14,30 @@ export type Gp200ToneRequest = {
   connection_mode: Gp200ConnectionMode;
 };
 
+export type Gp200ToneIntent = {
+  selected_style: string;
+  matched_keywords: string[];
+  fallback_used: boolean;
+  pickup_adjustments: string[];
+  connection_rules_applied: string[];
+  confidence: "low" | "medium" | "high";
+};
+
 export type Gp200PatchResponse = {
   device: string;
   model: string;
-  style?: string;
+  style: string;
   tone_goal: string;
   pickup_type: string;
   connection_mode: Gp200ConnectionMode;
   signal_chain: string[];
   modules: Record<string, Record<string, unknown>>;
   warnings: string[];
-  summary?: string;
+  summary: string;
+  tone_intent: Gp200ToneIntent;
+  dial_in_instructions: string[];
   valid: boolean;
-  errors?: string[];
+  errors: string[];
 };
 
 type FetchLike = (

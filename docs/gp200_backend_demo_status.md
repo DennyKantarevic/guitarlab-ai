@@ -7,6 +7,7 @@
 - Deterministic style selection for `grunge`, `metal`, `blues`, `shoegaze`, `punk`, `classic_rock`, `clean_indie`, and `funk`.
 - Rule-based connection handling for `headphones`, `direct_usb`, `guitar_amp_input`, `fx_return`, and `four_cable_method`.
 - Backend patch validation for modules, effects, parameters, parameter ranges, and AMP/CAB state.
+- Deterministic dial-in instructions generated from the validated patch JSON and connection mode.
 - Demo request fixtures in `apps/backend/tests/fixtures/gp200_demo_requests.json`.
 
 ## Current Limitations

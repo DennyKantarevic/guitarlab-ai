@@ -9,13 +9,25 @@ describe("createGp200Patch", () => {
       json: async () => ({
         device: "Valeton",
         model: "GP-200",
+        style: "metal",
         tone_goal: "tight rhythm",
         pickup_type: "humbucker",
         connection_mode: "direct_usb",
         signal_chain: [],
         modules: {},
         warnings: [],
+        summary: "Metal GP-200 patch for humbucker via direct usb.",
+        tone_intent: {
+          selected_style: "metal",
+          matched_keywords: ["metal"],
+          fallback_used: false,
+          pickup_adjustments: [],
+          connection_rules_applied: [],
+          confidence: "medium",
+        },
+        dial_in_instructions: ["Create a new patch on the Valeton GP-200."],
         valid: true,
+        errors: [],
       }),
     });
 
@@ -41,6 +53,9 @@ describe("createGp200Patch", () => {
       },
     );
     expect(patch.valid).toBe(true);
+    expect(patch.dial_in_instructions).toEqual([
+      "Create a new patch on the Valeton GP-200.",
+    ]);
   });
 
   test("uses NEXT_PUBLIC_BACKEND_URL when provided", async () => {
@@ -49,13 +64,25 @@ describe("createGp200Patch", () => {
       json: async () => ({
         device: "Valeton",
         model: "GP-200",
+        style: "clean_indie",
         tone_goal: "clean delay",
         pickup_type: "single coil",
         connection_mode: "headphones",
         signal_chain: [],
         modules: {},
         warnings: [],
+        summary: "Clean Indie GP-200 patch for single coil via headphones.",
+        tone_intent: {
+          selected_style: "clean_indie",
+          matched_keywords: ["clean"],
+          fallback_used: false,
+          pickup_adjustments: [],
+          connection_rules_applied: [],
+          confidence: "medium",
+        },
+        dial_in_instructions: ["Create a new patch on the Valeton GP-200."],
         valid: true,
+        errors: [],
       }),
     });
 
