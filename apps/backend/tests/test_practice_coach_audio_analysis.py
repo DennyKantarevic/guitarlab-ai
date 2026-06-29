@@ -26,6 +26,7 @@ REQUIRED_FIELDS = {
     "segment_analysis",
     "coach_feedback",
     "pitch_analysis",
+    "note_events",
 }
 
 PRACTICE_METRIC_FIELDS = {
@@ -83,6 +84,15 @@ DETECTED_NOTE_FIELDS = {
     "frequency_hz",
     "start_seconds",
     "end_seconds",
+    "confidence",
+}
+
+NOTE_EVENT_FIELDS = {
+    "note",
+    "frequency_hz",
+    "start_seconds",
+    "end_seconds",
+    "duration_seconds",
     "confidence",
 }
 
@@ -243,6 +253,16 @@ def test_valid_generated_sine_wave_returns_audio_features():
     if pitch["detected_notes"]:
         assert set(pitch["detected_notes"][0]) == DETECTED_NOTE_FIELDS
 
+    note_events = analysis["note_events"]
+    assert isinstance(note_events, list)
+    assert note_events
+    assert set(note_events[0]) == NOTE_EVENT_FIELDS
+    assert note_events[0]["note"] == "A4"
+    assert 0 <= note_events[0]["confidence"] <= 1
+    assert 0 <= note_events[0]["start_seconds"] <= analysis["duration_seconds"]
+    assert 0 <= note_events[0]["end_seconds"] <= analysis["duration_seconds"]
+    assert note_events[0]["duration_seconds"] > 0
+
 
 def test_unsupported_extension_returns_clear_error():
     response = post_audio(
@@ -264,6 +284,7 @@ def test_unsupported_extension_returns_clear_error():
     assert analysis["segment_analysis"] is None
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
+    assert analysis["note_events"] is None
 
 
 def test_empty_file_returns_clear_error():
@@ -286,6 +307,7 @@ def test_empty_file_returns_clear_error():
     assert analysis["segment_analysis"] is None
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
+    assert analysis["note_events"] is None
 
 
 def test_missing_file_returns_clear_error():
@@ -300,6 +322,7 @@ def test_missing_file_returns_clear_error():
     assert analysis["segment_analysis"] is None
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
+    assert analysis["note_events"] is None
 
 
 def test_invalid_wav_returns_clear_decode_error():
@@ -322,6 +345,7 @@ def test_invalid_wav_returns_clear_decode_error():
     assert analysis["segment_analysis"] is None
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
+    assert analysis["note_events"] is None
 
 
 def test_endpoint_response_contains_no_llm_or_agent_references():
@@ -375,6 +399,9 @@ def test_practice_metrics_are_deterministic_for_same_generated_audio():
     assert first_response.json()["pitch_analysis"] == second_response.json()[
         "pitch_analysis"
     ]
+    assert first_response.json()["note_events"] == second_response.json()[
+        "note_events"
+    ]
 
 
 def test_longer_generated_audio_returns_multiple_segments():
@@ -423,6 +450,39 @@ def test_generated_sine_wave_around_440_returns_a4_pitch_analysis():
     assert isinstance(pitch["pitch_warnings"], list)
 
 
+def test_generated_sine_wave_around_440_returns_a4_note_events():
+    response = post_audio(
+        {
+            "audio_file": (
+                "a4.wav",
+                make_sine_wave_bytes(duration_seconds=2.0, frequency=440.0),
+                "audio/wav",
+            )
+        }
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    note_events = analysis["note_events"]
+
+    assert analysis["valid"] is True
+    assert isinstance(note_events, list)
+    assert note_events
+    first_event = note_events[0]
+    assert set(first_event) == NOTE_EVENT_FIELDS
+    assert first_event["note"] == "A4"
+    assert math.isclose(first_event["frequency_hz"], 440.0, abs_tol=10.0)
+    assert 0 <= first_event["start_seconds"] <= analysis["duration_seconds"]
+    assert 0 <= first_event["end_seconds"] <= analysis["duration_seconds"]
+    assert first_event["end_seconds"] > first_event["start_seconds"]
+    assert math.isclose(
+        first_event["duration_seconds"],
+        first_event["end_seconds"] - first_event["start_seconds"],
+        rel_tol=1e-6,
+    )
+    assert 0 <= first_event["confidence"] <= 1
+
+
 def test_silent_audio_returns_low_confidence_pitch_analysis():
     response = post_audio(
         {
@@ -446,3 +506,4 @@ def test_silent_audio_returns_low_confidence_pitch_analysis():
     assert isinstance(pitch["detected_notes"], list)
     assert isinstance(pitch["pitch_warnings"], list)
     assert "No stable monophonic pitch was detected." in pitch["pitch_warnings"]
+    assert analysis["note_events"] == []

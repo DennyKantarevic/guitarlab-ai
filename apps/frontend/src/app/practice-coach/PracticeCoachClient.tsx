@@ -171,6 +171,8 @@ function AnalysisResult({
       {analysis.pitch_analysis ? (
         <PitchAnalysis analysis={analysis.pitch_analysis} />
       ) : null}
+
+      {analysis.note_events ? <NoteEvents events={analysis.note_events} /> : null}
     </section>
   );
 }
@@ -329,6 +331,39 @@ function PitchAnalysis({
           <p className="text-sm text-neutral-500">No detected notes.</p>
         )}
       </section>
+    </section>
+  );
+}
+
+function NoteEvents({
+  events,
+}: {
+  events: NonNullable<PracticeAudioAnalysisResponse["note_events"]>;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Detected Note Events</h2>
+      {events.length > 0 ? (
+        <ul className="space-y-3 text-sm">
+          {events.map((event) => (
+            <li
+              className="space-y-2"
+              key={`${event.note}-${event.start_seconds}-${event.end_seconds}`}
+            >
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <Field label="Note" value={event.note} />
+                <Field label="Frequency Hz" value={event.frequency_hz} />
+                <Field label="Start seconds" value={event.start_seconds} />
+                <Field label="End seconds" value={event.end_seconds} />
+                <Field label="Duration seconds" value={event.duration_seconds} />
+                <Field label="Confidence" value={event.confidence} />
+              </dl>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-neutral-500">No note events detected.</p>
+      )}
     </section>
   );
 }

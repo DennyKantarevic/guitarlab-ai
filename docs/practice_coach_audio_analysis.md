@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, measured feedback, and a narrow monophonic pitch-analysis foundation. The frontend can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, measured feedback, a narrow monophonic pitch-analysis foundation, and approximate monophonic note events. The frontend can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -102,7 +102,17 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
     "pitch_warnings": [
       "This feature works best with single-note recordings, not chords."
     ]
-  }
+  },
+  "note_events": [
+    {
+      "note": "A4",
+      "frequency_hz": 440.0,
+      "start_seconds": 0.0,
+      "end_seconds": 0.5,
+      "duration_seconds": 0.5,
+      "confidence": 0.82
+    }
+  ]
 }
 ```
 
@@ -122,6 +132,7 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `segment_analysis`: Fixed-length 5-second segment summaries for valid uploads. Invalid uploads return `segment_analysis: null`.
 - `coach_feedback`: Deterministic measured feedback for valid uploads. Invalid uploads return `coach_feedback: null`.
 - `pitch_analysis`: Monophonic pitch estimate for valid uploads. Invalid uploads return `pitch_analysis: null`.
+- `note_events`: Approximate monophonic note events derived from stable pitch regions. Invalid uploads return `note_events: null`.
 
 ## Practice Metrics
 
@@ -168,6 +179,19 @@ Pitch-related feedback is conservative. When confidence is reasonable, feedback 
 
 This is intended for clean monophonic single-note guitar recordings. It is a foundation for later note workflows, not exact note detection, chord detection, tab generation, or song/riff comparison.
 
+## Note Events
+
+`note_events` converts stable monophonic pitch regions into a compact sequence with note name, frequency, start time, end time, duration, and confidence.
+
+- `note`: Nearest note name using scientific pitch notation, such as `A4`.
+- `frequency_hz`: Median frequency for the event.
+- `start_seconds`: Approximate event start time.
+- `end_seconds`: Approximate event end time.
+- `duration_seconds`: Approximate event duration.
+- `confidence`: A `0` to `1` confidence proxy from the underlying pitch estimate.
+
+This is not tab generation, note correctness scoring, chord detection, or riff/song comparison. If pitch confidence is low, `note_events` may be empty or incomplete.
+
 ## Frontend Practice History
 
 The Practice Coach page stores compact successful analysis summaries in browser `localStorage` so recent scores can be compared over time. It keeps only summary fields such as filename, scores, quality level, attack activity, and one or more next steps.
@@ -177,9 +201,9 @@ Audio files, waveform data, and full backend responses are not saved. History st
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
-- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, measured feedback, and basic monophonic pitch estimates only.
+- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, measured feedback, basic monophonic pitch estimates, and approximate note events only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
-- Pitch estimates are approximate and work best on clean single-note recordings.
+- Pitch estimates and note events are approximate and work best on clean single-note recordings.
 - There is no note correctness scoring yet.
 - There is no chord detection or polyphonic pitch detection.
 - It does not know whether the player hit the right notes or played a specific riff correctly.

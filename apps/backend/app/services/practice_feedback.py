@@ -8,6 +8,7 @@ def build_coach_feedback(
     recording_quality: Mapping[str, Any],
     segment_analysis: list[Mapping[str, Any]],
     pitch_analysis: Mapping[str, Any] | None = None,
+    note_events: list[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     quality_level = recording_quality["quality_level"]
     energy_level = practice_metrics["energy_level"]
@@ -63,6 +64,14 @@ def build_coach_feedback(
         strengths.append(
             f"A stable pitch was detected around {pitch_analysis['estimated_note']}."
         )
+
+    if note_events:
+        strengths.append("Detected a short sequence of monophonic note events.")
+        next_steps.append(
+            "For cleaner note events, record single notes with clear separation."
+        )
+    elif pitch_analysis is not None and pitch_analysis["confidence"] < 0.55:
+        next_steps.append("Pitch confidence was low, so note events may be incomplete.")
 
     for warning in recording_quality["warnings"]:
         if warning not in focus_areas:

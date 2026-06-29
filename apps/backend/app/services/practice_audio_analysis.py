@@ -8,6 +8,7 @@ import numpy as np
 from fastapi import UploadFile
 
 from app.services.practice_feedback import build_coach_feedback
+from app.services.practice_note_events import extract_note_events
 from app.services.practice_pitch_analysis import analyze_pitch
 from app.services.practice_recording_quality import analyze_recording_quality
 from app.services.practice_scoring import score_practice_analysis
@@ -76,12 +77,17 @@ async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any
             sample_rate,
             analysis["duration_seconds"],
         )
+        analysis["note_events"] = extract_note_events(
+            analysis["pitch_analysis"],
+            analysis["duration_seconds"],
+        )
         analysis["coach_feedback"] = build_coach_feedback(
             analysis=analysis,
             practice_metrics=analysis["practice_metrics"],
             recording_quality=analysis["recording_quality"],
             segment_analysis=analysis["segment_analysis"],
             pitch_analysis=analysis["pitch_analysis"],
+            note_events=analysis["note_events"],
         )
         return analysis
     except Exception:
@@ -131,4 +137,5 @@ def build_invalid_response(filename: str, errors: list[str]) -> dict[str, Any]:
         "segment_analysis": None,
         "coach_feedback": None,
         "pitch_analysis": None,
+        "note_events": None,
     }

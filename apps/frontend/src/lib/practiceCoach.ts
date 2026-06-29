@@ -60,6 +60,15 @@ export type PitchAnalysis = {
   pitch_warnings: string[];
 };
 
+export type NoteEvent = {
+  note: string;
+  frequency_hz: number;
+  start_seconds: number;
+  end_seconds: number;
+  duration_seconds: number;
+  confidence: number;
+};
+
 export type PracticeAudioAnalysisResponse = {
   filename: string;
   duration_seconds: number;
@@ -77,6 +86,7 @@ export type PracticeAudioAnalysisResponse = {
   segment_analysis?: SegmentAnalysis[] | null;
   coach_feedback?: CoachFeedback | null;
   pitch_analysis?: PitchAnalysis | null;
+  note_events?: NoteEvent[] | null;
 };
 
 type FetchLike = (

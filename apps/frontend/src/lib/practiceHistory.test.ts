@@ -74,6 +74,16 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
       },
     ],
   },
+  note_events: [
+    {
+      note: "A4",
+      frequency_hz: 440,
+      start_seconds: 0,
+      end_seconds: 0.5,
+      duration_seconds: 0.5,
+      confidence: 0.82,
+    },
+  ],
 };
 
 beforeEach(() => {
@@ -180,6 +190,7 @@ describe("practice history", () => {
     expect(session).not.toHaveProperty("segment_analysis");
     expect(session).not.toHaveProperty("coach_feedback");
     expect(session).not.toHaveProperty("pitch_analysis");
+    expect(session).not.toHaveProperty("note_events");
   });
 });
 

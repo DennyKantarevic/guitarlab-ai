@@ -5,7 +5,7 @@ GuitarLab AI is a monorepo for guitar-focused web tools.
 Current MVPs:
 
 * **Valeton GP-200 Tone Maker**: generate structured GP-200 patch JSON from a tone goal, pickup type, and connection mode.
-* **Practice Coach**: upload a `.wav` guitar recording and return deterministic audio-analysis features, basic practice scoring metrics, recording-quality checks, segment analysis, measured feedback, basic monophonic pitch estimates, and local browser practice history.
+* **Practice Coach**: upload a `.wav` guitar recording and return deterministic audio-analysis features, basic practice scoring metrics, recording-quality checks, segment analysis, measured feedback, basic monophonic pitch estimates, approximate note events, and local browser practice history.
 
 The project uses a Next.js TypeScript frontend and a FastAPI Python backend.
 
@@ -148,7 +148,7 @@ http://localhost:3000/practice-coach
 1. Open `http://localhost:3000/practice-coach`.
 2. Upload a `.wav` file.
 3. Click **Analyze**.
-4. Confirm the page shows audio analysis fields, `practice_metrics`, `recording_quality`, `segment_analysis`, `coach_feedback`, `pitch_analysis`, and Practice history.
+4. Confirm the page shows audio analysis fields, `practice_metrics`, `recording_quality`, `segment_analysis`, `coach_feedback`, `pitch_analysis`, `note_events`, and Practice history.
 
 Expected displayed fields include:
 
@@ -174,11 +174,12 @@ Expected displayed fields include:
 * `pitch_analysis.estimated_note`
 * `pitch_analysis.estimated_frequency_hz`
 * `pitch_analysis.detected_notes`
+* `note_events`
 * local Practice history score summaries
 
 Practice history is stored only in the current browser with `localStorage`. Uploaded audio files are not saved, and history is not sent to the backend.
 
-Pitch analysis is a narrow foundation for clean monophonic single-note `.wav` recordings. Note estimates are approximate and are not note correctness, chord detection, tab generation, or riff/song comparison.
+Pitch and note-event analysis are narrow foundations for clean monophonic single-note `.wav` recordings. Note estimates and event timings are approximate and are not note correctness, chord detection, tab generation, or riff/song comparison.
 
 ### 6. Test the backend directly with curl
 
@@ -256,6 +257,7 @@ The response should include:
 * `segment_analysis`
 * `coach_feedback`
 * `pitch_analysis`
+* `note_events`
 * `valid`
 * `errors`
 
@@ -272,7 +274,7 @@ Implemented:
 * Practice Coach `.wav` audio-analysis features
 * Practice Coach deterministic `practice_metrics` scoring
 * Practice Coach recording-quality checks, fixed-length segment analysis, and deterministic measured feedback
-* Practice Coach basic monophonic pitch estimates and note-name summaries
+* Practice Coach basic monophonic pitch estimates, note-name summaries, and approximate note events
 * Practice Coach local browser history for recent compact score summaries
 
 Not implemented yet:
@@ -286,7 +288,7 @@ Not implemented yet:
 * reference song/riff comparison
 * polished conversational coaching
 
-Practice Coach timing/activity fields and pitch estimates are proxies from detected audio features. They are not true rhythmic accuracy, exact pitch accuracy, note correctness, or song/riff matching.
+Practice Coach timing/activity fields, pitch estimates, and note events are proxies from detected audio features. They are not true rhythmic accuracy, exact pitch accuracy, note correctness, or song/riff matching.
 
 ## Troubleshooting
 

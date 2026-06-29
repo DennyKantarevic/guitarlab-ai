@@ -75,6 +75,16 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
       },
     ],
   },
+  note_events: [
+    {
+      note: "A4",
+      frequency_hz: 440,
+      start_seconds: 0,
+      end_seconds: 0.5,
+      duration_seconds: 0.5,
+      confidence: 0.82,
+    },
+  ],
 };
 
 beforeEach(() => {
@@ -201,6 +211,7 @@ describe("PracticeCoachClient", () => {
     expect(session).not.toHaveProperty("practice_metrics");
     expect(session).not.toHaveProperty("coach_feedback");
     expect(session).not.toHaveProperty("pitch_analysis");
+    expect(session).not.toHaveProperty("note_events");
   });
 
   test("recording quality renders when present", async () => {
@@ -285,6 +296,27 @@ describe("PracticeCoachClient", () => {
       screen.getByText("This feature works best with single-note recordings."),
     ).toBeDefined();
     expect(screen.getByText("Detected notes")).toBeDefined();
+  });
+
+  test("note events render when present", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Detected Note Events")).toBeDefined();
+    });
+    expect(screen.getAllByText("A4").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("440").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("0.5").length).toBeGreaterThanOrEqual(1);
   });
 
   test("failed response displays an error", async () => {
