@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import PracticeCoachClient from "./PracticeCoachClient";
@@ -134,6 +135,69 @@ function createMemoryStorage(): Storage {
 }
 
 describe("PracticeCoachClient", () => {
+  test("server render does not read localStorage for practice history", () => {
+    window.localStorage.setItem(
+      PRACTICE_HISTORY_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "saved-session",
+          created_at: "2026-06-29T01:00:00.000Z",
+          filename: "saved.wav",
+          duration_seconds: 2,
+          overall_score: 91,
+          timing_activity_score: 88,
+          recording_quality_score: 94,
+          quality_level: "good",
+          attack_activity: "moderate",
+          energy_level: "medium",
+          brightness_level: "balanced",
+          summary: "Saved session.",
+          next_steps: ["Keep practicing."],
+        },
+      ]),
+    );
+    const getItemSpy = vi.spyOn(window.localStorage, "getItem");
+
+    const markup = renderToString(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    expect(getItemSpy).not.toHaveBeenCalled();
+    expect(markup).toContain(
+      "Practice history loads in this browser after the page opens.",
+    );
+    expect(markup).not.toContain("1 saved session");
+  });
+
+  test("localStorage history loads after mount", async () => {
+    window.localStorage.setItem(
+      PRACTICE_HISTORY_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "saved-session",
+          created_at: "2026-06-29T01:00:00.000Z",
+          filename: "saved.wav",
+          duration_seconds: 2,
+          overall_score: 91,
+          timing_activity_score: 88,
+          recording_quality_score: 94,
+          quality_level: "good",
+          attack_activity: "moderate",
+          energy_level: "medium",
+          brightness_level: "balanced",
+          summary: "Saved session.",
+          next_steps: ["Keep practicing."],
+        },
+      ]),
+    );
+
+    render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("1 saved session")).toBeDefined();
+    });
+    expect(screen.getByText("saved.wav")).toBeDefined();
+    expect(screen.getByText(/Keep practicing/)).toBeDefined();
+  });
+
   test("renders a wav file input", () => {
     render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
 

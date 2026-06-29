@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import {
   analyzePracticeAudio,
@@ -29,9 +29,26 @@ export default function PracticeCoachClient({
     useState<PracticeAudioAnalysisResponse | null>(null);
   const [historySessions, setHistorySessions] = useState<
     PracticeHistorySession[]
-  >(() => readPracticeHistory());
+  >([]);
+  const [hasMounted, setHasMounted] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    queueMicrotask(() => {
+      if (!isActive) {
+        return;
+      }
+      setHasMounted(true);
+      setHistorySessions(readPracticeHistory());
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,6 +136,7 @@ export default function PracticeCoachClient({
         ) : null}
 
         <PracticeHistory
+          hasMounted={hasMounted}
           onClearHistory={handleClearHistory}
           sessions={historySessions}
         />
@@ -460,9 +478,11 @@ function NoteEvents({
 }
 
 function PracticeHistory({
+  hasMounted,
   onClearHistory,
   sessions,
 }: {
+  hasMounted: boolean;
   onClearHistory: () => void;
   sessions: PracticeHistorySession[];
 }) {
@@ -478,65 +498,75 @@ function PracticeHistory({
         </p>
       </div>
 
-      <dl className="grid gap-3 text-sm sm:grid-cols-2">
-        <Field
-          label="Saved sessions"
-          value={`${stats.sessionCount} saved ${
-            stats.sessionCount === 1 ? "session" : "sessions"
-          }`}
-        />
-        <Field
-          label="Latest overall score"
-          value={formatNullableScore(stats.latestOverallScore)}
-        />
-        <Field
-          label="Best overall score"
-          value={formatNullableScore(stats.bestOverallScore)}
-        />
-        <Field
-          label="Average overall score"
-          value={formatNullableScore(stats.averageOverallScore)}
-        />
-        <Field
-          label="Latest recording quality"
-          value={stats.latestQualityLevel ?? "Not available"}
-        />
-      </dl>
-
-      <button
-        className="border border-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
-        disabled={sessions.length === 0}
-        onClick={onClearHistory}
-        type="button"
-      >
-        Clear History
-      </button>
-
-      {sessions.length > 0 ? (
-        <ul className="space-y-3 text-sm">
-          {sessions.map((session) => (
-            <li className="space-y-1" key={session.id}>
-              <div>
-                <strong>{session.filename}</strong>
-              </div>
-              <div>{formatSessionDate(session.created_at)}</div>
-              <div>Overall score: {formatNullableScore(session.overall_score)}</div>
-              <div>
-                Recording quality: {session.quality_level ?? "Not available"}
-              </div>
-              <div>
-                Attack activity: {session.attack_activity ?? "Not available"}
-              </div>
-              {session.next_steps[0] ? (
-                <div>Next step: {session.next_steps[0]}</div>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
+      {!hasMounted ? (
         <p className="text-sm text-neutral-500">
-          No saved practice sessions yet.
+          Practice history loads in this browser after the page opens.
         </p>
+      ) : (
+        <>
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <Field
+              label="Saved sessions"
+              value={`${stats.sessionCount} saved ${
+                stats.sessionCount === 1 ? "session" : "sessions"
+              }`}
+            />
+            <Field
+              label="Latest overall score"
+              value={formatNullableScore(stats.latestOverallScore)}
+            />
+            <Field
+              label="Best overall score"
+              value={formatNullableScore(stats.bestOverallScore)}
+            />
+            <Field
+              label="Average overall score"
+              value={formatNullableScore(stats.averageOverallScore)}
+            />
+            <Field
+              label="Latest recording quality"
+              value={stats.latestQualityLevel ?? "Not available"}
+            />
+          </dl>
+
+          <button
+            className="border border-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
+            disabled={sessions.length === 0}
+            onClick={onClearHistory}
+            type="button"
+          >
+            Clear History
+          </button>
+
+          {sessions.length > 0 ? (
+            <ul className="space-y-3 text-sm">
+              {sessions.map((session) => (
+                <li className="space-y-1" key={session.id}>
+                  <div>
+                    <strong>{session.filename}</strong>
+                  </div>
+                  <div>{formatSessionDate(session.created_at)}</div>
+                  <div>
+                    Overall score: {formatNullableScore(session.overall_score)}
+                  </div>
+                  <div>
+                    Recording quality: {session.quality_level ?? "Not available"}
+                  </div>
+                  <div>
+                    Attack activity: {session.attack_activity ?? "Not available"}
+                  </div>
+                  {session.next_steps[0] ? (
+                    <div>Next step: {session.next_steps[0]}</div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-neutral-500">
+              No saved practice sessions yet.
+            </p>
+          )}
+        </>
       )}
     </section>
   );
