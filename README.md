@@ -86,6 +86,96 @@ Pages:
 * GP-200 Tone Maker: `http://localhost:3000/tone-maker/gp200`
 * Practice Coach: `http://localhost:3000/practice-coach`
 
+## Running the Practice Coach
+
+### 1. Pull latest main
+
+```bash
+cd /Users/dennykantarevic/guitarlab-ai
+git checkout main
+git pull origin main
+```
+
+### 2. Install or update backend dependencies
+
+```bash
+source .venv/bin/activate
+pip install -r apps/backend/requirements.txt
+```
+
+Run this after pulling new backend features or if you see `ModuleNotFoundError: No module named 'librosa'`. The Practice Coach depends on audio-analysis packages such as `librosa`.
+
+### 3. Start the backend
+
+```bash
+PYTHONPATH=apps/backend python -m uvicorn app.main:app --reload --app-dir apps/backend
+```
+
+Backend URL:
+
+```text
+http://127.0.0.1:8000
+```
+
+API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Opening `/practice/analyze-audio` in a browser shows 404 because it is a `POST` API endpoint, not a normal webpage.
+
+### 4. Start the frontend
+
+```bash
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev --prefix apps/frontend
+```
+
+Frontend URL:
+
+```text
+http://localhost:3000
+```
+
+Practice Coach page:
+
+```text
+http://localhost:3000/practice-coach
+```
+
+### 5. Test through the website
+
+1. Open `http://localhost:3000/practice-coach`.
+2. Upload a `.wav` file.
+3. Click **Analyze**.
+4. Confirm the page shows audio analysis fields and `practice_metrics`.
+
+Expected displayed fields include:
+
+* `filename`
+* `duration_seconds`
+* `sample_rate`
+* `tempo_bpm`
+* `onset_count`
+* `rms_energy_mean`
+* `spectral_centroid_mean`
+* `zero_crossing_rate_mean`
+* `valid`
+* `errors`
+* `practice_metrics.overall_score`
+* `practice_metrics.timing_activity_score`
+* `practice_metrics.recording_quality_score`
+* `practice_metrics.recommendations`
+
+### 6. Test the backend directly with curl
+
+```bash
+curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
+  -F "audio_file=@practice.wav"
+```
+
+The file must be a `.wav` file and should be located wherever the curl command is run. You can also use the full path to the file.
+
 ## Tests and Checks
 
 Backend tests:
@@ -185,6 +275,34 @@ http://127.0.0.1:8000/docs
 ```
 
 or test a real endpoint with `curl`.
+
+### `ModuleNotFoundError: No module named 'librosa'`
+
+Activate the backend environment and reinstall requirements:
+
+```bash
+source .venv/bin/activate
+pip install -r apps/backend/requirements.txt
+```
+
+### `GET /practice/analyze-audio` returns 404
+
+That is normal. `/practice/analyze-audio` is a `POST` API endpoint. Use the Practice Coach frontend page or the curl command above.
+
+### Practice Coach page does not load
+
+Update `main`, clear the frontend build cache, and restart the dev server:
+
+```bash
+git checkout main
+git pull origin main
+rm -rf apps/frontend/.next
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev --prefix apps/frontend
+```
+
+### Practice Coach upload fails
+
+Make sure the file is a `.wav` file. Other formats are not supported yet.
 
 ### Generate Patch changes the URL
 
