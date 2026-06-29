@@ -42,6 +42,24 @@ export type CoachFeedback = {
   next_steps: string[];
 };
 
+export type DetectedPitchNote = {
+  note: string;
+  frequency_hz: number;
+  start_seconds: number;
+  end_seconds: number;
+  confidence: number;
+};
+
+export type PitchAnalysis = {
+  enabled: boolean;
+  method: string;
+  estimated_note: string | null;
+  estimated_frequency_hz: number | null;
+  confidence: number;
+  detected_notes: DetectedPitchNote[];
+  pitch_warnings: string[];
+};
+
 export type PracticeAudioAnalysisResponse = {
   filename: string;
   duration_seconds: number;
@@ -58,6 +76,7 @@ export type PracticeAudioAnalysisResponse = {
   recording_quality?: RecordingQuality | null;
   segment_analysis?: SegmentAnalysis[] | null;
   coach_feedback?: CoachFeedback | null;
+  pitch_analysis?: PitchAnalysis | null;
 };
 
 type FetchLike = (

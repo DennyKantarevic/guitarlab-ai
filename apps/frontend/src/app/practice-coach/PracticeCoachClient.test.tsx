@@ -58,6 +58,23 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
     focus_areas: ["Keep checking consistency between sections."],
     next_steps: ["Record another take at the same settings."],
   },
+  pitch_analysis: {
+    enabled: true,
+    method: "librosa.pyin",
+    estimated_note: "A4",
+    estimated_frequency_hz: 440,
+    confidence: 0.82,
+    pitch_warnings: ["This feature works best with single-note recordings."],
+    detected_notes: [
+      {
+        note: "A4",
+        frequency_hz: 440,
+        start_seconds: 0,
+        end_seconds: 0.5,
+        confidence: 0.82,
+      },
+    ],
+  },
 };
 
 beforeEach(() => {
@@ -183,6 +200,7 @@ describe("PracticeCoachClient", () => {
     expect(session).not.toHaveProperty("sample_rate");
     expect(session).not.toHaveProperty("practice_metrics");
     expect(session).not.toHaveProperty("coach_feedback");
+    expect(session).not.toHaveProperty("pitch_analysis");
   });
 
   test("recording quality renders when present", async () => {
@@ -243,6 +261,30 @@ describe("PracticeCoachClient", () => {
     });
     expect(screen.getByText("Analyzed 3.25 seconds of audio.")).toBeDefined();
     expect(screen.getByText("Record another take at the same settings.")).toBeDefined();
+  });
+
+  test("pitch analysis renders when present", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Pitch Analysis")).toBeDefined();
+    });
+    expect(screen.getAllByText("A4").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("440").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByText("This feature works best with single-note recordings."),
+    ).toBeDefined();
+    expect(screen.getByText("Detected notes")).toBeDefined();
   });
 
   test("failed response displays an error", async () => {

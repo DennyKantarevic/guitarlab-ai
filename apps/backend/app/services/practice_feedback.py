@@ -7,6 +7,7 @@ def build_coach_feedback(
     practice_metrics: Mapping[str, Any],
     recording_quality: Mapping[str, Any],
     segment_analysis: list[Mapping[str, Any]],
+    pitch_analysis: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     quality_level = recording_quality["quality_level"]
     energy_level = practice_metrics["energy_level"]
@@ -52,6 +53,15 @@ def build_coach_feedback(
         focus_areas.append("The tone is very bright.")
         next_steps.append(
             "Reduce treble or pick closer to the neck if the tone feels harsh."
+        )
+
+    if (
+        pitch_analysis is not None
+        and pitch_analysis["confidence"] >= 0.55
+        and pitch_analysis["estimated_note"] is not None
+    ):
+        strengths.append(
+            f"A stable pitch was detected around {pitch_analysis['estimated_note']}."
         )
 
     for warning in recording_quality["warnings"]:

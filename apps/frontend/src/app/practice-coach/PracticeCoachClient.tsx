@@ -167,6 +167,10 @@ function AnalysisResult({
       {analysis.coach_feedback ? (
         <CoachFeedback feedback={analysis.coach_feedback} />
       ) : null}
+
+      {analysis.pitch_analysis ? (
+        <PitchAnalysis analysis={analysis.pitch_analysis} />
+      ) : null}
     </section>
   );
 }
@@ -278,6 +282,53 @@ function CoachFeedback({
       <ListSection title="Strengths" items={feedback.strengths} />
       <ListSection title="Focus areas" items={feedback.focus_areas} />
       <ListSection title="Next steps" items={feedback.next_steps} />
+    </section>
+  );
+}
+
+function PitchAnalysis({
+  analysis,
+}: {
+  analysis: NonNullable<PracticeAudioAnalysisResponse["pitch_analysis"]>;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Pitch Analysis</h2>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field label="Method" value={analysis.method} />
+        <Field
+          label="Estimated note"
+          value={analysis.estimated_note ?? "Not detected"}
+        />
+        <Field
+          label="Estimated frequency Hz"
+          value={analysis.estimated_frequency_hz ?? "Not detected"}
+        />
+        <Field label="Confidence" value={analysis.confidence} />
+      </dl>
+      <ListSection title="Pitch warnings" items={analysis.pitch_warnings} />
+
+      <section className="space-y-2">
+        <h3 className="font-semibold">Detected notes</h3>
+        {analysis.detected_notes.length > 0 ? (
+          <ul className="space-y-3 text-sm">
+            {analysis.detected_notes.map((note) => (
+              <li
+                className="space-y-1"
+                key={`${note.note}-${note.start_seconds}-${note.end_seconds}`}
+              >
+                <div>Note: {note.note}</div>
+                <div>Frequency Hz: {note.frequency_hz}</div>
+                <div>Start seconds: {note.start_seconds}</div>
+                <div>End seconds: {note.end_seconds}</div>
+                <div>Confidence: {note.confidence}</div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-neutral-500">No detected notes.</p>
+        )}
+      </section>
     </section>
   );
 }

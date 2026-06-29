@@ -57,6 +57,23 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
     focus_areas: [],
     next_steps: ["Record another take at the same settings."],
   },
+  pitch_analysis: {
+    enabled: true,
+    method: "librosa.pyin",
+    estimated_note: "A4",
+    estimated_frequency_hz: 440,
+    confidence: 0.82,
+    pitch_warnings: ["This feature works best with single-note recordings."],
+    detected_notes: [
+      {
+        note: "A4",
+        frequency_hz: 440,
+        start_seconds: 0,
+        end_seconds: 0.5,
+        confidence: 0.82,
+      },
+    ],
+  },
 };
 
 beforeEach(() => {
@@ -162,6 +179,7 @@ describe("practice history", () => {
     expect(session).not.toHaveProperty("recording_quality");
     expect(session).not.toHaveProperty("segment_analysis");
     expect(session).not.toHaveProperty("coach_feedback");
+    expect(session).not.toHaveProperty("pitch_analysis");
   });
 });
 

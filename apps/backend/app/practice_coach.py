@@ -49,6 +49,24 @@ class CoachFeedback(BaseModel):
     next_steps: list[str] = Field(default_factory=list)
 
 
+class DetectedPitchNote(BaseModel):
+    note: str
+    frequency_hz: float
+    start_seconds: float
+    end_seconds: float
+    confidence: float
+
+
+class PitchAnalysis(BaseModel):
+    enabled: bool
+    method: str
+    estimated_note: str | None
+    estimated_frequency_hz: float | None
+    confidence: float
+    detected_notes: list[DetectedPitchNote] = Field(default_factory=list)
+    pitch_warnings: list[str] = Field(default_factory=list)
+
+
 class PracticeAudioAnalysisResponse(BaseModel):
     filename: str
     duration_seconds: float
@@ -65,6 +83,7 @@ class PracticeAudioAnalysisResponse(BaseModel):
     recording_quality: RecordingQuality | None = None
     segment_analysis: list[SegmentAnalysis] | None = None
     coach_feedback: CoachFeedback | None = None
+    pitch_analysis: PitchAnalysis | None = None
 
 
 @router.post("/practice/analyze-audio", response_model=PracticeAudioAnalysisResponse)

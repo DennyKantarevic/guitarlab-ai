@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, and measured feedback. The frontend can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, measured feedback, and a narrow monophonic pitch-analysis foundation. The frontend can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -83,6 +83,25 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
     "next_steps": [
       "Record another take at the same settings and compare the measured scores."
     ]
+  },
+  "pitch_analysis": {
+    "enabled": true,
+    "method": "librosa.pyin",
+    "estimated_note": "A4",
+    "estimated_frequency_hz": 440.0,
+    "confidence": 0.82,
+    "detected_notes": [
+      {
+        "note": "A4",
+        "frequency_hz": 440.0,
+        "start_seconds": 0.0,
+        "end_seconds": 0.5,
+        "confidence": 0.82
+      }
+    ],
+    "pitch_warnings": [
+      "This feature works best with single-note recordings, not chords."
+    ]
   }
 }
 ```
@@ -102,6 +121,7 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `recording_quality`: Recording setup checks for valid uploads. Invalid uploads return `recording_quality: null`.
 - `segment_analysis`: Fixed-length 5-second segment summaries for valid uploads. Invalid uploads return `segment_analysis: null`.
 - `coach_feedback`: Deterministic measured feedback for valid uploads. Invalid uploads return `coach_feedback: null`.
+- `pitch_analysis`: Monophonic pitch estimate for valid uploads. Invalid uploads return `pitch_analysis: null`.
 
 ## Practice Metrics
 
@@ -132,6 +152,22 @@ Each segment includes duration, onset count, onset density, mean RMS energy, mea
 
 `coach_feedback` contains a summary, strengths, focus areas, and next steps. This feedback is deterministic and only uses measured audio values, recording quality, practice metrics, and segment analysis. If recording quality is poor, feedback focuses on recording setup first.
 
+Pitch-related feedback is conservative. When confidence is reasonable, feedback may mention that a stable pitch was detected around an estimated note. It does not say the player hit the correct note or played a riff/song correctly.
+
+## Pitch Analysis
+
+`pitch_analysis` uses `librosa.pyin` to estimate fundamental frequency over time from the same mono audio used by the rest of the analysis.
+
+- `enabled`: Whether pitch analysis ran.
+- `method`: Current pitch method name.
+- `estimated_note`: Dominant estimated note using scientific pitch notation, such as `A4`, or `null`.
+- `estimated_frequency_hz`: Estimated frequency for the dominant note, or `null`.
+- `confidence`: A `0` to `1` confidence proxy based on voiced frames and pitch consistency.
+- `detected_notes`: Compact note-name segments with frequency, start/end times, and confidence.
+- `pitch_warnings`: Deterministic warnings for low confidence, noisy audio, or non-monophonic input.
+
+This is intended for clean monophonic single-note guitar recordings. It is a foundation for later note workflows, not exact note detection, chord detection, tab generation, or song/riff comparison.
+
 ## Frontend Practice History
 
 The Practice Coach page stores compact successful analysis summaries in browser `localStorage` so recent scores can be compared over time. It keeps only summary fields such as filename, scores, quality level, attack activity, and one or more next steps.
@@ -141,11 +177,14 @@ Audio files, waveform data, and full backend responses are not saved. History st
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
-- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, and measured feedback only.
+- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, measured feedback, and basic monophonic pitch estimates only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
-- There is no pitch detection or note correctness scoring yet.
+- Pitch estimates are approximate and work best on clean single-note recordings.
+- There is no note correctness scoring yet.
+- There is no chord detection or polyphonic pitch detection.
 - It does not know whether the player hit the right notes or played a specific riff correctly.
 - It does not provide polished conversational coaching.
 - It does not do pitch scoring, riff-to-tab, tab generation, or `.prst` export.
+- It does not compare against reference songs or riffs.
 - It does not call an LLM or agent.
 - It does not have user accounts, a database, or cross-device practice history sync.
