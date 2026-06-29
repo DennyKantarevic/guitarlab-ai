@@ -1,0 +1,64 @@
+export type PracticeAudioRequest = {
+  audio_file: File;
+};
+
+export type PracticeMetrics = {
+  overall_score: number;
+  timing_activity_score: number;
+  recording_quality_score: number;
+  onset_density_per_second: number;
+  energy_level: "low" | "medium" | "high";
+  brightness_level: "dark" | "balanced" | "bright";
+  attack_activity: "sparse" | "moderate" | "busy";
+  recommendations: string[];
+};
+
+export type PracticeAudioAnalysisResponse = {
+  filename: string;
+  duration_seconds: number;
+  sample_rate: number;
+  tempo_bpm: number | null;
+  onset_count: number;
+  rms_energy_mean: number;
+  spectral_centroid_mean: number;
+  zero_crossing_rate_mean: number;
+  analysis_warnings: string[];
+  valid: boolean;
+  errors: string[];
+  practice_metrics?: PracticeMetrics | null;
+};
+
+type FetchLike = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Pick<Response, "ok" | "status" | "json" | "text">>;
+
+const DEFAULT_BACKEND_URL = "http://127.0.0.1:8000";
+
+export async function analyzePracticeAudio(
+  audioFile: File,
+  fetcher: FetchLike = fetch,
+  backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_URL,
+): Promise<PracticeAudioAnalysisResponse> {
+  const formData = new FormData();
+  formData.append("audio_file", audioFile);
+
+  const response = await fetcher(
+    `${normalizeBackendUrl(backendUrl || DEFAULT_BACKEND_URL)}/practice/analyze-audio`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Practice Coach request failed: ${response.status} ${detail}`);
+  }
+
+  return response.json() as Promise<PracticeAudioAnalysisResponse>;
+}
+
+function normalizeBackendUrl(backendUrl: string): string {
+  return backendUrl.replace(/\/+$/, "");
+}
