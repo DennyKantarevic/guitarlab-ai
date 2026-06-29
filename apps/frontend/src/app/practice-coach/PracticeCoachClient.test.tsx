@@ -311,6 +311,38 @@ describe("PracticeCoachClient", () => {
     expect(expectedNotesInput.getAttribute("placeholder")).toBe("A4 B4 C5 D5");
   });
 
+  test("renders expected notes help panel with examples and unsupported items", () => {
+    const { container } = render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    expect(screen.getByText("How to use expected notes")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Enter a simple note sequence you are trying to play. The coach compares detected notes from your recording to your own exercise.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByText("A4 B4 C5 D5")).toBeDefined();
+    expect(screen.getByText("E3 G3 A3")).toBeDefined();
+    expect(screen.getByText("C#4 D#4 F#4")).toBeDefined();
+    expect(screen.getByText("tabs")).toBeDefined();
+    expect(screen.getByText("chords")).toBeDefined();
+    expect(screen.getByText("strumming patterns")).toBeDefined();
+    expect(screen.getByText("song names")).toBeDefined();
+    expect(screen.getByText("rhythm notation")).toBeDefined();
+    expect(screen.getByText("full song comparison")).toBeDefined();
+    expect(
+      screen.getByText(
+        "This works best for short, single-note exercises recorded clearly and slowly.",
+      ),
+    ).toBeDefined();
+
+    const setupText = container.textContent?.toLowerCase() || "";
+    expect(setupText).not.toContain("ai will recognize any song");
+    expect(setupText).not.toContain("paste a tab");
+    expect(setupText).not.toContain("enter nirvana riffs");
+    expect(setupText).not.toContain("checks rhythm accuracy");
+    expect(setupText).not.toContain("proves whether you played correctly");
+  });
+
   test("selecting Timing and rhythm and entering a description sends practice context", async () => {
     const audioFile = new File(["wav-bytes"], "practice.wav", {
       type: "audio/wav",

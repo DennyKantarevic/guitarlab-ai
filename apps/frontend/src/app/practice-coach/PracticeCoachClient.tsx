@@ -275,6 +275,7 @@ function PracticeSetup({
             rows={3}
             value={expectedNotes}
           />
+          <ExpectedNotesHelpPanel />
         </div>
 
         <div className="space-y-2">
@@ -314,6 +315,52 @@ function PracticeSetup({
         ) : null}
       </form>
     </section>
+  );
+}
+
+function ExpectedNotesHelpPanel() {
+  return (
+    <aside className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
+      <div className="space-y-1">
+        <h4 className="font-semibold">How to use expected notes</h4>
+        <p className="text-neutral-700">
+          Enter a simple note sequence you are trying to play. The coach
+          compares detected notes from your recording to your own exercise.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Good examples
+          </h5>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>A4 B4 C5 D5</li>
+            <li>E3 G3 A3</li>
+            <li>C#4 D#4 F#4</li>
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Not supported yet
+          </h5>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>tabs</li>
+            <li>chords</li>
+            <li>strumming patterns</li>
+            <li>song names</li>
+            <li>rhythm notation</li>
+            <li>full song comparison</li>
+          </ul>
+        </div>
+      </div>
+
+      <p className="text-xs text-neutral-600">
+        This works best for short, single-note exercises recorded clearly and
+        slowly.
+      </p>
+    </aside>
   );
 }
 
