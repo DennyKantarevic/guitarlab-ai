@@ -129,98 +129,35 @@ export default function PracticeCoachClient({
   }
 
   return (
-    <main className="min-h-screen px-6 py-10">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <header className="space-y-2">
+    <main className="min-h-screen bg-neutral-50 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="max-w-3xl space-y-2">
           <h1 className="text-3xl font-semibold">Practice Coach</h1>
           <p className="text-sm text-neutral-600">
-            Upload a .wav file to run the current deterministic audio analysis.
+            Upload a .wav take, choose what you are practicing, and get focused
+            feedback you can act on.
           </p>
         </header>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <section className="space-y-3">
-            <h2 className="text-xl font-semibold">
-              What are you practicing?
-            </h2>
-            <div className="space-y-2">
-              <label
-                className="block text-sm font-medium"
-                htmlFor="practice_focus"
-              >
-                Practice focus
-              </label>
-              <select
-                id="practice_focus"
-                name="practice_focus"
-                onChange={(event) =>
-                  setPracticeFocus(event.target.value as PracticeFocus)
-                }
-                value={practiceFocus}
-              >
-                {PRACTICE_FOCUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start">
+          <PracticeSetup
+            error={error}
+            isLoading={isLoading}
+            onDescriptionChange={setPracticeDescription}
+            onFileChange={setSelectedFile}
+            onFocusChange={setPracticeFocus}
+            onSubmit={handleSubmit}
+            practiceDescription={practiceDescription}
+            practiceFocus={practiceFocus}
+            selectedFile={selectedFile}
+          />
 
-            <div className="space-y-2">
-              <label
-                className="block text-sm font-medium"
-                htmlFor="practice_description"
-              >
-                Describe what you were trying to play
-              </label>
-              <textarea
-                id="practice_description"
-                name="practice_description"
-                onChange={(event) => setPracticeDescription(event.target.value)}
-                placeholder="Clean pentatonic scale&#10;Nirvana-style power chord rhythm&#10;Eighth-note alternate picking&#10;Soft indie lead phrase"
-                rows={4}
-                value={practiceDescription}
-              />
-            </div>
-          </section>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium" htmlFor="audio_file">
-              WAV file
-            </label>
-            <input
-              accept=".wav,audio/wav,audio/wave"
-              id="audio_file"
-              name="audio_file"
-              onChange={(event) =>
-                setSelectedFile(event.target.files?.[0] ?? null)
-              }
-              type="file"
-            />
-          </div>
-
-          <button
-            className="border border-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
-            disabled={isLoading}
-            type="submit"
-          >
-            {isLoading ? "Analyzing..." : "Analyze"}
-          </button>
-        </form>
-
-        {error ? (
-          <div className="border border-red-400 p-3 text-sm" role="alert">
-            {error}
-          </div>
-        ) : null}
-
-        {analysis ? (
-          <AnalysisResult
+          <LatestResult
             analysis={analysis}
             comparison={practiceComparison}
             historySessions={historySessions}
           />
-        ) : null}
+        </div>
 
         <PracticeHistory
           hasMounted={hasMounted}
@@ -234,19 +171,157 @@ export default function PracticeCoachClient({
   );
 }
 
-function AnalysisResult({
+function PracticeSetup({
+  error,
+  isLoading,
+  onDescriptionChange,
+  onFileChange,
+  onFocusChange,
+  onSubmit,
+  practiceDescription,
+  practiceFocus,
+  selectedFile,
+}: {
+  error: string;
+  isLoading: boolean;
+  onDescriptionChange: (value: string) => void;
+  onFileChange: (file: File | null) => void;
+  onFocusChange: (focus: PracticeFocus) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  practiceDescription: string;
+  practiceFocus: PracticeFocus;
+  selectedFile: File | null;
+}) {
+  return (
+    <section className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+      <form className="space-y-5" onSubmit={onSubmit}>
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold">Practice setup</h2>
+          <p className="text-sm text-neutral-600">
+            Tell the coach what to listen for, then upload a .wav take.
+          </p>
+        </div>
+
+        <section className="space-y-3">
+          <h3 className="font-semibold">What are you practicing?</h3>
+          <div className="space-y-2">
+            <label
+              className="block text-sm font-medium"
+              htmlFor="practice_focus"
+            >
+              Practice focus
+            </label>
+            <select
+              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+              id="practice_focus"
+              name="practice_focus"
+              onChange={(event) =>
+                onFocusChange(event.target.value as PracticeFocus)
+              }
+              value={practiceFocus}
+            >
+              {PRACTICE_FOCUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label
+              className="block text-sm font-medium"
+              htmlFor="practice_description"
+            >
+              Describe what you were trying to play
+            </label>
+            <textarea
+              className="min-h-28 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              id="practice_description"
+              name="practice_description"
+              onChange={(event) => onDescriptionChange(event.target.value)}
+              placeholder="Clean pentatonic scale&#10;Nirvana-style power chord rhythm&#10;Eighth-note alternate picking&#10;Soft indie lead phrase"
+              rows={4}
+              value={practiceDescription}
+            />
+          </div>
+        </section>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium" htmlFor="audio_file">
+            WAV file
+          </label>
+          <input
+            accept=".wav,audio/wav,audio/wave"
+            className="block w-full text-sm"
+            id="audio_file"
+            name="audio_file"
+            onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
+            type="file"
+          />
+          {selectedFile ? (
+            <p className="text-xs text-neutral-500">
+              Selected: {selectedFile.name}
+            </p>
+          ) : null}
+        </div>
+
+        <button
+          className="w-full rounded-md border border-neutral-900 bg-neutral-900 px-3 py-2 text-sm text-white disabled:opacity-60"
+          disabled={isLoading}
+          type="submit"
+        >
+          {isLoading ? "Analyzing..." : "Analyze"}
+        </button>
+
+        {error ? (
+          <div
+            className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+            role="alert"
+          >
+            {error}
+          </div>
+        ) : null}
+      </form>
+    </section>
+  );
+}
+
+function LatestResult({
   analysis,
   comparison,
   historySessions,
 }: {
-  analysis: PracticeAudioAnalysisResponse;
+  analysis: PracticeAudioAnalysisResponse | null;
   comparison: PracticeComparison | null;
   historySessions: PracticeHistorySession[];
 }) {
+  if (!analysis) {
+    return (
+      <section className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">Latest result</h2>
+          <p className="text-sm text-neutral-600">
+            Choose a focus, upload a .wav take, and run the coach to see your
+            score and next steps here.
+          </p>
+          <div className="rounded-md border border-dashed border-neutral-300 p-4 text-sm text-neutral-600">
+            No take analyzed yet.
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="space-y-5">
+    <section className="space-y-6 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold">Latest result</h2>
+        <p className="text-sm text-neutral-600">{analysis.filename}</p>
+      </div>
+
       {analysis.practice_metrics ? (
-        <ScoreCard analysis={analysis} historySessions={historySessions} />
+        <ScoreSummary analysis={analysis} historySessions={historySessions} />
       ) : null}
 
       {analysis.coach_feedback ? (
@@ -261,7 +336,7 @@ function AnalysisResult({
   );
 }
 
-function ScoreCard({
+function ScoreSummary({
   analysis,
   historySessions,
 }: {
@@ -277,30 +352,53 @@ function ScoreCard({
   }
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-semibold">Score</h2>
-      <dl className="grid gap-3 text-sm sm:grid-cols-2">
-        <Field label="Overall score" value={metrics.overall_score} />
-        <Field
-          label="Recording quality"
-          value={quality?.quality_level ?? "Not available"}
-        />
-        <Field label="Attack activity" value={metrics.attack_activity} />
-        <Field
-          label="Latest overall score"
-          value={formatNullableScore(stats.latestOverallScore)}
-        />
-        <Field
-          label="Best overall score"
-          value={formatNullableScore(stats.bestOverallScore)}
-        />
-        <Field
-          label="Average overall score"
-          value={formatNullableScore(stats.averageOverallScore)}
-        />
-      </dl>
+    <section className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4">
+          <div className="text-sm text-neutral-500">Your score</div>
+          <div className="text-4xl font-semibold">{metrics.overall_score}</div>
+        </div>
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <Field
+            label="Practice focus"
+            value={
+              analysis.practice_context
+                ? PRACTICE_FOCUS_LABELS[analysis.practice_context.practice_focus]
+                : "Not available"
+            }
+          />
+          <Field
+            label="Recording quality"
+            value={quality?.quality_level ?? "Not available"}
+          />
+          <Field label="Attack activity" value={metrics.attack_activity} />
+          <Field
+            label="Latest overall score"
+            value={formatNullableScore(stats.latestOverallScore)}
+          />
+          <Field
+            label="Best overall score"
+            value={formatNullableScore(stats.bestOverallScore)}
+          />
+          <Field
+            label="Average overall score"
+            value={formatNullableScore(stats.averageOverallScore)}
+          />
+          {analysis.practice_context?.practice_description ? (
+            <Field
+              label="Goal"
+              value={analysis.practice_context.practice_description}
+            />
+          ) : null}
+        </dl>
+      </div>
       {analysis.coach_feedback?.score_explanation ? (
-        <p className="text-sm">{analysis.coach_feedback.score_explanation}</p>
+        <section className="space-y-1">
+          <h3 className="font-semibold">What this means</h3>
+          <p className="text-sm text-neutral-700">
+            {analysis.coach_feedback.score_explanation}
+          </p>
+        </section>
       ) : null}
     </section>
   );
@@ -412,15 +510,19 @@ function CoachFeedback({
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Coach feedback</h2>
       {context ? <PracticeContextSummary context={context} /> : null}
-      <h3 className="font-semibold">{feedback.headline}</h3>
-      <p className="text-sm">{feedback.summary}</p>
-      <ListSection title="What went well" items={feedback.what_went_well} />
-      <ListSection title="Work on" items={feedback.work_on} />
-      <ListSection
-        title="Next practice steps"
-        items={feedback.next_practice_steps}
-      />
-      <ListSection title="Coach notes" items={feedback.coach_notes} />
+      <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4">
+        <h3 className="font-semibold">{feedback.headline}</h3>
+        <p className="mt-2 text-sm text-neutral-700">{feedback.summary}</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <ListSection title="What went well" items={feedback.what_went_well} />
+        <ListSection title="Work on" items={feedback.work_on} />
+        <ListSection
+          title="Next practice steps"
+          items={feedback.next_practice_steps}
+        />
+        <ListSection title="Coach notes" items={feedback.coach_notes} />
+      </div>
     </section>
   );
 }
@@ -449,7 +551,7 @@ function PracticeComparisonResult({
   comparison: PracticeComparison;
 }) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
       <h2 className="text-xl font-semibold">
         Progress compared to last similar session
       </h2>
@@ -491,8 +593,8 @@ function TechnicalDetails({
   analysis: PracticeAudioAnalysisResponse;
 }) {
   return (
-    <details className="space-y-4">
-      <summary className="cursor-pointer text-xl font-semibold">
+    <details className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+      <summary className="cursor-pointer text-xl font-semibold text-neutral-900">
         Technical details
       </summary>
 
@@ -646,7 +748,7 @@ function PracticeHistory({
   const stats = summarizePracticeHistory(sessions);
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">Practice history</h2>
         <p className="text-sm text-neutral-600">
@@ -687,7 +789,7 @@ function PracticeHistory({
           </dl>
 
           <button
-            className="border border-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
+            className="rounded-md border border-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
             disabled={sessions.length === 0}
             onClick={onClearHistory}
             type="button"
@@ -696,9 +798,12 @@ function PracticeHistory({
           </button>
 
           {sessions.length > 0 ? (
-            <ul className="space-y-3 text-sm">
+            <ul className="grid gap-3 text-sm lg:grid-cols-2">
               {sessions.map((session) => (
-                <li className="space-y-1" key={session.id}>
+                <li
+                  className="space-y-1 rounded-md border border-neutral-200 p-3"
+                  key={session.id}
+                >
                   <div>
                     <strong>{session.filename}</strong>
                   </div>

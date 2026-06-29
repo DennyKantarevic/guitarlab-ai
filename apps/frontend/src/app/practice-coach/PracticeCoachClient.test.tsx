@@ -205,9 +205,22 @@ describe("PracticeCoachClient", () => {
   test("renders a wav file input", () => {
     render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
 
+    expect(screen.getByText("Practice setup")).toBeDefined();
     const input = screen.getByLabelText("WAV file");
     expect(input).toBeDefined();
     expect(input.getAttribute("accept")).toBe(".wav,audio/wav,audio/wave");
+    expect(screen.getByRole("button", { name: "Analyze" })).toBeDefined();
+  });
+
+  test("renders an empty latest result state before analysis", () => {
+    render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    expect(screen.getByText("Latest result")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Choose a focus, upload a .wav take, and run the coach to see your score and next steps here.",
+      ),
+    ).toBeDefined();
   });
 
   test("renders practice focus controls with general as the default", () => {
@@ -307,14 +320,14 @@ describe("PracticeCoachClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Score")).toBeDefined();
+      expect(screen.getByText("Latest result")).toBeDefined();
     });
 
     const pageText = container.textContent || "";
-    expect(pageText.indexOf("Score")).toBeLessThan(
+    expect(pageText.indexOf("Latest result")).toBeLessThan(
       pageText.indexOf("Coach feedback"),
     );
-    expect(pageText.indexOf("Coach feedback")).toBeLessThan(
+    expect(pageText.indexOf("Progress compared to last similar session")).toBeLessThan(
       pageText.indexOf("Practice history"),
     );
     expect(pageText.indexOf("Technical details")).toBeGreaterThan(
@@ -340,6 +353,7 @@ describe("PracticeCoachClient", () => {
         screen.getByText("This take is usable and ready for focused practice."),
       ).toBeDefined();
     });
+    expect(screen.getByText("Your score")).toBeDefined();
     expect(
       screen.getByText(
         "Your overall score is 82. Treat it as a snapshot of recording quality and playing activity, not a grade for note correctness.",
@@ -374,10 +388,10 @@ describe("PracticeCoachClient", () => {
     expect(screen.getAllByText("Timing and rhythm").length).toBeGreaterThanOrEqual(
       1,
     );
-    expect(screen.getByText("Goal")).toBeDefined();
+    expect(screen.getAllByText("Goal").length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByText("Working on eighth-note alternate picking"),
-    ).toBeDefined();
+      screen.getAllByText("Working on eighth-note alternate picking").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   test("shows first-session comparison when no previous same-focus session exists", async () => {
