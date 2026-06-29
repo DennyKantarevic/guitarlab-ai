@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, measured feedback, a narrow monophonic pitch-analysis foundation, and approximate monophonic note events. The frontend can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns a clear score, coach-facing feedback, practical next steps, rule-based practice metrics, recording-quality checks, fixed-length segment analysis, a narrow monophonic pitch-analysis foundation, and approximate monophonic note events. The frontend prioritizes the score and coaching feedback while keeping technical metrics in a secondary details section. It can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -73,12 +73,28 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
     }
   ],
   "coach_feedback": {
-    "summary": "Analyzed 1.00 seconds of audio. Recording quality is usable, attack activity is moderate, and brightness is dark.",
+    "headline": "This take gives you a practical baseline to improve from.",
+    "summary": "I analyzed 1.00 seconds of audio. The recording is usable for basic feedback, the note starts are coming through at a manageable pace, and the tone is on the darker side.",
+    "score_explanation": "Your overall score is 82. Treat it as a snapshot of recording quality and playing activity, not a grade for note correctness or true timing accuracy. This take is weighted by usable recording quality and moderate attack activity.",
+    "what_went_well": [
+      "The recording is usable for basic feedback, even though the setup could still be cleaner.",
+      "The note attacks are coming through consistently without feeling overcrowded."
+    ],
+    "work_on": [
+      "The clip is short, so record a longer phrase for more useful feedback."
+    ],
+    "next_practice_steps": [
+      "Record another take at the same settings and compare the measured scores."
+    ],
+    "coach_notes": [
+      "Approximate pitch tracking found a stable area around A4, but this is not note correctness scoring."
+    ],
     "strengths": [
-      "The recording is usable for basic audio feedback."
+      "The recording is usable for basic feedback, even though the setup could still be cleaner.",
+      "The note attacks are coming through consistently without feeling overcrowded."
     ],
     "focus_areas": [
-      "The clip is too short for reliable feedback."
+      "The clip is short, so record a longer phrase for more useful feedback."
     ],
     "next_steps": [
       "Record another take at the same settings and compare the measured scores."
@@ -130,7 +146,7 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `practice_metrics`: Basic deterministic scoring metrics for valid uploads. Invalid uploads return `practice_metrics: null`.
 - `recording_quality`: Recording setup checks for valid uploads. Invalid uploads return `recording_quality: null`.
 - `segment_analysis`: Fixed-length 5-second segment summaries for valid uploads. Invalid uploads return `segment_analysis: null`.
-- `coach_feedback`: Deterministic measured feedback for valid uploads. Invalid uploads return `coach_feedback: null`.
+- `coach_feedback`: Deterministic coach-facing feedback for valid uploads. Invalid uploads return `coach_feedback: null`.
 - `pitch_analysis`: Monophonic pitch estimate for valid uploads. Invalid uploads return `pitch_analysis: null`.
 - `note_events`: Approximate monophonic note events derived from stable pitch regions. Invalid uploads return `note_events: null`.
 
@@ -161,9 +177,20 @@ Each segment includes duration, onset count, onset density, mean RMS energy, mea
 
 ## Coach Feedback
 
-`coach_feedback` contains a summary, strengths, focus areas, and next steps. This feedback is deterministic and only uses measured audio values, recording quality, practice metrics, and segment analysis. If recording quality is poor, feedback focuses on recording setup first.
+`coach_feedback` is the main user-facing output. It translates measured values into practical language and avoids leading with raw metrics.
 
-Pitch-related feedback is conservative. When confidence is reasonable, feedback may mention that a stable pitch was detected around an estimated note. It does not say the player hit the correct note or played a riff/song correctly.
+- `headline`: One short coaching takeaway.
+- `summary`: A readable explanation of what was analyzed.
+- `score_explanation`: Explains what the score means and clarifies that it is not note correctness or true timing accuracy.
+- `what_went_well`: Two to four useful positives, written in musician-friendly language.
+- `work_on`: Two to four focus areas.
+- `next_practice_steps`: Concrete practice steps.
+- `coach_notes`: Conservative notes about approximate pitch or note-event analysis.
+- `strengths`, `focus_areas`, and `next_steps`: Compatibility aliases for older clients.
+
+This feedback is deterministic and only uses measured audio values, recording quality, practice metrics, segment analysis, pitch analysis, and note events. If recording quality is poor, feedback focuses on recording setup first.
+
+Pitch-related feedback is conservative. When confidence is reasonable, feedback may mention that approximate pitch tracking found a stable area around an estimated note. It does not say the player hit the correct note or played a riff/song correctly.
 
 ## Pitch Analysis
 
@@ -201,13 +228,13 @@ Audio files, waveform data, and full backend responses are not saved. History st
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
-- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, measured feedback, basic monophonic pitch estimates, and approximate note events only.
+- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, and approximate note events only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
 - Pitch estimates and note events are approximate and work best on clean single-note recordings.
 - There is no note correctness scoring yet.
 - There is no chord detection or polyphonic pitch detection.
 - It does not know whether the player hit the right notes or played a specific riff correctly.
-- It does not provide polished conversational coaching.
+- It does not provide LLM/agent-based conversational coaching.
 - It does not do pitch scoring, riff-to-tab, tab generation, or `.prst` export.
 - It does not compare against reference songs or riffs.
 - It does not call an LLM or agent.

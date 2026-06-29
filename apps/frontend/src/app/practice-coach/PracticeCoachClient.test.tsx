@@ -53,7 +53,22 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
     },
   ],
   coach_feedback: {
+    headline: "This take is usable and ready for focused practice.",
     summary: "Analyzed 3.25 seconds of audio.",
+    score_explanation:
+      "Your overall score is 82. Treat it as a snapshot of recording quality and playing activity, not a grade for note correctness.",
+    what_went_well: [
+      "Your take has a clear enough signal to analyze, and the note attacks are coming through consistently.",
+    ],
+    work_on: [
+      "Keep checking consistency between sections before pushing the tempo.",
+    ],
+    next_practice_steps: [
+      "Play the same phrase slower and make each note start cleanly.",
+    ],
+    coach_notes: [
+      "Pitch and note event estimates are approximate and work best on clean single-note recordings.",
+    ],
     strengths: ["The input level is strong enough to measure reliably."],
     focus_areas: ["Keep checking consistency between sections."],
     next_steps: ["Record another take at the same settings."],
@@ -167,6 +182,70 @@ describe("PracticeCoachClient", () => {
     } satisfies PracticeAudioRequest);
   });
 
+  test("overall score is displayed before technical details", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    const { container } = render(
+      <PracticeCoachClient analyzeAudio={analyzeAudio} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Score")).toBeDefined();
+    });
+
+    const pageText = container.textContent || "";
+    expect(pageText.indexOf("Score")).toBeLessThan(
+      pageText.indexOf("Coach feedback"),
+    );
+    expect(pageText.indexOf("Coach feedback")).toBeLessThan(
+      pageText.indexOf("Practice history"),
+    );
+    expect(pageText.indexOf("Technical details")).toBeGreaterThan(
+      pageText.indexOf("Practice history"),
+    );
+  });
+
+  test("coach-facing feedback renders headline, score explanation, and next steps", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("This take is usable and ready for focused practice."),
+      ).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "Your overall score is 82. Treat it as a snapshot of recording quality and playing activity, not a grade for note correctness.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByText("What went well")).toBeDefined();
+    expect(screen.getByText("Work on")).toBeDefined();
+    expect(screen.getByText("Next practice steps")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Play the same phrase slower and make each note start cleanly.",
+      ),
+    ).toBeDefined();
+  });
+
   test("successful analysis saves a compact session to localStorage", async () => {
     const audioFile = new File(["wav-bytes"], "practice.wav", {
       type: "audio/wav",
@@ -202,7 +281,7 @@ describe("PracticeCoachClient", () => {
       energy_level: "medium",
       brightness_level: "balanced",
       summary: "Analyzed 3.25 seconds of audio.",
-      next_steps: ["Record another take at the same settings."],
+      next_steps: ["Play the same phrase slower and make each note start cleanly."],
     });
     expect(session.id).toEqual(expect.any(String));
     expect(session.created_at).toEqual(expect.any(String));
@@ -228,10 +307,34 @@ describe("PracticeCoachClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Recording quality")).toBeDefined();
+      expect(screen.getAllByText("Recording quality").length).toBeGreaterThanOrEqual(
+        1,
+      );
     });
     expect(screen.getAllByText("good").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("The recording is usable for testing.")).toBeDefined();
+  });
+
+  test("technical details are accessible but secondary", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Technical details")).toBeDefined();
+    });
+    expect(screen.getAllByText("RMS energy mean").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Segment analysis")).toBeDefined();
+    expect(screen.getByText("Pitch Analysis")).toBeDefined();
+    expect(screen.getByText("Detected Note Events")).toBeDefined();
   });
 
   test("segment analysis renders when present", async () => {
@@ -271,7 +374,11 @@ describe("PracticeCoachClient", () => {
       expect(screen.getByText("Coach feedback")).toBeDefined();
     });
     expect(screen.getByText("Analyzed 3.25 seconds of audio.")).toBeDefined();
-    expect(screen.getByText("Record another take at the same settings.")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Play the same phrase slower and make each note start cleanly.",
+      ),
+    ).toBeDefined();
   });
 
   test("pitch analysis renders when present", async () => {
@@ -362,11 +469,21 @@ describe("PracticeCoachClient", () => {
       expect(screen.getByText("Practice history")).toBeDefined();
     });
     expect(screen.getByText("1 saved session")).toBeDefined();
-    expect(screen.getByText("Latest overall score")).toBeDefined();
-    expect(screen.getByText("Best overall score")).toBeDefined();
-    expect(screen.getByText("Average overall score")).toBeDefined();
+    expect(screen.getAllByText("Latest overall score").length).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(screen.getAllByText("Best overall score").length).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(
+      screen.getAllByText("Average overall score").length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Latest recording quality")).toBeDefined();
-    expect(screen.getByText("Record another take at the same settings.")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Play the same phrase slower and make each note start cleanly.",
+      ),
+    ).toBeDefined();
   });
 
   test("Clear History removes saved sessions", async () => {

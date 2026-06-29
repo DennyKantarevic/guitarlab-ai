@@ -52,7 +52,18 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
     },
   ],
   coach_feedback: {
+    headline: "This take is usable and ready for focused practice.",
     summary: "Analyzed 3.25 seconds of audio.",
+    score_explanation:
+      "Your overall score is 82. Treat it as a snapshot of recording quality and playing activity, not a grade for note correctness.",
+    what_went_well: ["The input level is strong enough to measure reliably."],
+    work_on: ["Keep checking consistency between sections."],
+    next_practice_steps: [
+      "Play the same phrase slower and make each note start cleanly.",
+    ],
+    coach_notes: [
+      "Pitch and note event estimates are approximate and work best on clean single-note recordings.",
+    ],
     strengths: ["Good recording level."],
     focus_areas: [],
     next_steps: ["Record another take at the same settings."],
@@ -119,7 +130,7 @@ describe("practice history", () => {
       energy_level: "medium",
       brightness_level: "balanced",
       summary: "Analyzed 3.25 seconds of audio.",
-      next_steps: ["Record another take at the same settings."],
+      next_steps: ["Play the same phrase slower and make each note start cleanly."],
     });
     expect(readPracticeHistory(window.localStorage)).toEqual(sessions);
   });

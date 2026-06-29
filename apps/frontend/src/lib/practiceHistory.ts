@@ -122,7 +122,10 @@ function buildPracticeSession(
     energy_level: analysis.practice_metrics?.energy_level ?? null,
     brightness_level: analysis.practice_metrics?.brightness_level ?? null,
     summary: analysis.coach_feedback?.summary ?? null,
-    next_steps: analysis.coach_feedback?.next_steps ?? [],
+    next_steps:
+      analysis.coach_feedback?.next_practice_steps ??
+      analysis.coach_feedback?.next_steps ??
+      [],
   };
 }
 

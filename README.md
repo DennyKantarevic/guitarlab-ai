@@ -5,7 +5,7 @@ GuitarLab AI is a monorepo for guitar-focused web tools.
 Current MVPs:
 
 * **Valeton GP-200 Tone Maker**: generate structured GP-200 patch JSON from a tone goal, pickup type, and connection mode.
-* **Practice Coach**: upload a `.wav` guitar recording and return deterministic audio-analysis features, basic practice scoring metrics, recording-quality checks, segment analysis, measured feedback, basic monophonic pitch estimates, approximate note events, and local browser practice history.
+* **Practice Coach**: upload a `.wav` guitar recording and return a clear score, deterministic coach-facing feedback, practical next steps, audio-analysis features, basic practice scoring metrics, recording-quality checks, basic monophonic pitch estimates, approximate note events, and local browser practice history.
 
 The project uses a Next.js TypeScript frontend and a FastAPI Python backend.
 
@@ -148,9 +148,22 @@ http://localhost:3000/practice-coach
 1. Open `http://localhost:3000/practice-coach`.
 2. Upload a `.wav` file.
 3. Click **Analyze**.
-4. Confirm the page shows audio analysis fields, `practice_metrics`, `recording_quality`, `segment_analysis`, `coach_feedback`, `pitch_analysis`, `note_events`, and Practice history.
+4. Confirm the page shows a score, coach feedback, practice history, and a secondary Technical details section.
 
 Expected displayed fields include:
+
+* `practice_metrics.overall_score`
+* `recording_quality.quality_level`
+* `practice_metrics.attack_activity`
+* `coach_feedback.headline`
+* `coach_feedback.summary`
+* `coach_feedback.score_explanation`
+* `coach_feedback.what_went_well`
+* `coach_feedback.work_on`
+* `coach_feedback.next_practice_steps`
+* local Practice history score summaries
+
+Technical details remain available in the secondary section and include:
 
 * `filename`
 * `duration_seconds`
@@ -160,22 +173,13 @@ Expected displayed fields include:
 * `rms_energy_mean`
 * `spectral_centroid_mean`
 * `zero_crossing_rate_mean`
-* `valid`
-* `errors`
-* `practice_metrics.overall_score`
-* `practice_metrics.timing_activity_score`
-* `practice_metrics.recording_quality_score`
-* `practice_metrics.recommendations`
-* `recording_quality.quality_level`
-* `recording_quality.warnings`
+* `practice_metrics`
+* `recording_quality`
 * `segment_analysis`
-* `coach_feedback.summary`
-* `coach_feedback.next_steps`
 * `pitch_analysis.estimated_note`
 * `pitch_analysis.estimated_frequency_hz`
 * `pitch_analysis.detected_notes`
 * `note_events`
-* local Practice history score summaries
 
 Practice history is stored only in the current browser with `localStorage`. Uploaded audio files are not saved, and history is not sent to the backend.
 
@@ -273,7 +277,7 @@ Implemented:
 * Practice Coach backend endpoint at `POST /practice/analyze-audio`
 * Practice Coach `.wav` audio-analysis features
 * Practice Coach deterministic `practice_metrics` scoring
-* Practice Coach recording-quality checks, fixed-length segment analysis, and deterministic measured feedback
+* Practice Coach recording-quality checks, fixed-length segment analysis, deterministic coach-facing feedback, and practical next steps
 * Practice Coach basic monophonic pitch estimates, note-name summaries, and approximate note events
 * Practice Coach local browser history for recent compact score summaries
 
@@ -286,7 +290,7 @@ Not implemented yet:
 * note correctness scoring, chord detection, or polyphonic pitch detection
 * riff-to-tab or tab generation
 * reference song/riff comparison
-* polished conversational coaching
+* LLM/agent-based conversational coaching
 
 Practice Coach timing/activity fields, pitch estimates, and note events are proxies from detected audio features. They are not true rhythmic accuracy, exact pitch accuracy, note correctness, or song/riff matching.
 

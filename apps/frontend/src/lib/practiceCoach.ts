@@ -36,7 +36,13 @@ export type SegmentAnalysis = {
 };
 
 export type CoachFeedback = {
+  headline: string;
   summary: string;
+  score_explanation: string;
+  what_went_well: string[];
+  work_on: string[];
+  next_practice_steps: string[];
+  coach_notes: string[];
   strengths: string[];
   focus_areas: string[];
   next_steps: string[];

@@ -7,6 +7,7 @@ import wave
 import httpx
 
 from app.main import app
+from app.services.practice_feedback import build_coach_feedback
 
 
 REQUIRED_FIELDS = {
@@ -63,7 +64,13 @@ SEGMENT_FIELDS = {
 }
 
 COACH_FEEDBACK_FIELDS = {
+    "headline",
     "summary",
+    "score_explanation",
+    "what_went_well",
+    "work_on",
+    "next_practice_steps",
+    "coach_notes",
     "strengths",
     "focus_areas",
     "next_steps",
@@ -236,7 +243,13 @@ def test_valid_generated_sine_wave_returns_audio_features():
 
     feedback = analysis["coach_feedback"]
     assert set(feedback) == COACH_FEEDBACK_FIELDS
+    assert isinstance(feedback["headline"], str)
     assert isinstance(feedback["summary"], str)
+    assert isinstance(feedback["score_explanation"], str)
+    assert isinstance(feedback["what_went_well"], list)
+    assert isinstance(feedback["work_on"], list)
+    assert isinstance(feedback["next_practice_steps"], list)
+    assert isinstance(feedback["coach_notes"], list)
     assert isinstance(feedback["strengths"], list)
     assert isinstance(feedback["focus_areas"], list)
     assert isinstance(feedback["next_steps"], list)
@@ -364,6 +377,93 @@ def test_endpoint_response_contains_no_llm_or_agent_references():
     assert "llm" not in serialized
     assert "agent" not in serialized
     assert "openai" not in serialized
+
+
+def test_coach_feedback_uses_musician_friendly_fields():
+    response = post_audio(
+        {
+            "audio_file": (
+                "practice.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        }
+    )
+
+    assert response.status_code == 200
+    feedback = response.json()["coach_feedback"]
+
+    assert feedback["headline"]
+    assert "score" in feedback["score_explanation"].lower()
+    assert feedback["what_went_well"]
+    assert feedback["work_on"]
+    assert feedback["next_practice_steps"]
+    assert feedback["coach_notes"]
+    assert any("practice" in step.lower() for step in feedback["next_practice_steps"])
+
+
+def test_low_recording_quality_produces_setup_focused_feedback():
+    response = post_audio(
+        {
+            "audio_file": (
+                "silence.wav",
+                make_silence_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        }
+    )
+
+    assert response.status_code == 200
+    feedback_text = serialize_feedback(response.json()["coach_feedback"])
+
+    assert "recording setup" in feedback_text
+    assert "input" in feedback_text or "source" in feedback_text
+
+
+def test_busy_attack_activity_produces_slower_practice_advice():
+    feedback = build_coach_feedback(
+        analysis={"duration_seconds": 3.0},
+        practice_metrics={
+            "overall_score": 68,
+            "energy_level": "medium",
+            "brightness_level": "balanced",
+            "attack_activity": "busy",
+        },
+        recording_quality={"quality_level": "good", "warnings": []},
+        segment_analysis=[],
+    )
+
+    feedback_text = serialize_feedback(feedback)
+
+    assert "slower" in feedback_text
+    assert "metronome" in feedback_text
+
+
+def test_feedback_does_not_claim_note_riff_or_song_correctness():
+    response = post_audio(
+        {
+            "audio_file": (
+                "practice.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        }
+    )
+
+    assert response.status_code == 200
+    feedback_text = serialize_feedback(response.json()["coach_feedback"])
+
+    forbidden_claims = [
+        "correct note",
+        "wrong note",
+        "riff is correct",
+        "matches the song",
+        "played nirvana",
+        "rhythmically accurate",
+        "rhythmically inaccurate",
+    ]
+    for claim in forbidden_claims:
+        assert claim not in feedback_text
 
 
 def test_practice_metrics_are_deterministic_for_same_generated_audio():
@@ -507,3 +607,7 @@ def test_silent_audio_returns_low_confidence_pitch_analysis():
     assert isinstance(pitch["pitch_warnings"], list)
     assert "No stable monophonic pitch was detected." in pitch["pitch_warnings"]
     assert analysis["note_events"] == []
+
+
+def serialize_feedback(feedback):
+    return json.dumps(feedback).lower()

@@ -111,12 +111,19 @@ export default function PracticeCoachClient({
           </div>
         ) : null}
 
-        {analysis ? <AnalysisResult analysis={analysis} /> : null}
+        {analysis ? (
+          <AnalysisResult
+            analysis={analysis}
+            historySessions={historySessions}
+          />
+        ) : null}
 
         <PracticeHistory
           onClearHistory={handleClearHistory}
           sessions={historySessions}
         />
+
+        {analysis ? <TechnicalDetails analysis={analysis} /> : null}
       </div>
     </main>
   );
@@ -124,55 +131,65 @@ export default function PracticeCoachClient({
 
 function AnalysisResult({
   analysis,
+  historySessions,
 }: {
   analysis: PracticeAudioAnalysisResponse;
+  historySessions: PracticeHistorySession[];
 }) {
   return (
     <section className="space-y-5">
-      <h2 className="text-xl font-semibold">Audio analysis</h2>
-
-      <dl className="grid gap-3 text-sm sm:grid-cols-2">
-        <Field label="Filename" value={analysis.filename} />
-        <Field label="Duration seconds" value={analysis.duration_seconds} />
-        <Field label="Sample rate" value={analysis.sample_rate} />
-        <Field label="Tempo BPM" value={analysis.tempo_bpm ?? "Not detected"} />
-        <Field label="Onset count" value={analysis.onset_count} />
-        <Field label="RMS energy mean" value={analysis.rms_energy_mean} />
-        <Field
-          label="Spectral centroid mean"
-          value={analysis.spectral_centroid_mean}
-        />
-        <Field
-          label="Zero crossing rate mean"
-          value={analysis.zero_crossing_rate_mean}
-        />
-        <Field label="Valid" value={analysis.valid ? "true" : "false"} />
-      </dl>
-
-      <ListSection title="Analysis warnings" items={analysis.analysis_warnings} />
-      <ListSection title="Errors" items={analysis.errors} emptyText="No errors." />
-
       {analysis.practice_metrics ? (
-        <PracticeMetrics metrics={analysis.practice_metrics} />
-      ) : null}
-
-      {analysis.recording_quality ? (
-        <RecordingQuality quality={analysis.recording_quality} />
-      ) : null}
-
-      {analysis.segment_analysis ? (
-        <SegmentAnalysis segments={analysis.segment_analysis} />
+        <ScoreCard analysis={analysis} historySessions={historySessions} />
       ) : null}
 
       {analysis.coach_feedback ? (
         <CoachFeedback feedback={analysis.coach_feedback} />
       ) : null}
+    </section>
+  );
+}
 
-      {analysis.pitch_analysis ? (
-        <PitchAnalysis analysis={analysis.pitch_analysis} />
+function ScoreCard({
+  analysis,
+  historySessions,
+}: {
+  analysis: PracticeAudioAnalysisResponse;
+  historySessions: PracticeHistorySession[];
+}) {
+  const metrics = analysis.practice_metrics;
+  const quality = analysis.recording_quality;
+  const stats = summarizePracticeHistory(historySessions);
+
+  if (!metrics) {
+    return null;
+  }
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Score</h2>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field label="Overall score" value={metrics.overall_score} />
+        <Field
+          label="Recording quality"
+          value={quality?.quality_level ?? "Not available"}
+        />
+        <Field label="Attack activity" value={metrics.attack_activity} />
+        <Field
+          label="Latest overall score"
+          value={formatNullableScore(stats.latestOverallScore)}
+        />
+        <Field
+          label="Best overall score"
+          value={formatNullableScore(stats.bestOverallScore)}
+        />
+        <Field
+          label="Average overall score"
+          value={formatNullableScore(stats.averageOverallScore)}
+        />
+      </dl>
+      {analysis.coach_feedback?.score_explanation ? (
+        <p className="text-sm">{analysis.coach_feedback.score_explanation}</p>
       ) : null}
-
-      {analysis.note_events ? <NoteEvents events={analysis.note_events} /> : null}
     </section>
   );
 }
@@ -280,11 +297,85 @@ function CoachFeedback({
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Coach feedback</h2>
+      <h3 className="font-semibold">{feedback.headline}</h3>
       <p className="text-sm">{feedback.summary}</p>
-      <ListSection title="Strengths" items={feedback.strengths} />
-      <ListSection title="Focus areas" items={feedback.focus_areas} />
-      <ListSection title="Next steps" items={feedback.next_steps} />
+      <ListSection title="What went well" items={feedback.what_went_well} />
+      <ListSection title="Work on" items={feedback.work_on} />
+      <ListSection
+        title="Next practice steps"
+        items={feedback.next_practice_steps}
+      />
+      <ListSection title="Coach notes" items={feedback.coach_notes} />
     </section>
+  );
+}
+
+function TechnicalDetails({
+  analysis,
+}: {
+  analysis: PracticeAudioAnalysisResponse;
+}) {
+  return (
+    <details className="space-y-4">
+      <summary className="cursor-pointer text-xl font-semibold">
+        Technical details
+      </summary>
+
+      <section className="space-y-5 pt-4">
+        <h2 className="text-xl font-semibold">Raw analysis details</h2>
+
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <Field label="Filename" value={analysis.filename} />
+          <Field label="Duration seconds" value={analysis.duration_seconds} />
+          <Field label="Sample rate" value={analysis.sample_rate} />
+          <Field
+            label="Tempo BPM"
+            value={analysis.tempo_bpm ?? "Not detected"}
+          />
+          <Field label="Onset count" value={analysis.onset_count} />
+          <Field label="RMS energy mean" value={analysis.rms_energy_mean} />
+          <Field
+            label="Spectral centroid mean"
+            value={analysis.spectral_centroid_mean}
+          />
+          <Field
+            label="Zero crossing rate mean"
+            value={analysis.zero_crossing_rate_mean}
+          />
+          <Field label="Valid" value={analysis.valid ? "true" : "false"} />
+        </dl>
+
+        <ListSection
+          title="Analysis warnings"
+          items={analysis.analysis_warnings}
+        />
+        <ListSection
+          title="Errors"
+          items={analysis.errors}
+          emptyText="No errors."
+        />
+
+        {analysis.practice_metrics ? (
+          <PracticeMetrics metrics={analysis.practice_metrics} />
+        ) : null}
+
+        {analysis.recording_quality ? (
+          <RecordingQuality quality={analysis.recording_quality} />
+        ) : null}
+
+        {analysis.segment_analysis ? (
+          <SegmentAnalysis segments={analysis.segment_analysis} />
+        ) : null}
+
+        {analysis.pitch_analysis ? (
+          <PitchAnalysis analysis={analysis.pitch_analysis} />
+        ) : null}
+
+        {analysis.note_events ? (
+          <NoteEvents events={analysis.note_events} />
+        ) : null}
+      </section>
+    </details>
   );
 }
 

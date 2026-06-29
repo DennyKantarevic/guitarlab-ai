@@ -43,7 +43,13 @@ class SegmentAnalysis(BaseModel):
 
 
 class CoachFeedback(BaseModel):
+    headline: str
     summary: str
+    score_explanation: str
+    what_went_well: list[str] = Field(default_factory=list)
+    work_on: list[str] = Field(default_factory=list)
+    next_practice_steps: list[str] = Field(default_factory=list)
+    coach_notes: list[str] = Field(default_factory=list)
     strengths: list[str] = Field(default_factory=list)
     focus_areas: list[str] = Field(default_factory=list)
     next_steps: list[str] = Field(default_factory=list)
