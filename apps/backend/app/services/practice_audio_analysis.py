@@ -7,6 +7,8 @@ import librosa
 import numpy as np
 from fastapi import UploadFile
 
+from app.services.practice_scoring import score_practice_analysis
+
 
 SUPPORTED_AUDIO_EXTENSIONS = {".wav"}
 
@@ -41,7 +43,7 @@ async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any
         onset_frames = librosa.onset.onset_detect(y=audio, sr=sample_rate)
         tempo_bpm = estimate_tempo(audio, sample_rate, len(onset_frames))
 
-        return {
+        analysis = {
             "filename": filename,
             "duration_seconds": float(librosa.get_duration(y=audio, sr=sample_rate)),
             "sample_rate": int(sample_rate),
@@ -58,6 +60,8 @@ async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any
             "valid": True,
             "errors": [],
         }
+        analysis["practice_metrics"] = score_practice_analysis(analysis)
+        return analysis
     except Exception:
         return build_invalid_response(filename, ["Could not decode audio file."])
     finally:
@@ -100,4 +104,5 @@ def build_invalid_response(filename: str, errors: list[str]) -> dict[str, Any]:
         "analysis_warnings": [],
         "valid": False,
         "errors": errors,
+        "practice_metrics": None,
     }

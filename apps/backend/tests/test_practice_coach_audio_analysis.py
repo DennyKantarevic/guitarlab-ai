@@ -21,6 +21,18 @@ REQUIRED_FIELDS = {
     "analysis_warnings",
     "valid",
     "errors",
+    "practice_metrics",
+}
+
+PRACTICE_METRIC_FIELDS = {
+    "overall_score",
+    "timing_activity_score",
+    "recording_quality_score",
+    "onset_density_per_second",
+    "energy_level",
+    "brightness_level",
+    "attack_activity",
+    "recommendations",
 }
 
 
@@ -87,6 +99,21 @@ def test_valid_generated_sine_wave_returns_audio_features():
     assert isinstance(analysis["zero_crossing_rate_mean"], (int, float))
     assert isinstance(analysis["analysis_warnings"], list)
 
+    metrics = analysis["practice_metrics"]
+    assert set(metrics) == PRACTICE_METRIC_FIELDS
+    assert math.isclose(
+        metrics["onset_density_per_second"],
+        analysis["onset_count"] / analysis["duration_seconds"],
+        rel_tol=1e-6,
+    )
+    assert 0 <= metrics["overall_score"] <= 100
+    assert 0 <= metrics["recording_quality_score"] <= 100
+    assert 0 <= metrics["timing_activity_score"] <= 100
+    assert metrics["energy_level"] in {"low", "medium", "high"}
+    assert metrics["brightness_level"] in {"dark", "balanced", "bright"}
+    assert metrics["attack_activity"] in {"sparse", "moderate", "busy"}
+    assert isinstance(metrics["recommendations"], list)
+
 
 def test_unsupported_extension_returns_clear_error():
     response = post_audio(
@@ -103,6 +130,7 @@ def test_unsupported_extension_returns_clear_error():
     analysis = response.json()
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Unsupported audio format. Only .wav files are supported."]
+    assert analysis["practice_metrics"] is None
 
 
 def test_empty_file_returns_clear_error():
@@ -120,6 +148,7 @@ def test_empty_file_returns_clear_error():
     analysis = response.json()
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Empty audio file."]
+    assert analysis["practice_metrics"] is None
 
 
 def test_missing_file_returns_clear_error():
@@ -129,6 +158,7 @@ def test_missing_file_returns_clear_error():
     analysis = response.json()
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Missing audio file."]
+    assert analysis["practice_metrics"] is None
 
 
 def test_invalid_wav_returns_clear_decode_error():
@@ -146,6 +176,7 @@ def test_invalid_wav_returns_clear_decode_error():
     analysis = response.json()
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Could not decode audio file."]
+    assert analysis["practice_metrics"] is None
 
 
 def test_endpoint_response_contains_no_llm_or_agent_references():
@@ -164,3 +195,32 @@ def test_endpoint_response_contains_no_llm_or_agent_references():
     assert "llm" not in serialized
     assert "agent" not in serialized
     assert "openai" not in serialized
+
+
+def test_practice_metrics_are_deterministic_for_same_generated_audio():
+    audio_bytes = make_sine_wave_bytes()
+
+    first_response = post_audio(
+        {
+            "audio_file": (
+                "practice.wav",
+                audio_bytes,
+                "audio/wav",
+            )
+        }
+    )
+    second_response = post_audio(
+        {
+            "audio_file": (
+                "practice.wav",
+                audio_bytes,
+                "audio/wav",
+            )
+        }
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert first_response.json()["practice_metrics"] == second_response.json()[
+        "practice_metrics"
+    ]
