@@ -19,6 +19,10 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
   analysis_warnings: [],
   valid: true,
   errors: [],
+  practice_context: {
+    practice_focus: "timing",
+    practice_description: "Working on eighth-note alternate picking",
+  },
   practice_metrics: {
     overall_score: 82,
     timing_activity_score: 78,
@@ -125,6 +129,8 @@ describe("practice history", () => {
       overall_score: 82,
       timing_activity_score: 78,
       recording_quality_score: 86,
+      practice_focus: "timing",
+      practice_description: "Working on eighth-note alternate picking",
       quality_level: "good",
       attack_activity: "moderate",
       energy_level: "medium",
@@ -133,6 +139,49 @@ describe("practice history", () => {
       next_steps: ["Play the same phrase slower and make each note start cleanly."],
     });
     expect(readPracticeHistory(window.localStorage)).toEqual(sessions);
+  });
+
+  test("old saved sessions without context load safely", () => {
+    window.localStorage.setItem(
+      PRACTICE_HISTORY_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "old-session",
+          created_at: "2026-06-29T01:00:00.000Z",
+          filename: "old.wav",
+          duration_seconds: 2,
+          overall_score: 77,
+          timing_activity_score: 70,
+          recording_quality_score: 84,
+          quality_level: "usable",
+          attack_activity: "sparse",
+          energy_level: "medium",
+          brightness_level: "balanced",
+          summary: "Older session.",
+          next_steps: ["Record another take."],
+        },
+      ]),
+    );
+
+    expect(readPracticeHistory(window.localStorage)).toEqual([
+      {
+        id: "old-session",
+        created_at: "2026-06-29T01:00:00.000Z",
+        filename: "old.wav",
+        duration_seconds: 2,
+        overall_score: 77,
+        timing_activity_score: 70,
+        recording_quality_score: 84,
+        practice_focus: null,
+        practice_description: null,
+        quality_level: "usable",
+        attack_activity: "sparse",
+        energy_level: "medium",
+        brightness_level: "balanced",
+        summary: "Older session.",
+        next_steps: ["Record another take."],
+      },
+    ]);
   });
 
   test("invalid analysis does not save history", () => {
@@ -200,6 +249,7 @@ describe("practice history", () => {
     expect(session).not.toHaveProperty("recording_quality");
     expect(session).not.toHaveProperty("segment_analysis");
     expect(session).not.toHaveProperty("coach_feedback");
+    expect(session).not.toHaveProperty("practice_context");
     expect(session).not.toHaveProperty("pitch_analysis");
     expect(session).not.toHaveProperty("note_events");
   });

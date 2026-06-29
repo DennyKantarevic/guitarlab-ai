@@ -410,6 +410,8 @@ describe("PracticeCoachClient", () => {
       overall_score: 82,
       timing_activity_score: 78,
       recording_quality_score: 86,
+      practice_focus: "timing",
+      practice_description: "Working on eighth-note alternate picking",
       quality_level: "good",
       attack_activity: "moderate",
       energy_level: "medium",
@@ -423,6 +425,7 @@ describe("PracticeCoachClient", () => {
     expect(session).not.toHaveProperty("sample_rate");
     expect(session).not.toHaveProperty("practice_metrics");
     expect(session).not.toHaveProperty("coach_feedback");
+    expect(session).not.toHaveProperty("practice_context");
     expect(session).not.toHaveProperty("pitch_analysis");
     expect(session).not.toHaveProperty("note_events");
   });
@@ -613,6 +616,10 @@ describe("PracticeCoachClient", () => {
       screen.getAllByText("Average overall score").length,
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Latest recording quality")).toBeDefined();
+    expect(screen.getByText("Practice focus: Timing and rhythm")).toBeDefined();
+    expect(
+      screen.getByText("Goal: Working on eighth-note alternate picking"),
+    ).toBeDefined();
     expect(
       screen.getByText(
         "Play the same phrase slower and make each note start cleanly.",

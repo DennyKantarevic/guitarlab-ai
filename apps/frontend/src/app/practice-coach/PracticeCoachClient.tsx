@@ -651,6 +651,15 @@ function PracticeHistory({
                   <div>
                     Overall score: {formatNullableScore(session.overall_score)}
                   </div>
+                  {session.practice_focus ? (
+                    <div>
+                      Practice focus:{" "}
+                      {PRACTICE_FOCUS_LABELS[session.practice_focus]}
+                    </div>
+                  ) : null}
+                  {session.practice_description ? (
+                    <div>Goal: {session.practice_description}</div>
+                  ) : null}
                   <div>
                     Recording quality: {session.quality_level ?? "Not available"}
                   </div>

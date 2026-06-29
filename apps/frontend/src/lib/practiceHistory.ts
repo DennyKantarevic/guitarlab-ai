@@ -1,4 +1,4 @@
-import type { PracticeAudioAnalysisResponse } from "./practiceCoach";
+import type { PracticeAudioAnalysisResponse, PracticeFocus } from "./practiceCoach";
 
 export const PRACTICE_HISTORY_STORAGE_KEY =
   "guitarlab.practiceCoach.sessions.v1";
@@ -13,6 +13,8 @@ export type PracticeHistorySession = {
   overall_score: number | null;
   timing_activity_score: number | null;
   recording_quality_score: number | null;
+  practice_focus: PracticeFocus | null;
+  practice_description: string | null;
   quality_level: "poor" | "usable" | "good" | null;
   attack_activity: "sparse" | "moderate" | "busy" | null;
   energy_level: "low" | "medium" | "high" | null;
@@ -72,6 +74,7 @@ export function readPracticeHistory(
 
     return parsedHistory
       .filter(isPracticeHistorySession)
+      .map(normalizePracticeHistorySession)
       .slice(0, MAX_HISTORY_SESSIONS);
   } catch {
     return [];
@@ -117,6 +120,9 @@ function buildPracticeSession(
       analysis.practice_metrics?.timing_activity_score ?? null,
     recording_quality_score:
       analysis.practice_metrics?.recording_quality_score ?? null,
+    practice_focus: analysis.practice_context?.practice_focus ?? null,
+    practice_description:
+      analysis.practice_context?.practice_description ?? null,
     quality_level: analysis.recording_quality?.quality_level ?? null,
     attack_activity: analysis.practice_metrics?.attack_activity ?? null,
     energy_level: analysis.practice_metrics?.energy_level ?? null,
@@ -127,6 +133,32 @@ function buildPracticeSession(
       analysis.coach_feedback?.next_steps ??
       [],
   };
+}
+
+function normalizePracticeHistorySession(
+  session: PracticeHistorySession,
+): PracticeHistorySession {
+  return {
+    ...session,
+    practice_focus: isPracticeFocus(session.practice_focus)
+      ? session.practice_focus
+      : null,
+    practice_description:
+      typeof session.practice_description === "string"
+        ? session.practice_description
+        : null,
+  };
+}
+
+function isPracticeFocus(value: unknown): value is PracticeFocus {
+  return (
+    value === "general" ||
+    value === "note_clarity" ||
+    value === "timing" ||
+    value === "speed_control" ||
+    value === "lead_phrase" ||
+    value === "tone_recording"
+  );
 }
 
 function createSessionId(): string {
