@@ -28,6 +28,7 @@ REQUIRED_FIELDS = {
     "coach_feedback",
     "pitch_analysis",
     "note_events",
+    "practice_context",
 }
 
 PRACTICE_METRIC_FIELDS = {
@@ -103,15 +104,24 @@ NOTE_EVENT_FIELDS = {
     "confidence",
 }
 
+PRACTICE_CONTEXT_FIELDS = {
+    "practice_focus",
+    "practice_description",
+}
 
-def post_audio(files):
+
+def post_audio(files, data=None):
     async def send_request():
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(
             transport=transport,
             base_url="http://testserver",
         ) as client:
-            return await client.post("/practice/analyze-audio", files=files)
+            return await client.post(
+                "/practice/analyze-audio",
+                files=files,
+                data=data,
+            )
 
     return asyncio.run(send_request())
 
@@ -254,6 +264,13 @@ def test_valid_generated_sine_wave_returns_audio_features():
     assert isinstance(feedback["focus_areas"], list)
     assert isinstance(feedback["next_steps"], list)
 
+    practice_context = analysis["practice_context"]
+    assert set(practice_context) == PRACTICE_CONTEXT_FIELDS
+    assert practice_context == {
+        "practice_focus": "general",
+        "practice_description": None,
+    }
+
     pitch = analysis["pitch_analysis"]
     assert set(pitch) == PITCH_ANALYSIS_FIELDS
     assert pitch["enabled"] is True
@@ -298,6 +315,7 @@ def test_unsupported_extension_returns_clear_error():
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
+    assert analysis["practice_context"] is None
 
 
 def test_empty_file_returns_clear_error():
@@ -321,6 +339,7 @@ def test_empty_file_returns_clear_error():
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
+    assert analysis["practice_context"] is None
 
 
 def test_missing_file_returns_clear_error():
@@ -336,6 +355,7 @@ def test_missing_file_returns_clear_error():
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
+    assert analysis["practice_context"] is None
 
 
 def test_invalid_wav_returns_clear_decode_error():
@@ -359,6 +379,7 @@ def test_invalid_wav_returns_clear_decode_error():
     assert analysis["coach_feedback"] is None
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
+    assert analysis["practice_context"] is None
 
 
 def test_endpoint_response_contains_no_llm_or_agent_references():
@@ -464,6 +485,179 @@ def test_feedback_does_not_claim_note_riff_or_song_correctness():
     ]
     for claim in forbidden_claims:
         assert claim not in feedback_text
+
+
+def test_endpoint_accepts_practice_focus_and_description():
+    response = post_audio(
+        {
+            "audio_file": (
+                "practice.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        },
+        data={
+            "practice_focus": "note_clarity",
+            "practice_description": "  Alternate-picked single-note exercise  ",
+        },
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is True
+    assert analysis["practice_context"] == {
+        "practice_focus": "note_clarity",
+        "practice_description": "Alternate-picked single-note exercise",
+    }
+
+
+def test_missing_empty_or_invalid_practice_focus_defaults_to_general():
+    missing_focus = post_audio(
+        {
+            "audio_file": (
+                "missing-focus.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        }
+    ).json()
+    empty_focus = post_audio(
+        {
+            "audio_file": (
+                "empty-focus.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"practice_focus": "   "},
+    ).json()
+    invalid_focus = post_audio(
+        {
+            "audio_file": (
+                "invalid-focus.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"practice_focus": "reference_song_comparison"},
+    ).json()
+
+    assert missing_focus["practice_context"]["practice_focus"] == "general"
+    assert empty_focus["practice_context"]["practice_focus"] == "general"
+    assert invalid_focus["practice_context"]["practice_focus"] == "general"
+
+
+def test_long_practice_description_is_trimmed_and_capped():
+    long_description = f"  {'a' * 350}  "
+    response = post_audio(
+        {
+            "audio_file": (
+                "long-description.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={
+            "practice_focus": "general",
+            "practice_description": long_description,
+        },
+    )
+
+    assert response.status_code == 200
+    description = response.json()["practice_context"]["practice_description"]
+    assert description == "a" * 300
+
+
+def test_note_clarity_focus_changes_coach_feedback():
+    response = post_audio(
+        {
+            "audio_file": (
+                "clarity.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        },
+        data={"practice_focus": "note_clarity"},
+    )
+
+    feedback_text = serialize_feedback(response.json()["coach_feedback"])
+    assert "note clarity" in feedback_text
+    assert "each note start cleanly" in feedback_text
+    assert "clear separation" in feedback_text
+
+
+def test_timing_focus_includes_metronome_and_proxy_advice():
+    response = post_audio(
+        {
+            "audio_file": (
+                "timing.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        },
+        data={"practice_focus": "timing"},
+    )
+
+    feedback_text = serialize_feedback(response.json()["coach_feedback"])
+    assert "timing" in feedback_text
+    assert "metronome" in feedback_text
+    assert "activity read" in feedback_text
+    assert "true rhythm grade" in feedback_text
+
+
+def test_speed_control_focus_includes_slow_down_and_control_advice():
+    response = post_audio(
+        {
+            "audio_file": (
+                "speed-control.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        },
+        data={"practice_focus": "speed_control"},
+    )
+
+    feedback_text = serialize_feedback(response.json()["coach_feedback"])
+    assert "speed control" in feedback_text
+    assert "control" in feedback_text
+    assert "slower" in feedback_text
+
+
+def test_lead_phrase_focus_mentions_approximate_pitch_and_note_event_limits():
+    response = post_audio(
+        {
+            "audio_file": (
+                "lead-phrase.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        },
+        data={"practice_focus": "lead_phrase"},
+    )
+
+    feedback_text = serialize_feedback(response.json()["coach_feedback"])
+    assert "lead phrase" in feedback_text
+    assert "approximate" in feedback_text
+    assert "not a correctness check" in feedback_text
+    assert "single-note line" in feedback_text
+
+
+def test_tone_recording_focus_prioritizes_recording_quality():
+    response = post_audio(
+        {
+            "audio_file": (
+                "tone-recording.wav",
+                make_sine_wave_bytes(duration_seconds=2.0),
+                "audio/wav",
+            )
+        },
+        data={"practice_focus": "tone_recording"},
+    )
+
+    feedback_text = serialize_feedback(response.json()["coach_feedback"])
+    assert "tone and recording quality" in feedback_text
+    assert "strong, clean signal" in feedback_text
+    assert "cleaner recording" in feedback_text
 
 
 def test_practice_metrics_are_deterministic_for_same_generated_audio():

@@ -189,10 +189,12 @@ Pitch and note-event analysis are narrow foundations for clean monophonic single
 
 ```bash
 curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
-  -F "audio_file=@practice.wav"
+  -F "audio_file=@practice.wav" \
+  -F "practice_focus=timing" \
+  -F "practice_description=Working on eighth-note alternate picking"
 ```
 
-The file must be a `.wav` file and should be located wherever the curl command is run. You can also use the full path to the file.
+The file must be a `.wav` file and should be located wherever the curl command is run. You can also use the full path to the file. `practice_focus` and `practice_description` are optional; supported focus values are `general`, `note_clarity`, `timing`, `speed_control`, `lead_phrase`, and `tone_recording`.
 
 ## Tests and Checks
 
@@ -240,7 +242,9 @@ The response should include:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
-  -F "audio_file=@practice.wav"
+  -F "audio_file=@practice.wav" \
+  -F "practice_focus=timing" \
+  -F "practice_description=Working on eighth-note alternate picking"
 ```
 
 Current limitation: Practice Coach accepts `.wav` files only.
@@ -256,6 +260,7 @@ The response should include:
 * `spectral_centroid_mean`
 * `zero_crossing_rate_mean`
 * `analysis_warnings`
+* `practice_context`
 * `practice_metrics`
 * `recording_quality`
 * `segment_analysis`

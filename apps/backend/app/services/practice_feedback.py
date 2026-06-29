@@ -7,6 +7,7 @@ def build_coach_feedback(
     practice_metrics: Mapping[str, Any],
     recording_quality: Mapping[str, Any],
     segment_analysis: list[Mapping[str, Any]],
+    practice_context: Mapping[str, Any] | None = None,
     pitch_analysis: Mapping[str, Any] | None = None,
     note_events: list[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -133,6 +134,15 @@ def build_coach_feedback(
             "The upload was processed successfully and has enough information for a first pass."
         )
 
+    apply_practice_focus_feedback(
+        practice_focus=str(
+            (practice_context or {}).get("practice_focus", "general")
+        ),
+        work_on=work_on,
+        next_practice_steps=next_practice_steps,
+        coach_notes=coach_notes,
+    )
+
     what_went_well = limit_items(dedupe(what_went_well), 4)
     work_on = limit_items(dedupe(work_on), 4)
     next_practice_steps = limit_items(dedupe(next_practice_steps), 4)
@@ -237,6 +247,60 @@ def translate_recording_warning(warning: str) -> str:
     if "silence" in warning.lower():
         return "Much of the recording appears to be silence, so trim dead space or play a fuller take."
     return warning
+
+
+def apply_practice_focus_feedback(
+    *,
+    practice_focus: str,
+    work_on: list[str],
+    next_practice_steps: list[str],
+    coach_notes: list[str],
+) -> None:
+    if practice_focus == "note_clarity":
+        work_on.insert(
+            0,
+            "Since you are working on note clarity, focus on making each note start cleanly instead of letting the phrase blur together.",
+        )
+        next_practice_steps.insert(
+            0,
+            "Record single-note phrases with clear separation so the coach can read the attack pattern more reliably.",
+        )
+    elif practice_focus == "timing":
+        coach_notes.insert(
+            0,
+            "Since you are working on timing, use this as an activity read rather than a true rhythm grade.",
+        )
+        next_practice_steps.insert(
+            0,
+            "Try playing the same phrase slower with a metronome and focus on even note starts.",
+        )
+    elif practice_focus == "speed_control":
+        work_on.insert(
+            0,
+            "Since you are working on speed control, the goal is not just playing faster. Keep the note starts clean as the phrase gets busier.",
+        )
+        next_practice_steps.insert(
+            0,
+            "Try playing this at a slower tempo, then increase speed only when the notes still sound separated.",
+        )
+    elif practice_focus == "lead_phrase":
+        coach_notes.insert(
+            0,
+            "Since this is a lead phrase, the pitch and note-event estimates can give a rough read, but they are not a correctness check yet.",
+        )
+        next_practice_steps.insert(
+            0,
+            "For better phrase feedback, record a clean single-note line without chords underneath.",
+        )
+    elif practice_focus == "tone_recording":
+        work_on.insert(
+            0,
+            "Since you are working on tone and recording quality, the first priority is getting a strong, clean signal.",
+        )
+        next_practice_steps.insert(
+            0,
+            "A cleaner recording will make every other part of the coach more useful.",
+        )
 
 
 def has_large_segment_intensity_changes(

@@ -10,15 +10,19 @@ No LLM calls or agents are used.
 
 ## Request Format
 
-Use `multipart/form-data` with one file field:
+Use `multipart/form-data` with one required file field and optional practice context fields:
 
 - `audio_file`: `.wav` file
+- `practice_focus`: optional practice goal. Supported values are `general`, `note_clarity`, `timing`, `speed_control`, `lead_phrase`, `tone_recording`. Missing, empty, or invalid values default to `general`.
+- `practice_description`: optional free-text note about what the user is practicing. The backend trims whitespace and caps this at 300 characters.
 
 Example:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
-  -F "audio_file=@practice.wav"
+  -F "audio_file=@practice.wav" \
+  -F "practice_focus=timing" \
+  -F "practice_description=Working on eighth-note alternate picking"
 ```
 
 ## Response Fields
@@ -36,6 +40,10 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
   "analysis_warnings": [],
   "valid": true,
   "errors": [],
+  "practice_context": {
+    "practice_focus": "timing",
+    "practice_description": "Working on eighth-note alternate picking"
+  },
   "practice_metrics": {
     "overall_score": 82,
     "timing_activity_score": 75,
@@ -143,6 +151,7 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `analysis_warnings`: Non-fatal analysis notes.
 - `valid`: Whether analysis succeeded.
 - `errors`: Simple validation or decode errors.
+- `practice_context`: Normalized practice context for valid uploads. Invalid uploads return `practice_context: null`.
 - `practice_metrics`: Basic deterministic scoring metrics for valid uploads. Invalid uploads return `practice_metrics: null`.
 - `recording_quality`: Recording setup checks for valid uploads. Invalid uploads return `recording_quality: null`.
 - `segment_analysis`: Fixed-length 5-second segment summaries for valid uploads. Invalid uploads return `segment_analysis: null`.
@@ -188,7 +197,9 @@ Each segment includes duration, onset count, onset density, mean RMS energy, mea
 - `coach_notes`: Conservative notes about approximate pitch or note-event analysis.
 - `strengths`, `focus_areas`, and `next_steps`: Compatibility aliases for older clients.
 
-This feedback is deterministic and only uses measured audio values, recording quality, practice metrics, segment analysis, pitch analysis, and note events. If recording quality is poor, feedback focuses on recording setup first.
+This feedback is deterministic and only uses measured audio values, recording quality, practice metrics, segment analysis, pitch analysis, note events, and the optional practice context. If recording quality is poor, feedback focuses on recording setup first.
+
+`practice_focus` changes the emphasis of the feedback, not the underlying scoring. For example, `timing` adds metronome and timing-proxy guidance, `note_clarity` emphasizes clean note starts and separation, `speed_control` emphasizes control before speed, `lead_phrase` frames pitch and note events as approximate, and `tone_recording` prioritizes recording quality.
 
 Pitch-related feedback is conservative. When confidence is reasonable, feedback may mention that approximate pitch tracking found a stable area around an estimated note. It does not say the player hit the correct note or played a riff/song correctly.
 

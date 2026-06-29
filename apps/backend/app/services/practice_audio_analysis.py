@@ -16,9 +16,24 @@ from app.services.practice_segment_analysis import analyze_audio_segments
 
 
 SUPPORTED_AUDIO_EXTENSIONS = {".wav"}
+SUPPORTED_PRACTICE_FOCUS_VALUES = {
+    "general",
+    "note_clarity",
+    "timing",
+    "speed_control",
+    "lead_phrase",
+    "tone_recording",
+}
+DEFAULT_PRACTICE_FOCUS = "general"
+MAX_PRACTICE_DESCRIPTION_LENGTH = 300
 
 
-async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any]:
+async def analyze_uploaded_audio(
+    audio_file: UploadFile | None,
+    *,
+    practice_focus: str | None = None,
+    practice_description: str | None = None,
+) -> dict[str, Any]:
     if audio_file is None:
         return build_invalid_response("", ["Missing audio file."])
 
@@ -32,6 +47,11 @@ async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any
     contents = await audio_file.read()
     if not contents:
         return build_invalid_response(filename, ["Empty audio file."])
+
+    practice_context = normalize_practice_context(
+        practice_focus=practice_focus,
+        practice_description=practice_description,
+    )
 
     temp_path: str | None = None
     try:
@@ -64,6 +84,7 @@ async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any
             "analysis_warnings": [],
             "valid": True,
             "errors": [],
+            "practice_context": practice_context,
         }
         analysis["practice_metrics"] = score_practice_analysis(analysis)
         analysis["recording_quality"] = analyze_recording_quality(
@@ -86,6 +107,7 @@ async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any
             practice_metrics=analysis["practice_metrics"],
             recording_quality=analysis["recording_quality"],
             segment_analysis=analysis["segment_analysis"],
+            practice_context=analysis["practice_context"],
             pitch_analysis=analysis["pitch_analysis"],
             note_events=analysis["note_events"],
         )
@@ -119,6 +141,29 @@ def feature_mean(values: np.ndarray) -> float:
     return float(np.nan_to_num(values, nan=0.0, posinf=0.0, neginf=0.0).mean())
 
 
+def normalize_practice_context(
+    *,
+    practice_focus: str | None,
+    practice_description: str | None,
+) -> dict[str, str | None]:
+    normalized_focus = (practice_focus or "").strip().lower()
+    if normalized_focus not in SUPPORTED_PRACTICE_FOCUS_VALUES:
+        normalized_focus = DEFAULT_PRACTICE_FOCUS
+
+    normalized_description = (practice_description or "").strip()
+    if not normalized_description:
+        normalized_description = None
+    else:
+        normalized_description = normalized_description[
+            :MAX_PRACTICE_DESCRIPTION_LENGTH
+        ]
+
+    return {
+        "practice_focus": normalized_focus,
+        "practice_description": normalized_description,
+    }
+
+
 def build_invalid_response(filename: str, errors: list[str]) -> dict[str, Any]:
     return {
         "filename": filename,
@@ -136,6 +181,7 @@ def build_invalid_response(filename: str, errors: list[str]) -> dict[str, Any]:
         "recording_quality": None,
         "segment_analysis": None,
         "coach_feedback": None,
+        "practice_context": None,
         "pitch_analysis": None,
         "note_events": None,
     }

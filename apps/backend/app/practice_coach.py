@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile
 from pydantic import BaseModel, Field
 
 from app.services.practice_audio_analysis import analyze_uploaded_audio
@@ -55,6 +55,18 @@ class CoachFeedback(BaseModel):
     next_steps: list[str] = Field(default_factory=list)
 
 
+class PracticeContext(BaseModel):
+    practice_focus: Literal[
+        "general",
+        "note_clarity",
+        "timing",
+        "speed_control",
+        "lead_phrase",
+        "tone_recording",
+    ]
+    practice_description: str | None = None
+
+
 class DetectedPitchNote(BaseModel):
     note: str
     frequency_hz: float
@@ -98,6 +110,7 @@ class PracticeAudioAnalysisResponse(BaseModel):
     recording_quality: RecordingQuality | None = None
     segment_analysis: list[SegmentAnalysis] | None = None
     coach_feedback: CoachFeedback | None = None
+    practice_context: PracticeContext | None = None
     pitch_analysis: PitchAnalysis | None = None
     note_events: list[NoteEvent] | None = None
 
@@ -105,7 +118,13 @@ class PracticeAudioAnalysisResponse(BaseModel):
 @router.post("/practice/analyze-audio", response_model=PracticeAudioAnalysisResponse)
 async def analyze_practice_audio(
     audio_file: UploadFile | None = File(default=None),
+    practice_focus: str | None = Form(default=None),
+    practice_description: str | None = Form(default=None),
 ) -> PracticeAudioAnalysisResponse:
     return PracticeAudioAnalysisResponse.model_validate(
-        await analyze_uploaded_audio(audio_file)
+        await analyze_uploaded_audio(
+            audio_file,
+            practice_focus=practice_focus,
+            practice_description=practice_description,
+        )
     )
