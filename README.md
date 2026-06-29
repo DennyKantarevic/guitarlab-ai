@@ -5,7 +5,7 @@ GuitarLab AI is a monorepo for guitar-focused web tools.
 Current MVPs:
 
 * **Valeton GP-200 Tone Maker**: generate structured GP-200 patch JSON from a tone goal, pickup type, and connection mode.
-* **Practice Coach**: upload a `.wav` guitar recording and return deterministic audio-analysis features, basic practice scoring metrics, recording-quality checks, segment analysis, and measured feedback.
+* **Practice Coach**: upload a `.wav` guitar recording and return deterministic audio-analysis features, basic practice scoring metrics, recording-quality checks, segment analysis, measured feedback, and local browser practice history.
 
 The project uses a Next.js TypeScript frontend and a FastAPI Python backend.
 
@@ -148,7 +148,7 @@ http://localhost:3000/practice-coach
 1. Open `http://localhost:3000/practice-coach`.
 2. Upload a `.wav` file.
 3. Click **Analyze**.
-4. Confirm the page shows audio analysis fields, `practice_metrics`, `recording_quality`, `segment_analysis`, and `coach_feedback`.
+4. Confirm the page shows audio analysis fields, `practice_metrics`, `recording_quality`, `segment_analysis`, `coach_feedback`, and Practice history.
 
 Expected displayed fields include:
 
@@ -171,6 +171,9 @@ Expected displayed fields include:
 * `segment_analysis`
 * `coach_feedback.summary`
 * `coach_feedback.next_steps`
+* local Practice history score summaries
+
+Practice history is stored only in the current browser with `localStorage`. Uploaded audio files are not saved, and history is not sent to the backend.
 
 ### 6. Test the backend directly with curl
 
@@ -263,10 +266,12 @@ Implemented:
 * Practice Coach `.wav` audio-analysis features
 * Practice Coach deterministic `practice_metrics` scoring
 * Practice Coach recording-quality checks, fixed-length segment analysis, and deterministic measured feedback
+* Practice Coach local browser history for recent compact score summaries
 
 Not implemented yet:
 
 * LLM calls or agents
+* user accounts, authentication, database-backed history, or cross-device sync
 * final UI design
 * `.prst` export
 * pitch detection or note correctness scoring

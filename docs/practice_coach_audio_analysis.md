@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, and measured feedback. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, and measured feedback. The frontend can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -132,6 +132,12 @@ Each segment includes duration, onset count, onset density, mean RMS energy, mea
 
 `coach_feedback` contains a summary, strengths, focus areas, and next steps. This feedback is deterministic and only uses measured audio values, recording quality, practice metrics, and segment analysis. If recording quality is poor, feedback focuses on recording setup first.
 
+## Frontend Practice History
+
+The Practice Coach page stores compact successful analysis summaries in browser `localStorage` so recent scores can be compared over time. It keeps only summary fields such as filename, scores, quality level, attack activity, and one or more next steps.
+
+Audio files, waveform data, and full backend responses are not saved. History stays in the current browser and is not sent to the backend.
+
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
@@ -142,3 +148,4 @@ Each segment includes duration, onset count, onset density, mean RMS energy, mea
 - It does not provide polished conversational coaching.
 - It does not do pitch scoring, riff-to-tab, tab generation, or `.prst` export.
 - It does not call an LLM or agent.
+- It does not have user accounts, a database, or cross-device practice history sync.

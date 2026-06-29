@@ -7,6 +7,13 @@ import {
   type PracticeAudioAnalysisResponse,
   type PracticeAudioRequest,
 } from "@/lib/practiceCoach";
+import {
+  clearPracticeHistory,
+  readPracticeHistory,
+  savePracticeSessionFromAnalysis,
+  summarizePracticeHistory,
+  type PracticeHistorySession,
+} from "@/lib/practiceHistory";
 
 type PracticeCoachClientProps = {
   analyzeAudio?: (
@@ -20,6 +27,9 @@ export default function PracticeCoachClient({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [analysis, setAnalysis] =
     useState<PracticeAudioAnalysisResponse | null>(null);
+  const [historySessions, setHistorySessions] = useState<
+    PracticeHistorySession[]
+  >(() => readPracticeHistory());
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,6 +51,8 @@ export default function PracticeCoachClient({
         setError(
           nextAnalysis.errors.join(" ") || "Practice Coach analysis failed.",
         );
+      } else {
+        setHistorySessions(savePracticeSessionFromAnalysis(nextAnalysis));
       }
     } catch (requestError) {
       setError(
@@ -51,6 +63,11 @@ export default function PracticeCoachClient({
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function handleClearHistory() {
+    clearPracticeHistory();
+    setHistorySessions([]);
   }
 
   return (
@@ -95,6 +112,11 @@ export default function PracticeCoachClient({
         ) : null}
 
         {analysis ? <AnalysisResult analysis={analysis} /> : null}
+
+        <PracticeHistory
+          onClearHistory={handleClearHistory}
+          sessions={historySessions}
+        />
       </div>
     </main>
   );
@@ -260,6 +282,89 @@ function CoachFeedback({
   );
 }
 
+function PracticeHistory({
+  onClearHistory,
+  sessions,
+}: {
+  onClearHistory: () => void;
+  sessions: PracticeHistorySession[];
+}) {
+  const stats = summarizePracticeHistory(sessions);
+
+  return (
+    <section className="space-y-4">
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold">Practice history</h2>
+        <p className="text-sm text-neutral-600">
+          Practice history is stored locally in this browser. Audio files are
+          not saved.
+        </p>
+      </div>
+
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Saved sessions"
+          value={`${stats.sessionCount} saved ${
+            stats.sessionCount === 1 ? "session" : "sessions"
+          }`}
+        />
+        <Field
+          label="Latest overall score"
+          value={formatNullableScore(stats.latestOverallScore)}
+        />
+        <Field
+          label="Best overall score"
+          value={formatNullableScore(stats.bestOverallScore)}
+        />
+        <Field
+          label="Average overall score"
+          value={formatNullableScore(stats.averageOverallScore)}
+        />
+        <Field
+          label="Latest recording quality"
+          value={stats.latestQualityLevel ?? "Not available"}
+        />
+      </dl>
+
+      <button
+        className="border border-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
+        disabled={sessions.length === 0}
+        onClick={onClearHistory}
+        type="button"
+      >
+        Clear History
+      </button>
+
+      {sessions.length > 0 ? (
+        <ul className="space-y-3 text-sm">
+          {sessions.map((session) => (
+            <li className="space-y-1" key={session.id}>
+              <div>
+                <strong>{session.filename}</strong>
+              </div>
+              <div>{formatSessionDate(session.created_at)}</div>
+              <div>Overall score: {formatNullableScore(session.overall_score)}</div>
+              <div>
+                Recording quality: {session.quality_level ?? "Not available"}
+              </div>
+              <div>
+                Attack activity: {session.attack_activity ?? "Not available"}
+              </div>
+              {session.next_steps[0] ? (
+                <div>Next step: {session.next_steps[0]}</div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-neutral-500">
+          No saved practice sessions yet.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function Field({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
@@ -267,6 +372,19 @@ function Field({ label, value }: { label: string; value: string | number }) {
       <dd>{value}</dd>
     </div>
   );
+}
+
+function formatNullableScore(score: number | null): string {
+  return score === null ? "Not available" : String(score);
+}
+
+function formatSessionDate(createdAt: string): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) {
+    return createdAt;
+  }
+
+  return date.toLocaleString();
 }
 
 function ListSection({
