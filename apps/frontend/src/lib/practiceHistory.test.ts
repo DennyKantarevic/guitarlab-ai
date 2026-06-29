@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import type { PracticeAudioAnalysisResponse } from "./practiceCoach";
 import {
   PRACTICE_HISTORY_STORAGE_KEY,
+  buildPracticeComparison,
   readPracticeHistory,
   savePracticeSessionFromAnalysis,
+  type PracticeHistorySession,
 } from "./practiceHistory";
 
 const successfulResponse: PracticeAudioAnalysisResponse = {
@@ -253,7 +255,152 @@ describe("practice history", () => {
     expect(session).not.toHaveProperty("pitch_analysis");
     expect(session).not.toHaveProperty("note_events");
   });
+
+  test("comparison reports first session when no previous same-focus session exists", () => {
+    const comparison = buildPracticeComparison(successfulResponse, [
+      makeHistorySession({
+        practice_focus: "note_clarity",
+        overall_score: 70,
+      }),
+    ]);
+
+    expect(comparison).toMatchObject({
+      hasComparison: false,
+      previousSession: null,
+      scoreChange: null,
+      trend: "first",
+      message:
+        "This is your first saved session for Timing and rhythm, so future takes will have a comparison.",
+    });
+  });
+
+  test("comparison reports improvement against the most recent same-focus session", () => {
+    const comparison = buildPracticeComparison(
+      {
+        ...successfulResponse,
+        practice_metrics: {
+          ...successfulResponse.practice_metrics!,
+          overall_score: 88,
+        },
+      },
+      [
+        makeHistorySession({
+          filename: "previous-timing.wav",
+          practice_focus: "timing",
+          practice_description: "Older alternate picking take",
+          overall_score: 80,
+        }),
+        makeHistorySession({
+          filename: "older-timing.wav",
+          practice_focus: "timing",
+          overall_score: 86,
+        }),
+      ],
+    );
+
+    expect(comparison).toMatchObject({
+      hasComparison: true,
+      previousSession: expect.objectContaining({
+        filename: "previous-timing.wav",
+        practice_description: "Older alternate picking take",
+      }),
+      scoreChange: 8,
+      trend: "improved",
+      message:
+        "This take scored 8 points higher than your last Timing and rhythm session.",
+    });
+  });
+
+  test("comparison reports about the same for small score changes", () => {
+    const comparison = buildPracticeComparison(successfulResponse, [
+      makeHistorySession({
+        practice_focus: "timing",
+        overall_score: 81,
+      }),
+    ]);
+
+    expect(comparison).toMatchObject({
+      scoreChange: 1,
+      trend: "same",
+      message:
+        "This take scored about the same as your last Timing and rhythm session.",
+    });
+  });
+
+  test("comparison reports lower scores with practical advice", () => {
+    const comparison = buildPracticeComparison(successfulResponse, [
+      makeHistorySession({
+        practice_focus: "timing",
+        overall_score: 87,
+      }),
+    ]);
+
+    expect(comparison).toMatchObject({
+      scoreChange: -5,
+      trend: "lower",
+      message:
+        "This take scored 5 points lower than your last Timing and rhythm session. Try repeating the same exercise at a slower tempo.",
+    });
+  });
+
+  test("comparison ignores sessions with a different practice focus", () => {
+    const comparison = buildPracticeComparison(successfulResponse, [
+      makeHistorySession({
+        practice_focus: "note_clarity",
+        overall_score: 20,
+      }),
+    ]);
+
+    expect(comparison.trend).toBe("first");
+    expect(comparison.previousSession).toBeNull();
+  });
+
+  test("comparison returns unavailable when a score is missing", () => {
+    const comparison = buildPracticeComparison(
+      {
+        ...successfulResponse,
+        practice_metrics: null,
+      },
+      [
+        makeHistorySession({
+          practice_focus: "timing",
+          overall_score: 80,
+        }),
+      ],
+    );
+
+    expect(comparison).toMatchObject({
+      hasComparison: true,
+      scoreChange: null,
+      trend: "unavailable",
+      message:
+        "A previous Timing and rhythm session exists, but one of the scores is unavailable, so there is no score change to compare.",
+    });
+  });
 });
+
+function makeHistorySession(
+  overrides: Partial<PracticeHistorySession> = {},
+): PracticeHistorySession {
+  return {
+    id: "session",
+    created_at: "2026-06-29T01:00:00.000Z",
+    filename: "saved.wav",
+    duration_seconds: 2,
+    overall_score: 82,
+    timing_activity_score: 78,
+    recording_quality_score: 86,
+    practice_focus: "timing",
+    practice_description: null,
+    quality_level: "good",
+    attack_activity: "moderate",
+    energy_level: "medium",
+    brightness_level: "balanced",
+    summary: "Saved session.",
+    next_steps: ["Keep practicing."],
+    ...overrides,
+  };
+}
 
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();

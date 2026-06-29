@@ -380,6 +380,91 @@ describe("PracticeCoachClient", () => {
     ).toBeDefined();
   });
 
+  test("shows first-session comparison when no previous same-focus session exists", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Progress compared to last similar session"),
+      ).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "This is your first saved session for Timing and rhythm, so future takes will have a comparison.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByText("1 saved session")).toBeDefined();
+  });
+
+  test("shows improvement compared to the previous same-focus session", async () => {
+    window.localStorage.setItem(
+      PRACTICE_HISTORY_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "previous-timing",
+          created_at: "2026-06-29T01:00:00.000Z",
+          filename: "previous-timing.wav",
+          duration_seconds: 2,
+          overall_score: 74,
+          timing_activity_score: 70,
+          recording_quality_score: 78,
+          practice_focus: "timing",
+          practice_description: "Older eighth-note alternate picking",
+          quality_level: "usable",
+          attack_activity: "moderate",
+          energy_level: "medium",
+          brightness_level: "balanced",
+          summary: "Older session.",
+          next_steps: ["Keep practicing."],
+        },
+      ]),
+    );
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("1 saved session")).toBeDefined();
+    });
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "This take scored 8 points higher than your last Timing and rhythm session.",
+        ),
+      ).toBeDefined();
+    });
+    expect(screen.getByText("Previous overall score")).toBeDefined();
+    expect(screen.getAllByText("74").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Current overall score")).toBeDefined();
+    expect(screen.getAllByText("82").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Score change")).toBeDefined();
+    expect(screen.getByText("+8")).toBeDefined();
+    expect(screen.getByText("Previous practice description")).toBeDefined();
+    expect(
+      screen.getByText("Older eighth-note alternate picking"),
+    ).toBeDefined();
+    expect(screen.getByText("2 saved sessions")).toBeDefined();
+  });
+
   test("successful analysis saves a compact session to localStorage", async () => {
     const audioFile = new File(["wav-bytes"], "practice.wav", {
       type: "audio/wav",

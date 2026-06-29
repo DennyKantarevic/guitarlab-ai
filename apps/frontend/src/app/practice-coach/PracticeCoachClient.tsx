@@ -9,10 +9,12 @@ import {
   type PracticeAudioRequest,
 } from "@/lib/practiceCoach";
 import {
+  buildPracticeComparison,
   clearPracticeHistory,
   readPracticeHistory,
   savePracticeSessionFromAnalysis,
   summarizePracticeHistory,
+  type PracticeComparison,
   type PracticeHistorySession,
 } from "@/lib/practiceHistory";
 
@@ -51,6 +53,8 @@ export default function PracticeCoachClient({
   const [practiceDescription, setPracticeDescription] = useState("");
   const [analysis, setAnalysis] =
     useState<PracticeAudioAnalysisResponse | null>(null);
+  const [practiceComparison, setPracticeComparison] =
+    useState<PracticeComparison | null>(null);
   const [historySessions, setHistorySessions] = useState<
     PracticeHistorySession[]
   >([]);
@@ -78,6 +82,7 @@ export default function PracticeCoachClient({
     event.preventDefault();
     setError("");
     setAnalysis(null);
+    setPracticeComparison(null);
 
     if (!selectedFile) {
       setError("Select a .wav file before analyzing.");
@@ -102,6 +107,9 @@ export default function PracticeCoachClient({
           nextAnalysis.errors.join(" ") || "Practice Coach analysis failed.",
         );
       } else {
+        setPracticeComparison(
+          buildPracticeComparison(nextAnalysis, historySessions),
+        );
         setHistorySessions(savePracticeSessionFromAnalysis(nextAnalysis));
       }
     } catch (requestError) {
@@ -209,6 +217,7 @@ export default function PracticeCoachClient({
         {analysis ? (
           <AnalysisResult
             analysis={analysis}
+            comparison={practiceComparison}
             historySessions={historySessions}
           />
         ) : null}
@@ -227,9 +236,11 @@ export default function PracticeCoachClient({
 
 function AnalysisResult({
   analysis,
+  comparison,
   historySessions,
 }: {
   analysis: PracticeAudioAnalysisResponse;
+  comparison: PracticeComparison | null;
   historySessions: PracticeHistorySession[];
 }) {
   return (
@@ -244,6 +255,8 @@ function AnalysisResult({
           feedback={analysis.coach_feedback}
         />
       ) : null}
+
+      {comparison ? <PracticeComparisonResult comparison={comparison} /> : null}
     </section>
   );
 }
@@ -427,6 +440,48 @@ function PracticeContextSummary({
         <Field label="Goal" value={context.practice_description} />
       ) : null}
     </dl>
+  );
+}
+
+function PracticeComparisonResult({
+  comparison,
+}: {
+  comparison: PracticeComparison;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">
+        Progress compared to last similar session
+      </h2>
+      <p className="text-sm">{comparison.message}</p>
+
+      {comparison.previousSession ? (
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <Field
+            label="Previous overall score"
+            value={formatNullableScore(comparison.previousOverallScore)}
+          />
+          <Field
+            label="Current overall score"
+            value={formatNullableScore(comparison.currentOverallScore)}
+          />
+          <Field
+            label="Score change"
+            value={formatScoreChange(comparison.scoreChange)}
+          />
+          <Field
+            label="Previous date"
+            value={formatSessionDate(comparison.previousSession.created_at)}
+          />
+          {comparison.previousSession.practice_description ? (
+            <Field
+              label="Previous practice description"
+              value={comparison.previousSession.practice_description}
+            />
+          ) : null}
+        </dl>
+      ) : null}
+    </section>
   );
 }
 
@@ -703,6 +758,14 @@ function formatSessionDate(createdAt: string): string {
   }
 
   return date.toLocaleString();
+}
+
+function formatScoreChange(scoreChange: number | null): string {
+  if (scoreChange === null) {
+    return "Not available";
+  }
+
+  return scoreChange > 0 ? `+${scoreChange}` : String(scoreChange);
 }
 
 function ListSection({

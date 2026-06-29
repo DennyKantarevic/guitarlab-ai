@@ -31,10 +31,36 @@ export type PracticeHistoryStats = {
   latestQualityLevel: "poor" | "usable" | "good" | null;
 };
 
+export type PracticeComparisonTrend =
+  | "improved"
+  | "same"
+  | "lower"
+  | "first"
+  | "unavailable";
+
+export type PracticeComparison = {
+  hasComparison: boolean;
+  previousSession: PracticeHistorySession | null;
+  currentOverallScore: number | null;
+  previousOverallScore: number | null;
+  scoreChange: number | null;
+  trend: PracticeComparisonTrend;
+  message: string;
+};
+
 type SaveOptions = {
   createdAt?: string;
   id?: string;
   storage?: Storage | null;
+};
+
+const PRACTICE_FOCUS_LABELS: Record<PracticeFocus, string> = {
+  general: "General feedback",
+  note_clarity: "Note clarity",
+  timing: "Timing and rhythm",
+  speed_control: "Speed control",
+  lead_phrase: "Lead phrase",
+  tone_recording: "Tone / recording quality",
 };
 
 export function savePracticeSessionFromAnalysis(
@@ -103,6 +129,93 @@ export function summarizePracticeHistory(
         ? Math.round(scores.reduce((total, score) => total + score, 0) / scores.length)
         : null,
     latestQualityLevel: sessions[0]?.quality_level ?? null,
+  };
+}
+
+export function buildPracticeComparison(
+  currentAnalysis: PracticeAudioAnalysisResponse,
+  previousSessions: PracticeHistorySession[],
+): PracticeComparison {
+  const currentFocus = currentAnalysis.practice_context?.practice_focus ?? null;
+  const currentOverallScore =
+    currentAnalysis.practice_metrics?.overall_score ?? null;
+
+  if (currentFocus === null) {
+    return {
+      hasComparison: false,
+      previousSession: null,
+      currentOverallScore,
+      previousOverallScore: null,
+      scoreChange: null,
+      trend: "unavailable",
+      message:
+        "This session does not include a practice focus, so there is no similar-session comparison yet.",
+    };
+  }
+
+  const focusLabel = PRACTICE_FOCUS_LABELS[currentFocus];
+  const previousSession = previousSessions.find(
+    (session) => session.practice_focus === currentFocus,
+  );
+
+  if (!previousSession) {
+    return {
+      hasComparison: false,
+      previousSession: null,
+      currentOverallScore,
+      previousOverallScore: null,
+      scoreChange: null,
+      trend: "first",
+      message: `This is your first saved session for ${focusLabel}, so future takes will have a comparison.`,
+    };
+  }
+
+  const previousOverallScore = previousSession.overall_score;
+  if (currentOverallScore === null || previousOverallScore === null) {
+    return {
+      hasComparison: true,
+      previousSession,
+      currentOverallScore,
+      previousOverallScore,
+      scoreChange: null,
+      trend: "unavailable",
+      message: `A previous ${focusLabel} session exists, but one of the scores is unavailable, so there is no score change to compare.`,
+    };
+  }
+
+  const scoreChange = currentOverallScore - previousOverallScore;
+  if (scoreChange >= 3) {
+    return {
+      hasComparison: true,
+      previousSession,
+      currentOverallScore,
+      previousOverallScore,
+      scoreChange,
+      trend: "improved",
+      message: `This take scored ${scoreChange} points higher than your last ${focusLabel} session.`,
+    };
+  }
+
+  if (scoreChange <= -3) {
+    return {
+      hasComparison: true,
+      previousSession,
+      currentOverallScore,
+      previousOverallScore,
+      scoreChange,
+      trend: "lower",
+      message: `This take scored ${Math.abs(scoreChange)} points lower than your last ${focusLabel} session. Try repeating the same exercise at a slower tempo.`,
+    };
+  }
+
+  return {
+    hasComparison: true,
+    previousSession,
+    currentOverallScore,
+    previousOverallScore,
+    scoreChange,
+    trend: "same",
+    message: `This take scored about the same as your last ${focusLabel} session.`,
   };
 }
 
