@@ -94,6 +94,48 @@ class NoteEvent(BaseModel):
     confidence: float
 
 
+class ReferenceExercise(BaseModel):
+    expected_notes_raw: str | None
+    expected_notes: list[str] = Field(default_factory=list)
+    valid: bool
+    warnings: list[str] = Field(default_factory=list)
+
+
+class ReferenceMatch(BaseModel):
+    expected_note: str
+    detected_note: str
+    expected_index: int
+    detected_index: int
+    confidence: float
+
+
+class ReferenceMiss(BaseModel):
+    expected_note: str
+    expected_index: int
+
+
+class ReferenceExtra(BaseModel):
+    detected_note: str
+    detected_index: int
+    confidence: float
+
+
+class ReferenceComparison(BaseModel):
+    enabled: bool
+    valid: bool
+    matched_count: int
+    missed_count: int
+    extra_count: int
+    expected_count: int
+    detected_count: int
+    match_ratio: float | None
+    summary: str
+    matches: list[ReferenceMatch] = Field(default_factory=list)
+    misses: list[ReferenceMiss] = Field(default_factory=list)
+    extras: list[ReferenceExtra] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class PracticeAudioAnalysisResponse(BaseModel):
     filename: str
     duration_seconds: float
@@ -113,6 +155,8 @@ class PracticeAudioAnalysisResponse(BaseModel):
     practice_context: PracticeContext | None = None
     pitch_analysis: PitchAnalysis | None = None
     note_events: list[NoteEvent] | None = None
+    reference_exercise: ReferenceExercise | None = None
+    reference_comparison: ReferenceComparison | None = None
 
 
 @router.post("/practice/analyze-audio", response_model=PracticeAudioAnalysisResponse)
@@ -120,11 +164,13 @@ async def analyze_practice_audio(
     audio_file: UploadFile | None = File(default=None),
     practice_focus: str | None = Form(default=None),
     practice_description: str | None = Form(default=None),
+    expected_notes: str | None = Form(default=None),
 ) -> PracticeAudioAnalysisResponse:
     return PracticeAudioAnalysisResponse.model_validate(
         await analyze_uploaded_audio(
             audio_file,
             practice_focus=practice_focus,
             practice_description=practice_description,
+            expected_notes=expected_notes,
         )
     )

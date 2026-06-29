@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns a clear score, coach-facing feedback, practical next steps, rule-based practice metrics, recording-quality checks, fixed-length segment analysis, a narrow monophonic pitch-analysis foundation, and approximate monophonic note events. The frontend prioritizes the score and coaching feedback while keeping technical metrics in a secondary details section. It can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns a clear score, coach-facing feedback, practical next steps, rule-based practice metrics, recording-quality checks, fixed-length segment analysis, a narrow monophonic pitch-analysis foundation, approximate monophonic note events, and optional user-provided reference exercise comparison. The frontend prioritizes the score and coaching feedback while keeping technical metrics in a secondary details section. It can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -15,6 +15,9 @@ Use `multipart/form-data` with one required file field and optional practice con
 - `audio_file`: `.wav` file
 - `practice_focus`: optional practice goal. Supported values are `general`, `note_clarity`, `timing`, `speed_control`, `lead_phrase`, `tone_recording`. Missing, empty, or invalid values default to `general`.
 - `practice_description`: optional free-text note about what the user is practicing. The backend trims whitespace and caps this at 300 characters.
+- `expected_notes`: optional user-provided reference exercise, such as `A4 B4 C5 D5`. Spaces, commas, and new lines are accepted as separators.
+
+`expected_notes` supports scientific pitch notation with sharps and a required octave number: `C`, `C#`, `D`, `D#`, `E`, `F`, `F#`, `G`, `G#`, `A`, `A#`, `B`, followed by an octave. Examples: `A4`, `C#5`, `E3`. Flats such as `Bb4`, chords, rhythm values, durations, tabs, and string/fret positions are not supported.
 
 Example:
 
@@ -22,7 +25,8 @@ Example:
 curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
   -F "audio_file=@practice.wav" \
   -F "practice_focus=timing" \
-  -F "practice_description=Working on eighth-note alternate picking"
+  -F "practice_description=Working on eighth-note alternate picking" \
+  -F "expected_notes=A4 B4 C5 D5"
 ```
 
 ## Response Fields
@@ -136,7 +140,41 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
       "duration_seconds": 0.5,
       "confidence": 0.82
     }
-  ]
+  ],
+  "reference_exercise": {
+    "expected_notes_raw": "A4 B4 C5 D5",
+    "expected_notes": ["A4", "B4", "C5", "D5"],
+    "valid": true,
+    "warnings": []
+  },
+  "reference_comparison": {
+    "enabled": true,
+    "valid": true,
+    "matched_count": 1,
+    "missed_count": 3,
+    "extra_count": 0,
+    "expected_count": 4,
+    "detected_count": 1,
+    "match_ratio": 0.25,
+    "summary": "Compared with your expected exercise, the coach found 1 of 4 notes in order. Some expected notes were not detected clearly; try recording slower with cleaner separation.",
+    "matches": [
+      {
+        "expected_note": "A4",
+        "detected_note": "A4",
+        "expected_index": 0,
+        "detected_index": 0,
+        "confidence": 0.82
+      }
+    ],
+    "misses": [
+      {
+        "expected_note": "B4",
+        "expected_index": 1
+      }
+    ],
+    "extras": [],
+    "warnings": []
+  }
 }
 ```
 
@@ -158,6 +196,8 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `coach_feedback`: Deterministic coach-facing feedback for valid uploads. Invalid uploads return `coach_feedback: null`.
 - `pitch_analysis`: Monophonic pitch estimate for valid uploads. Invalid uploads return `pitch_analysis: null`.
 - `note_events`: Approximate monophonic note events derived from stable pitch regions. Invalid uploads return `note_events: null`.
+- `reference_exercise`: Parsed user-provided expected note sequence for valid uploads. Invalid uploads return `reference_exercise: null`.
+- `reference_comparison`: Approximate comparison between `expected_notes` and detected `note_events` for valid uploads. Invalid uploads return `reference_comparison: null`.
 
 ## Practice Metrics
 
@@ -230,6 +270,33 @@ This is intended for clean monophonic single-note guitar recordings. It is a fou
 
 This is not tab generation, note correctness scoring, chord detection, or riff/song comparison. If pitch confidence is low, `note_events` may be empty or incomplete.
 
+## Reference Exercise Comparison
+
+If `expected_notes` is provided, the backend parses it as a simple user-provided monophonic exercise and compares it against detected `note_events` in order.
+
+`reference_exercise` includes:
+
+- `expected_notes_raw`: Trimmed raw input, or `null` when no exercise was provided.
+- `expected_notes`: Supported notes parsed from the input, capped at the first 50 supported notes.
+- `valid`: `false` when unsupported note tokens were included.
+- `warnings`: Clear parse warnings for unsupported input such as flats, chords, tabs, rhythm values, or durations.
+
+`reference_comparison` includes:
+
+- `enabled`: `false` when no reference exercise was provided.
+- `valid`: `false` when the provided reference exercise had unsupported note tokens.
+- `matched_count`: Number of expected notes found in order.
+- `missed_count`: Number of expected notes not clearly detected.
+- `extra_count`: Number of detected note events that did not align with the expected sequence.
+- `expected_count`: Number of supported expected notes compared.
+- `detected_count`: Number of detected note events compared, capped at 100.
+- `match_ratio`: `matched_count / expected_count`, or `null` when no supported expected notes were compared.
+- `summary`: Short user-facing explanation.
+- `matches`, `misses`, `extras`: Compact per-note comparison details.
+- `warnings`: Parse or comparison warnings.
+
+This comparison checks exact detected note names only, including octave. It does not compare rhythm, duration, timing correctness, song correctness, or tab accuracy. It is intended for simple user-provided exercises like `A4 B4 C5 D5`.
+
 ## Frontend Practice History
 
 The Practice Coach page stores compact successful analysis summaries in browser `localStorage` so recent scores can be compared over time. It keeps only summary fields such as filename, scores, quality level, attack activity, and one or more next steps.
@@ -239,9 +306,12 @@ Audio files, waveform data, and full backend responses are not saved. History st
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
-- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, and approximate note events only.
+- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, approximate note events, and optional user-provided reference exercise comparison only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
 - Pitch estimates and note events are approximate and work best on clean single-note recordings.
+- Reference comparison uses a user-provided simple note sequence only.
+- Reference comparison does not perform song recognition or copyrighted tab lookup.
+- Reference comparison does not score rhythm correctness yet.
 - There is no note correctness scoring yet.
 - There is no chord detection or polyphonic pitch detection.
 - It does not know whether the player hit the right notes or played a specific riff correctly.

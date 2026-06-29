@@ -29,6 +29,8 @@ REQUIRED_FIELDS = {
     "pitch_analysis",
     "note_events",
     "practice_context",
+    "reference_exercise",
+    "reference_comparison",
 }
 
 PRACTICE_METRIC_FIELDS = {
@@ -107,6 +109,48 @@ NOTE_EVENT_FIELDS = {
 PRACTICE_CONTEXT_FIELDS = {
     "practice_focus",
     "practice_description",
+}
+
+REFERENCE_EXERCISE_FIELDS = {
+    "expected_notes_raw",
+    "expected_notes",
+    "valid",
+    "warnings",
+}
+
+REFERENCE_COMPARISON_FIELDS = {
+    "enabled",
+    "valid",
+    "matched_count",
+    "missed_count",
+    "extra_count",
+    "expected_count",
+    "detected_count",
+    "match_ratio",
+    "summary",
+    "matches",
+    "misses",
+    "extras",
+    "warnings",
+}
+
+REFERENCE_MATCH_FIELDS = {
+    "expected_note",
+    "detected_note",
+    "expected_index",
+    "detected_index",
+    "confidence",
+}
+
+REFERENCE_MISS_FIELDS = {
+    "expected_note",
+    "expected_index",
+}
+
+REFERENCE_EXTRA_FIELDS = {
+    "detected_note",
+    "detected_index",
+    "confidence",
 }
 
 
@@ -271,6 +315,23 @@ def test_valid_generated_sine_wave_returns_audio_features():
         "practice_description": None,
     }
 
+    reference_exercise = analysis["reference_exercise"]
+    assert set(reference_exercise) == REFERENCE_EXERCISE_FIELDS
+    assert reference_exercise == {
+        "expected_notes_raw": None,
+        "expected_notes": [],
+        "valid": True,
+        "warnings": [],
+    }
+
+    reference_comparison = analysis["reference_comparison"]
+    assert set(reference_comparison) == REFERENCE_COMPARISON_FIELDS
+    assert reference_comparison["enabled"] is False
+    assert reference_comparison["valid"] is True
+    assert reference_comparison["matched_count"] == 0
+    assert reference_comparison["expected_count"] == 0
+    assert reference_comparison["summary"] == "No reference exercise was provided."
+
     pitch = analysis["pitch_analysis"]
     assert set(pitch) == PITCH_ANALYSIS_FIELDS
     assert pitch["enabled"] is True
@@ -316,6 +377,8 @@ def test_unsupported_extension_returns_clear_error():
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
     assert analysis["practice_context"] is None
+    assert analysis["reference_exercise"] is None
+    assert analysis["reference_comparison"] is None
 
 
 def test_empty_file_returns_clear_error():
@@ -340,6 +403,8 @@ def test_empty_file_returns_clear_error():
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
     assert analysis["practice_context"] is None
+    assert analysis["reference_exercise"] is None
+    assert analysis["reference_comparison"] is None
 
 
 def test_missing_file_returns_clear_error():
@@ -356,6 +421,8 @@ def test_missing_file_returns_clear_error():
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
     assert analysis["practice_context"] is None
+    assert analysis["reference_exercise"] is None
+    assert analysis["reference_comparison"] is None
 
 
 def test_invalid_wav_returns_clear_decode_error():
@@ -380,6 +447,8 @@ def test_invalid_wav_returns_clear_decode_error():
     assert analysis["pitch_analysis"] is None
     assert analysis["note_events"] is None
     assert analysis["practice_context"] is None
+    assert analysis["reference_exercise"] is None
+    assert analysis["reference_comparison"] is None
 
 
 def test_endpoint_response_contains_no_llm_or_agent_references():
@@ -696,6 +765,12 @@ def test_practice_metrics_are_deterministic_for_same_generated_audio():
     assert first_response.json()["note_events"] == second_response.json()[
         "note_events"
     ]
+    assert first_response.json()["reference_exercise"] == second_response.json()[
+        "reference_exercise"
+    ]
+    assert first_response.json()["reference_comparison"] == second_response.json()[
+        "reference_comparison"
+    ]
 
 
 def test_longer_generated_audio_returns_multiple_segments():
@@ -801,6 +876,224 @@ def test_silent_audio_returns_low_confidence_pitch_analysis():
     assert isinstance(pitch["pitch_warnings"], list)
     assert "No stable monophonic pitch was detected." in pitch["pitch_warnings"]
     assert analysis["note_events"] == []
+
+
+def test_expected_notes_parses_space_separated_notes():
+    response = post_audio(
+        {
+            "audio_file": (
+                "space-notes.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4 B4 C5 D5"},
+    )
+
+    assert response.status_code == 200
+    reference = response.json()["reference_exercise"]
+    assert reference["expected_notes_raw"] == "A4 B4 C5 D5"
+    assert reference["expected_notes"] == ["A4", "B4", "C5", "D5"]
+    assert reference["valid"] is True
+    assert reference["warnings"] == []
+
+
+def test_expected_notes_parses_comma_separated_notes():
+    response = post_audio(
+        {
+            "audio_file": (
+                "comma-notes.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4, B4, C5, D5"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["reference_exercise"]["expected_notes"] == [
+        "A4",
+        "B4",
+        "C5",
+        "D5",
+    ]
+
+
+def test_expected_notes_parses_newline_separated_notes():
+    response = post_audio(
+        {
+            "audio_file": (
+                "newline-notes.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4\nB4\nC5\nD5"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["reference_exercise"]["expected_notes"] == [
+        "A4",
+        "B4",
+        "C5",
+        "D5",
+    ]
+
+
+def test_invalid_expected_note_returns_reference_warning_without_failing_audio():
+    response = post_audio(
+        {
+            "audio_file": (
+                "invalid-note.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4 Bb4 H2"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is True
+    assert analysis["reference_exercise"]["valid"] is False
+    assert analysis["reference_exercise"]["expected_notes"] == ["A4"]
+    assert any(
+        "Bb4" in warning for warning in analysis["reference_exercise"]["warnings"]
+    )
+    assert any(
+        "H2" in warning for warning in analysis["reference_exercise"]["warnings"]
+    )
+    assert analysis["reference_comparison"]["enabled"] is True
+    assert analysis["reference_comparison"]["valid"] is False
+
+
+def test_missing_expected_notes_disables_reference_comparison():
+    response = post_audio(
+        {
+            "audio_file": (
+                "missing-reference.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        }
+    )
+
+    assert response.status_code == 200
+    comparison = response.json()["reference_comparison"]
+    assert comparison["enabled"] is False
+    assert comparison["summary"] == "No reference exercise was provided."
+
+
+def test_matching_a4_reference_against_generated_a4_audio_counts_match():
+    response = post_audio(
+        {
+            "audio_file": (
+                "a4-reference.wav",
+                make_sine_wave_bytes(duration_seconds=2.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4"},
+    )
+
+    assert response.status_code == 200
+    comparison = response.json()["reference_comparison"]
+    assert comparison["enabled"] is True
+    assert comparison["valid"] is True
+    assert comparison["matched_count"] >= 1
+    assert comparison["missed_count"] == 0
+    assert 0 <= comparison["match_ratio"] <= 1
+    assert comparison["matches"]
+    assert set(comparison["matches"][0]) == REFERENCE_MATCH_FIELDS
+    assert comparison["matches"][0]["expected_note"] == "A4"
+    assert comparison["matches"][0]["detected_note"] == "A4"
+
+
+def test_expected_a4_b4_with_only_a4_detected_counts_miss():
+    response = post_audio(
+        {
+            "audio_file": (
+                "a4-b4-reference.wav",
+                make_sine_wave_bytes(duration_seconds=2.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4 B4"},
+    )
+
+    assert response.status_code == 200
+    comparison = response.json()["reference_comparison"]
+    assert comparison["matched_count"] >= 1
+    assert comparison["missed_count"] >= 1
+    assert comparison["misses"]
+    assert set(comparison["misses"][0]) == REFERENCE_MISS_FIELDS
+    assert any(miss["expected_note"] == "B4" for miss in comparison["misses"])
+
+
+def test_extra_detected_notes_are_counted_when_reference_is_shorter():
+    response = post_audio(
+        {
+            "audio_file": (
+                "extra-reference.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=6.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4"},
+    )
+
+    assert response.status_code == 200
+    comparison = response.json()["reference_comparison"]
+    assert comparison["detected_count"] > comparison["expected_count"]
+    assert comparison["extra_count"] >= 1
+    assert comparison["extras"]
+    assert set(comparison["extras"][0]) == REFERENCE_EXTRA_FIELDS
+
+
+def test_reference_comparison_summary_is_conversational_and_safe():
+    response = post_audio(
+        {
+            "audio_file": (
+                "safe-reference.wav",
+                make_sine_wave_bytes(duration_seconds=2.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4 B4"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    summary = analysis["reference_comparison"]["summary"]
+    feedback_text = serialize_feedback(analysis["coach_feedback"])
+    combined_text = f"{summary} {feedback_text}".lower()
+
+    assert summary
+    assert "expected exercise" in combined_text
+    assert "song correctly" not in combined_text
+    assert "nirvana" not in combined_text
+    assert "accurate transcription" not in combined_text
+    assert "rhythm was correct" not in combined_text
+    assert "tab is accurate" not in combined_text
+
+
+def test_invalid_upload_does_not_return_successful_reference_comparison():
+    response = post_audio(
+        {
+            "audio_file": (
+                "broken-reference.wav",
+                b"not-really-a-wav",
+                "audio/wav",
+            )
+        },
+        data={"expected_notes": "A4 B4"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is False
+    assert analysis["reference_exercise"] is None
+    assert analysis["reference_comparison"] is None
 
 
 def serialize_feedback(feedback):
