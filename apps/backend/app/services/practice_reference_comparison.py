@@ -1,6 +1,8 @@
 import re
 from typing import Any, Mapping
 
+from app.services.practice_tab_parser import parse_expected_tab
+
 
 MAX_EXPECTED_NOTES = 50
 MAX_DETECTED_NOTES = 100
@@ -48,16 +50,58 @@ def parse_expected_notes(raw: str | None) -> dict[str, Any]:
     }
 
 
+def build_reference_exercise(
+    *,
+    expected_notes_raw: str | None,
+    expected_tab_raw: str | None,
+) -> dict[str, Any]:
+    parsed_notes = parse_expected_notes(expected_notes_raw)
+    parsed_tab = parse_expected_tab(expected_tab_raw)
+
+    if parsed_notes["expected_notes_raw"] is not None:
+        warnings = list(parsed_notes["warnings"])
+        if parsed_tab["expected_tab_raw"] is not None:
+            warnings.append("expected_tab was ignored because expected_notes was provided.")
+
+        return {
+            "expected_notes_raw": parsed_notes["expected_notes_raw"],
+            "expected_notes": parsed_notes["expected_notes"],
+            "expected_tab_raw": parsed_tab["expected_tab_raw"],
+            "source": "notes",
+            "valid": parsed_notes["valid"],
+            "warnings": warnings,
+        }
+
+    if parsed_tab["expected_tab_raw"] is not None:
+        return {
+            "expected_notes_raw": None,
+            "expected_notes": parsed_tab["expected_notes"],
+            "expected_tab_raw": parsed_tab["expected_tab_raw"],
+            "source": "tab",
+            "valid": parsed_tab["valid"],
+            "warnings": parsed_tab["warnings"],
+        }
+
+    return {
+        "expected_notes_raw": None,
+        "expected_notes": [],
+        "expected_tab_raw": None,
+        "source": "none",
+        "valid": True,
+        "warnings": [],
+    }
+
+
 def compare_reference_notes(
     reference_exercise: Mapping[str, Any],
     note_events: list[Mapping[str, Any]] | None,
 ) -> dict[str, Any]:
-    raw_reference = reference_exercise.get("expected_notes_raw")
+    source = str(reference_exercise.get("source", "none"))
     expected_notes = list(reference_exercise.get("expected_notes") or [])
     reference_warnings = list(reference_exercise.get("warnings") or [])
     reference_valid = bool(reference_exercise.get("valid", False))
 
-    if raw_reference is None:
+    if source == "none":
         return build_empty_comparison(
             enabled=False,
             valid=True,
@@ -194,7 +238,7 @@ def build_summary(
         )
 
     prefix = (
-        "The expected exercise includes unsupported notes, so this comparison is incomplete. "
+        "The expected exercise includes unsupported input, so this comparison is incomplete. "
         if not valid
         else ""
     )

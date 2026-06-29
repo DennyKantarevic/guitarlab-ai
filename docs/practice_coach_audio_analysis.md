@@ -16,8 +16,11 @@ Use `multipart/form-data` with one required file field and optional practice con
 - `practice_focus`: optional practice goal. Supported values are `general`, `note_clarity`, `timing`, `speed_control`, `lead_phrase`, `tone_recording`. Missing, empty, or invalid values default to `general`.
 - `practice_description`: optional free-text note about what the user is practicing. The backend trims whitespace and caps this at 300 characters.
 - `expected_notes`: optional user-provided reference exercise, such as `A4 B4 C5 D5`. Spaces, commas, and new lines are accepted as separators.
+- `expected_tab`: optional user-provided six-line single-note guitar tab. This is converted into expected note names before reference comparison.
 
-`expected_notes` supports scientific pitch notation with sharps and a required octave number: `C`, `C#`, `D`, `D#`, `E`, `F`, `F#`, `G`, `G#`, `A`, `A#`, `B`, followed by an octave. Examples: `A4`, `C#5`, `E3`. Flats such as `Bb4`, chords, rhythm values, durations, tabs, and string/fret positions are not supported.
+`expected_notes` supports scientific pitch notation with sharps and a required octave number: `C`, `C#`, `D`, `D#`, `E`, `F`, `F#`, `G`, `G#`, `A`, `A#`, `B`, followed by an octave. Examples: `A4`, `C#5`, `E3`. Flats such as `Bb4`, chords, rhythm values, and durations are not supported.
+
+`expected_tab` supports basic six-line standard-tuning guitar tab only. Lines should be ordered `e|`, `B|`, `G|`, `D|`, `A|`, `E|`. Frets `0` through `24` are supported, including multi-digit frets such as `10` and `12`. The parser is single-note only for now and does not support chords, strumming patterns, bends, slides, hammer-ons, pull-offs, mutes, alternate tunings, capo, rhythm notation, song lookup, copyrighted tab lookup, or tab generation. If both `expected_notes` and `expected_tab` are provided, `expected_notes` is used and `expected_tab` is ignored with a warning.
 
 Example:
 
@@ -27,6 +30,19 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
   -F "practice_focus=timing" \
   -F "practice_description=Working on eighth-note alternate picking" \
   -F "expected_notes=A4 B4 C5 D5"
+```
+
+Tab example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
+  -F "audio_file=@practice.wav" \
+  -F "expected_tab=e|----------------|
+B|----------------|
+G|----------------|
+D|----------------|
+A|-----0-2-3------|
+E|-0-3------------|"
 ```
 
 ## Response Fields
@@ -144,6 +160,8 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
   "reference_exercise": {
     "expected_notes_raw": "A4 B4 C5 D5",
     "expected_notes": ["A4", "B4", "C5", "D5"],
+    "expected_tab_raw": null,
+    "source": "notes",
     "valid": true,
     "warnings": []
   },
@@ -272,14 +290,16 @@ This is not tab generation, note correctness scoring, chord detection, or riff/s
 
 ## Reference Exercise Comparison
 
-If `expected_notes` is provided, the backend parses it as a simple user-provided monophonic exercise and compares it against detected `note_events` in order.
+If `expected_notes` is provided, the backend parses it as a simple user-provided monophonic exercise and compares it against detected `note_events` in order. If `expected_notes` is missing and `expected_tab` is provided, the backend converts the tab into expected note names first, then uses the same comparison.
 
 `reference_exercise` includes:
 
 - `expected_notes_raw`: Trimmed raw input, or `null` when no exercise was provided.
-- `expected_notes`: Supported notes parsed from the input, capped at the first 50 supported notes.
-- `valid`: `false` when unsupported note tokens were included.
-- `warnings`: Clear parse warnings for unsupported input such as flats, chords, tabs, rhythm values, or durations.
+- `expected_notes`: Supported notes parsed from `expected_notes` or converted from `expected_tab`, capped at the first 50 supported notes.
+- `expected_tab_raw`: Trimmed raw tab input, or `null` when no tab was provided.
+- `source`: `notes`, `tab`, or `none`.
+- `valid`: `false` when unsupported note tokens or unsupported tab syntax were included.
+- `warnings`: Clear parse warnings for unsupported input such as flats, chords, tab techniques, rhythm values, or durations.
 
 `reference_comparison` includes:
 
@@ -295,7 +315,7 @@ If `expected_notes` is provided, the backend parses it as a simple user-provided
 - `matches`, `misses`, `extras`: Compact per-note comparison details.
 - `warnings`: Parse or comparison warnings.
 
-This comparison checks exact detected note names only, including octave. It does not compare rhythm, duration, timing correctness, song correctness, or tab accuracy. It is intended for simple user-provided exercises like `A4 B4 C5 D5`.
+This comparison checks exact detected note names only, including octave. It does not compare rhythm, duration, timing correctness, song correctness, strumming accuracy, or tab accuracy. It is intended for simple user-provided exercises like `A4 B4 C5 D5` or a short single-note tab.
 
 ## Frontend Practice History
 
@@ -309,9 +329,10 @@ Audio files, waveform data, and full backend responses are not saved. History st
 - The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, approximate note events, and optional user-provided reference exercise comparison only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
 - Pitch estimates and note events are approximate and work best on clean single-note recordings.
-- Reference comparison uses a user-provided simple note sequence only.
+- Reference comparison uses a user-provided simple note sequence or short single-note tab only.
 - Reference comparison does not perform song recognition or copyrighted tab lookup.
 - Reference comparison does not score rhythm correctness yet.
+- Tab parsing is standard tuning only and does not support chords, strumming patterns, bends, slides, mutes, alternate tunings, or capo.
 - There is no note correctness scoring yet.
 - There is no chord detection or polyphonic pitch detection.
 - It does not know whether the player hit the right notes or played a specific riff correctly.

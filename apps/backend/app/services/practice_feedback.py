@@ -10,6 +10,7 @@ def build_coach_feedback(
     practice_context: Mapping[str, Any] | None = None,
     pitch_analysis: Mapping[str, Any] | None = None,
     note_events: list[Mapping[str, Any]] | None = None,
+    reference_exercise: Mapping[str, Any] | None = None,
     reference_comparison: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     quality_level = recording_quality["quality_level"]
@@ -121,21 +122,35 @@ def build_coach_feedback(
         )
 
     if reference_comparison is not None and reference_comparison.get("enabled"):
+        reference_source = str((reference_exercise or {}).get("source", "notes"))
         if reference_comparison.get("valid"):
             coach_notes.append(
                 f"Compared with your expected exercise, the coach found {reference_comparison['matched_count']} of {reference_comparison['expected_count']} notes in order."
             )
-            coach_notes.append(
-                "This comparison checks approximate detected note names only, not rhythm or full song correctness."
-            )
+            if reference_source == "tab":
+                coach_notes.append(
+                    "The tab was converted into a simple expected note sequence before comparison."
+                )
+                coach_notes.append(
+                    "This tab comparison checks detected note names only, not rhythm or strumming."
+                )
+            else:
+                coach_notes.append(
+                    "This comparison checks approximate detected note names only, not rhythm or full song correctness."
+                )
             if int(reference_comparison.get("missed_count", 0)) > 0:
                 next_practice_steps.append(
                     "Some expected notes were not detected clearly. Try recording slower with cleaner separation."
                 )
         else:
-            coach_notes.append(
-                "The expected exercise includes unsupported note names, so reference feedback is incomplete."
-            )
+            if reference_source == "tab":
+                coach_notes.append(
+                    "The provided tab includes unsupported syntax, so reference feedback is incomplete."
+                )
+            else:
+                coach_notes.append(
+                    "The expected exercise includes unsupported note names, so reference feedback is incomplete."
+                )
 
     if not work_on:
         work_on.append(

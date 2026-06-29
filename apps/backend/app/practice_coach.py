@@ -97,6 +97,8 @@ class NoteEvent(BaseModel):
 class ReferenceExercise(BaseModel):
     expected_notes_raw: str | None
     expected_notes: list[str] = Field(default_factory=list)
+    expected_tab_raw: str | None = None
+    source: Literal["notes", "tab", "none"]
     valid: bool
     warnings: list[str] = Field(default_factory=list)
 
@@ -165,6 +167,7 @@ async def analyze_practice_audio(
     practice_focus: str | None = Form(default=None),
     practice_description: str | None = Form(default=None),
     expected_notes: str | None = Form(default=None),
+    expected_tab: str | None = Form(default=None),
 ) -> PracticeAudioAnalysisResponse:
     return PracticeAudioAnalysisResponse.model_validate(
         await analyze_uploaded_audio(
@@ -172,5 +175,6 @@ async def analyze_practice_audio(
             practice_focus=practice_focus,
             practice_description=practice_description,
             expected_notes=expected_notes,
+            expected_tab=expected_tab,
         )
     )

@@ -12,8 +12,8 @@ from app.services.practice_note_events import extract_note_events
 from app.services.practice_pitch_analysis import analyze_pitch
 from app.services.practice_recording_quality import analyze_recording_quality
 from app.services.practice_reference_comparison import (
+    build_reference_exercise,
     compare_reference_notes,
-    parse_expected_notes,
 )
 from app.services.practice_scoring import score_practice_analysis
 from app.services.practice_segment_analysis import analyze_audio_segments
@@ -38,6 +38,7 @@ async def analyze_uploaded_audio(
     practice_focus: str | None = None,
     practice_description: str | None = None,
     expected_notes: str | None = None,
+    expected_tab: str | None = None,
 ) -> dict[str, Any]:
     if audio_file is None:
         return build_invalid_response("", ["Missing audio file."])
@@ -107,7 +108,10 @@ async def analyze_uploaded_audio(
             analysis["pitch_analysis"],
             analysis["duration_seconds"],
         )
-        analysis["reference_exercise"] = parse_expected_notes(expected_notes)
+        analysis["reference_exercise"] = build_reference_exercise(
+            expected_notes_raw=expected_notes,
+            expected_tab_raw=expected_tab,
+        )
         analysis["reference_comparison"] = compare_reference_notes(
             analysis["reference_exercise"],
             analysis["note_events"],
@@ -120,6 +124,7 @@ async def analyze_uploaded_audio(
             practice_context=analysis["practice_context"],
             pitch_analysis=analysis["pitch_analysis"],
             note_events=analysis["note_events"],
+            reference_exercise=analysis["reference_exercise"],
             reference_comparison=analysis["reference_comparison"],
         )
         return analysis

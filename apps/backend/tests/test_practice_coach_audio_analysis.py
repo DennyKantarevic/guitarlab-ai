@@ -8,6 +8,7 @@ import httpx
 
 from app.main import app
 from app.services.practice_feedback import build_coach_feedback
+from app.services.practice_tab_parser import parse_expected_tab
 
 
 REQUIRED_FIELDS = {
@@ -114,6 +115,8 @@ PRACTICE_CONTEXT_FIELDS = {
 REFERENCE_EXERCISE_FIELDS = {
     "expected_notes_raw",
     "expected_notes",
+    "expected_tab_raw",
+    "source",
     "valid",
     "warnings",
 }
@@ -320,6 +323,8 @@ def test_valid_generated_sine_wave_returns_audio_features():
     assert reference_exercise == {
         "expected_notes_raw": None,
         "expected_notes": [],
+        "expected_tab_raw": None,
+        "source": "none",
         "valid": True,
         "warnings": [],
     }
@@ -878,6 +883,91 @@ def test_silent_audio_returns_low_confidence_pitch_analysis():
     assert analysis["note_events"] == []
 
 
+def test_expected_tab_parses_valid_six_line_single_note_tab():
+    parsed = parse_expected_tab(
+        """
+e|----------------|
+B|----------------|
+G|----------------|
+D|----------------|
+A|-----0-2-3------|
+E|-0-3------------|
+"""
+    )
+
+    assert parsed["valid"] is True
+    assert parsed["expected_notes"] == ["E2", "G2", "A2", "B2", "C3"]
+    assert parsed["warnings"] == []
+
+
+def test_expected_tab_converts_each_open_standard_tuning_string():
+    assert parse_expected_tab("e|0---|\nB|----|\nG|----|\nD|----|\nA|----|\nE|----|")[
+        "expected_notes"
+    ] == ["E4"]
+    assert parse_expected_tab("e|----|\nB|0---|\nG|----|\nD|----|\nA|----|\nE|----|")[
+        "expected_notes"
+    ] == ["B3"]
+    assert parse_expected_tab("e|----|\nB|----|\nG|0---|\nD|----|\nA|----|\nE|----|")[
+        "expected_notes"
+    ] == ["G3"]
+    assert parse_expected_tab("e|----|\nB|----|\nG|----|\nD|0---|\nA|----|\nE|----|")[
+        "expected_notes"
+    ] == ["D3"]
+    assert parse_expected_tab("e|----|\nB|----|\nG|----|\nD|----|\nA|0---|\nE|----|")[
+        "expected_notes"
+    ] == ["A2"]
+    assert parse_expected_tab("e|----|\nB|----|\nG|----|\nD|----|\nA|----|\nE|0---|")[
+        "expected_notes"
+    ] == ["E2"]
+
+
+def test_expected_tab_supports_multi_digit_frets():
+    parsed = parse_expected_tab(
+        """
+e|-10-12-|
+B|-------|
+G|-------|
+D|-------|
+A|-------|
+E|-------|
+"""
+    )
+
+    assert parsed["valid"] is True
+    assert parsed["expected_notes"] == ["D5", "E5"]
+
+
+def test_expected_tab_preserves_left_to_right_order_across_strings():
+    parsed = parse_expected_tab(
+        """
+e|--------|
+B|------1-|
+G|----0---|
+D|--0-----|
+A|0-------|
+E|--------|
+"""
+    )
+
+    assert parsed["expected_notes"] == ["A2", "D3", "G3", "C4"]
+
+
+def test_expected_tab_returns_warning_for_chord_like_columns():
+    parsed = parse_expected_tab(
+        """
+e|0---|
+B|0---|
+G|----|
+D|----|
+A|----|
+E|----|
+"""
+    )
+
+    assert parsed["valid"] is False
+    assert any("Chords are not supported" in warning for warning in parsed["warnings"])
+
+
 def test_expected_notes_parses_space_separated_notes():
     response = post_audio(
         {
@@ -894,6 +984,8 @@ def test_expected_notes_parses_space_separated_notes():
     reference = response.json()["reference_exercise"]
     assert reference["expected_notes_raw"] == "A4 B4 C5 D5"
     assert reference["expected_notes"] == ["A4", "B4", "C5", "D5"]
+    assert reference["expected_tab_raw"] is None
+    assert reference["source"] == "notes"
     assert reference["valid"] is True
     assert reference["warnings"] == []
 
@@ -979,9 +1071,78 @@ def test_missing_expected_notes_disables_reference_comparison():
     )
 
     assert response.status_code == 200
-    comparison = response.json()["reference_comparison"]
+    analysis = response.json()
+    assert analysis["reference_exercise"]["source"] == "none"
+    comparison = analysis["reference_comparison"]
     assert comparison["enabled"] is False
     assert comparison["summary"] == "No reference exercise was provided."
+
+
+def test_expected_notes_take_priority_when_expected_tab_is_also_provided():
+    response = post_audio(
+        {
+            "audio_file": (
+                "notes-priority.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={
+            "expected_notes": "A4",
+            "expected_tab": "e|----|\nB|----|\nG|----|\nD|----|\nA|----|\nE|0---|",
+        },
+    )
+
+    assert response.status_code == 200
+    reference = response.json()["reference_exercise"]
+    assert reference["source"] == "notes"
+    assert reference["expected_notes"] == ["A4"]
+    assert reference["expected_tab_raw"] is not None
+    assert any("expected_tab was ignored" in warning for warning in reference["warnings"])
+
+
+def test_expected_tab_is_used_when_expected_notes_are_missing():
+    response = post_audio(
+        {
+            "audio_file": (
+                "tab-reference.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={
+            "expected_tab": "e|----|\nB|----|\nG|----|\nD|----|\nA|----|\nE|0---|",
+        },
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["reference_exercise"]["source"] == "tab"
+    assert analysis["reference_exercise"]["expected_notes"] == ["E2"]
+    assert analysis["reference_comparison"]["enabled"] is True
+
+
+def test_invalid_expected_tab_does_not_crash_analysis():
+    response = post_audio(
+        {
+            "audio_file": (
+                "invalid-tab.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_tab": "this is not a six-line tab"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is True
+    assert analysis["reference_exercise"]["source"] == "tab"
+    assert analysis["reference_exercise"]["valid"] is False
+    assert analysis["reference_exercise"]["expected_notes"] == []
+    assert analysis["reference_exercise"]["warnings"]
+    assert analysis["reference_comparison"]["enabled"] is True
+    assert analysis["reference_comparison"]["valid"] is False
 
 
 def test_matching_a4_reference_against_generated_a4_audio_counts_match():
