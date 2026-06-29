@@ -1,5 +1,20 @@
+export type PracticeFocus =
+  | "general"
+  | "note_clarity"
+  | "timing"
+  | "speed_control"
+  | "lead_phrase"
+  | "tone_recording";
+
 export type PracticeAudioRequest = {
   audio_file: File;
+  practice_focus?: PracticeFocus;
+  practice_description?: string;
+};
+
+export type PracticeContext = {
+  practice_focus: PracticeFocus;
+  practice_description: string | null;
 };
 
 export type PracticeMetrics = {
@@ -87,6 +102,7 @@ export type PracticeAudioAnalysisResponse = {
   analysis_warnings: string[];
   valid: boolean;
   errors: string[];
+  practice_context?: PracticeContext | null;
   practice_metrics?: PracticeMetrics | null;
   recording_quality?: RecordingQuality | null;
   segment_analysis?: SegmentAnalysis[] | null;
@@ -103,12 +119,19 @@ type FetchLike = (
 const DEFAULT_BACKEND_URL = "http://127.0.0.1:8000";
 
 export async function analyzePracticeAudio(
-  audioFile: File,
+  audioInput: File | PracticeAudioRequest,
   fetcher: FetchLike = fetch,
   backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_URL,
 ): Promise<PracticeAudioAnalysisResponse> {
+  const request = normalizePracticeAudioRequest(audioInput);
   const formData = new FormData();
-  formData.append("audio_file", audioFile);
+  formData.append("audio_file", request.audio_file);
+  formData.append("practice_focus", request.practice_focus ?? "general");
+
+  const description = request.practice_description?.trim();
+  if (description) {
+    formData.append("practice_description", description);
+  }
 
   const response = await fetcher(
     `${normalizeBackendUrl(backendUrl || DEFAULT_BACKEND_URL)}/practice/analyze-audio`,
@@ -128,4 +151,21 @@ export async function analyzePracticeAudio(
 
 function normalizeBackendUrl(backendUrl: string): string {
   return backendUrl.replace(/\/+$/, "");
+}
+
+function normalizePracticeAudioRequest(
+  audioInput: File | PracticeAudioRequest,
+): PracticeAudioRequest {
+  if (
+    typeof audioInput === "object" &&
+    audioInput !== null &&
+    "audio_file" in audioInput
+  ) {
+    return audioInput;
+  }
+
+  return {
+    audio_file: audioInput,
+    practice_focus: "general",
+  };
 }

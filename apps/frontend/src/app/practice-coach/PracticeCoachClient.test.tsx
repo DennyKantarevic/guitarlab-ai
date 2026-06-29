@@ -21,6 +21,10 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
   analysis_warnings: ["Short test warning."],
   valid: true,
   errors: [],
+  practice_context: {
+    practice_focus: "timing",
+    practice_description: "Working on eighth-note alternate picking",
+  },
   practice_metrics: {
     overall_score: 82,
     timing_activity_score: 78,
@@ -206,6 +210,46 @@ describe("PracticeCoachClient", () => {
     expect(input.getAttribute("accept")).toBe(".wav,audio/wav,audio/wave");
   });
 
+  test("renders practice focus controls with general as the default", () => {
+    render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    expect(screen.getByText("What are you practicing?")).toBeDefined();
+    const focusSelect = screen.getByLabelText("Practice focus");
+    expect(focusSelect).toBeDefined();
+    expect((focusSelect as HTMLSelectElement).value).toBe("general");
+    expect(
+      screen.getByLabelText("Describe what you were trying to play"),
+    ).toBeDefined();
+  });
+
+  test("selecting Timing and rhythm and entering a description sends practice context", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Practice focus"), {
+      target: { value: "timing" },
+    });
+    fireEvent.change(screen.getByLabelText("Describe what you were trying to play"), {
+      target: { value: "  Working on eighth-note alternate picking  " },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "timing",
+        practice_description: "Working on eighth-note alternate picking",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
   test("clicking Analyze with no file shows an error", async () => {
     const analyzeAudio = vi.fn();
     render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
@@ -243,6 +287,7 @@ describe("PracticeCoachClient", () => {
     ).toBeDefined();
     expect(analyzeAudio).toHaveBeenCalledWith({
       audio_file: audioFile,
+      practice_focus: "general",
     } satisfies PracticeAudioRequest);
   });
 
@@ -307,6 +352,31 @@ describe("PracticeCoachClient", () => {
       screen.getByText(
         "Play the same phrase slower and make each note start cleanly.",
       ),
+    ).toBeDefined();
+  });
+
+  test("successful response displays practice context in user-friendly language", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Practice focus")).toBeDefined();
+    });
+    expect(screen.getAllByText("Timing and rhythm").length).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(screen.getByText("Goal")).toBeDefined();
+    expect(
+      screen.getByText("Working on eighth-note alternate picking"),
     ).toBeDefined();
   });
 

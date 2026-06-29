@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   analyzePracticeAudio,
   type PracticeAudioAnalysisResponse,
+  type PracticeFocus,
   type PracticeAudioRequest,
 } from "@/lib/practiceCoach";
 import {
@@ -21,10 +22,33 @@ type PracticeCoachClientProps = {
   ) => Promise<PracticeAudioAnalysisResponse>;
 };
 
+const PRACTICE_FOCUS_LABELS: Record<PracticeFocus, string> = {
+  general: "General feedback",
+  note_clarity: "Note clarity",
+  timing: "Timing and rhythm",
+  speed_control: "Speed control",
+  lead_phrase: "Lead phrase",
+  tone_recording: "Tone / recording quality",
+};
+
+const PRACTICE_FOCUS_OPTIONS: Array<{
+  value: PracticeFocus;
+  label: string;
+}> = [
+  { value: "general", label: PRACTICE_FOCUS_LABELS.general },
+  { value: "note_clarity", label: PRACTICE_FOCUS_LABELS.note_clarity },
+  { value: "timing", label: PRACTICE_FOCUS_LABELS.timing },
+  { value: "speed_control", label: PRACTICE_FOCUS_LABELS.speed_control },
+  { value: "lead_phrase", label: PRACTICE_FOCUS_LABELS.lead_phrase },
+  { value: "tone_recording", label: PRACTICE_FOCUS_LABELS.tone_recording },
+];
+
 export default function PracticeCoachClient({
-  analyzeAudio = ({ audio_file }) => analyzePracticeAudio(audio_file),
+  analyzeAudio = (request) => analyzePracticeAudio(request),
 }: PracticeCoachClientProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [practiceFocus, setPracticeFocus] = useState<PracticeFocus>("general");
+  const [practiceDescription, setPracticeDescription] = useState("");
   const [analysis, setAnalysis] =
     useState<PracticeAudioAnalysisResponse | null>(null);
   const [historySessions, setHistorySessions] = useState<
@@ -62,7 +86,16 @@ export default function PracticeCoachClient({
 
     setIsLoading(true);
     try {
-      const nextAnalysis = await analyzeAudio({ audio_file: selectedFile });
+      const trimmedDescription = practiceDescription.trim();
+      const request: PracticeAudioRequest = {
+        audio_file: selectedFile,
+        practice_focus: practiceFocus,
+      };
+      if (trimmedDescription) {
+        request.practice_description = trimmedDescription;
+      }
+
+      const nextAnalysis = await analyzeAudio(request);
       setAnalysis(nextAnalysis);
       if (!nextAnalysis.valid) {
         setError(
@@ -98,6 +131,51 @@ export default function PracticeCoachClient({
         </header>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold">
+              What are you practicing?
+            </h2>
+            <div className="space-y-2">
+              <label
+                className="block text-sm font-medium"
+                htmlFor="practice_focus"
+              >
+                Practice focus
+              </label>
+              <select
+                id="practice_focus"
+                name="practice_focus"
+                onChange={(event) =>
+                  setPracticeFocus(event.target.value as PracticeFocus)
+                }
+                value={practiceFocus}
+              >
+                {PRACTICE_FOCUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                className="block text-sm font-medium"
+                htmlFor="practice_description"
+              >
+                Describe what you were trying to play
+              </label>
+              <textarea
+                id="practice_description"
+                name="practice_description"
+                onChange={(event) => setPracticeDescription(event.target.value)}
+                placeholder="Clean pentatonic scale&#10;Nirvana-style power chord rhythm&#10;Eighth-note alternate picking&#10;Soft indie lead phrase"
+                rows={4}
+                value={practiceDescription}
+              />
+            </div>
+          </section>
+
           <div className="space-y-2">
             <label className="block text-sm font-medium" htmlFor="audio_file">
               WAV file
@@ -161,7 +239,10 @@ function AnalysisResult({
       ) : null}
 
       {analysis.coach_feedback ? (
-        <CoachFeedback feedback={analysis.coach_feedback} />
+        <CoachFeedback
+          context={analysis.practice_context}
+          feedback={analysis.coach_feedback}
+        />
       ) : null}
     </section>
   );
@@ -308,13 +389,16 @@ function SegmentAnalysis({
 }
 
 function CoachFeedback({
+  context,
   feedback,
 }: {
+  context: PracticeAudioAnalysisResponse["practice_context"];
   feedback: NonNullable<PracticeAudioAnalysisResponse["coach_feedback"]>;
 }) {
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Coach feedback</h2>
+      {context ? <PracticeContextSummary context={context} /> : null}
       <h3 className="font-semibold">{feedback.headline}</h3>
       <p className="text-sm">{feedback.summary}</p>
       <ListSection title="What went well" items={feedback.what_went_well} />
@@ -325,6 +409,24 @@ function CoachFeedback({
       />
       <ListSection title="Coach notes" items={feedback.coach_notes} />
     </section>
+  );
+}
+
+function PracticeContextSummary({
+  context,
+}: {
+  context: NonNullable<PracticeAudioAnalysisResponse["practice_context"]>;
+}) {
+  return (
+    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+      <Field
+        label="Practice focus"
+        value={PRACTICE_FOCUS_LABELS[context.practice_focus]}
+      />
+      {context.practice_description ? (
+        <Field label="Goal" value={context.practice_description} />
+      ) : null}
+    </dl>
   );
 }
 
