@@ -112,6 +112,8 @@ const referenceResponse: PracticeAudioAnalysisResponse = {
   reference_exercise: {
     expected_notes_raw: "A4 B4 C5 D5",
     expected_notes: ["A4", "B4", "C5", "D5"],
+    expected_tab_raw: null,
+    source: "notes",
     valid: true,
     warnings: [],
   },
@@ -156,6 +158,8 @@ const invalidReferenceResponse: PracticeAudioAnalysisResponse = {
   reference_exercise: {
     expected_notes_raw: "A4 Bb4",
     expected_notes: ["A4"],
+    expected_tab_raw: null,
+    source: "notes",
     valid: false,
     warnings: [
       "Unsupported expected note 'Bb4'. Use notes like A4 or C#5; flats, chords, tabs, durations, and rhythm values are not supported.",
@@ -166,6 +170,51 @@ const invalidReferenceResponse: PracticeAudioAnalysisResponse = {
     valid: false,
     warnings: [
       "Unsupported expected note 'Bb4'. Use notes like A4 or C#5; flats, chords, tabs, durations, and rhythm values are not supported.",
+    ],
+  },
+};
+
+const tabReferenceResponse: PracticeAudioAnalysisResponse = {
+  ...referenceResponse,
+  reference_exercise: {
+    expected_notes_raw: null,
+    expected_notes: ["E2", "G2", "A2", "B2", "C3"],
+    expected_tab_raw:
+      "e|----------------|\nB|----------------|\nG|----------------|\nD|----------------|\nA|-----0-2-3------|\nE|-0-3------------|",
+    source: "tab",
+    valid: true,
+    warnings: [],
+  },
+  reference_comparison: {
+    ...referenceResponse.reference_comparison,
+    matched_count: 2,
+    missed_count: 3,
+    expected_count: 5,
+    match_ratio: 0.4,
+    summary:
+      "Compared with your expected exercise, the coach found 2 of 5 notes in order.",
+    misses: [
+      { expected_note: "A2", expected_index: 2 },
+      { expected_note: "B2", expected_index: 3 },
+      { expected_note: "C3", expected_index: 4 },
+    ],
+  },
+};
+
+const invalidTabReferenceResponse: PracticeAudioAnalysisResponse = {
+  ...tabReferenceResponse,
+  reference_exercise: {
+    ...tabReferenceResponse.reference_exercise,
+    valid: false,
+    warnings: [
+      "Chords are not supported yet; multiple fret numbers were found at the same tab position.",
+    ],
+  },
+  reference_comparison: {
+    ...tabReferenceResponse.reference_comparison,
+    valid: false,
+    warnings: [
+      "Chords are not supported yet; multiple fret numbers were found at the same tab position.",
     ],
   },
 };
@@ -298,7 +347,7 @@ describe("PracticeCoachClient", () => {
     ).toBeDefined();
   });
 
-  test("renders expected notes input with reference exercise helper text", () => {
+  test("renders expected notes and expected tab inputs with reference exercise helper text", () => {
     render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
 
     const expectedNotesInput = screen.getByLabelText("Expected notes");
@@ -309,26 +358,47 @@ describe("PracticeCoachClient", () => {
       ),
     ).toBeDefined();
     expect(expectedNotesInput.getAttribute("placeholder")).toBe("A4 B4 C5 D5");
-  });
-
-  test("renders expected notes help panel with examples and unsupported items", () => {
-    const { container } = render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
-
-    expect(screen.getByText("How to use expected notes")).toBeDefined();
+    const expectedTabInput = screen.getByLabelText("Expected tab");
+    expect(expectedTabInput).toBeDefined();
+    expect(expectedTabInput.getAttribute("placeholder")).toContain(
+      "A|-----0-2-3------|",
+    );
     expect(
       screen.getByText(
-        "Enter a simple note sequence you are trying to play. The coach compares detected notes from your recording to your own exercise.",
+        "Optional. Paste a short single-note guitar tab in standard tuning. Use this instead of Expected notes.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Use one reference format at a time. If both are filled, Expected notes will be used first.",
+      ),
+    ).toBeDefined();
+  });
+
+  test("renders reference exercise help panel with examples and unsupported items", () => {
+    const { container } = render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    expect(screen.getByText("How to use reference exercises")).toBeDefined();
+    expect(
+      screen.getByText(
+        "You can enter either expected notes or a short single-note guitar tab. The coach compares detected notes from your recording to your own exercise.",
       ),
     ).toBeDefined();
     expect(screen.getByText("A4 B4 C5 D5")).toBeDefined();
     expect(screen.getByText("E3 G3 A3")).toBeDefined();
     expect(screen.getByText("C#4 D#4 F#4")).toBeDefined();
-    expect(screen.getByText("tabs")).toBeDefined();
+    expect(screen.getByText(/A\|-----0-2-3------\|/)).toBeDefined();
+    expect(screen.getByText("6-line guitar tab")).toBeDefined();
+    expect(screen.getByText("standard tuning")).toBeDefined();
+    expect(screen.getByText("single-note melodies")).toBeDefined();
+    expect(screen.getByText("frets 0-24")).toBeDefined();
     expect(screen.getByText("chords")).toBeDefined();
     expect(screen.getByText("strumming patterns")).toBeDefined();
     expect(screen.getByText("song names")).toBeDefined();
     expect(screen.getByText("rhythm notation")).toBeDefined();
     expect(screen.getByText("full song comparison")).toBeDefined();
+    expect(screen.getByText("bends, slides, hammer-ons, pull-offs")).toBeDefined();
+    expect(screen.getByText("alternate tunings or capo")).toBeDefined();
     expect(
       screen.getByText(
         "This works best for short, single-note exercises recorded clearly and slowly.",
@@ -337,7 +407,6 @@ describe("PracticeCoachClient", () => {
 
     const setupText = container.textContent?.toLowerCase() || "";
     expect(setupText).not.toContain("ai will recognize any song");
-    expect(setupText).not.toContain("paste a tab");
     expect(setupText).not.toContain("enter nirvana riffs");
     expect(setupText).not.toContain("checks rhythm accuracy");
     expect(setupText).not.toContain("proves whether you played correctly");
@@ -416,6 +485,64 @@ describe("PracticeCoachClient", () => {
       expect(analyzeAudio).toHaveBeenCalledWith({
         audio_file: audioFile,
         practice_focus: "general",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("entering expected tab sends it with the upload request", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(tabReferenceResponse);
+    const expectedTab =
+      "e|----------------|\nB|----------------|\nG|----------------|\nD|----------------|\nA|-----0-2-3------|\nE|-0-3------------|";
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected tab"), {
+      target: { value: `  ${expectedTab}  ` },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_tab: expectedTab,
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("both expected notes and expected tab can be submitted without frontend blocking", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(referenceResponse);
+    const expectedTab =
+      "e|----------------|\nB|----------------|\nG|----------------|\nD|----------------|\nA|-----0-2-3------|\nE|-0-3------------|";
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected notes"), {
+      target: { value: "A4 B4" },
+    });
+    fireEvent.change(screen.getByLabelText("Expected tab"), {
+      target: { value: expectedTab },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_notes: "A4 B4",
+        expected_tab: expectedTab,
       } satisfies PracticeAudioRequest);
     });
   });
@@ -796,6 +923,8 @@ describe("PracticeCoachClient", () => {
       ),
     ).toBeDefined();
     expect(screen.getByText("Matched notes")).toBeDefined();
+    expect(screen.getByText("Source")).toBeDefined();
+    expect(screen.getAllByText("Expected notes").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("1 of 4")).toBeDefined();
     expect(screen.getByText("Missed notes")).toBeDefined();
     expect(screen.getByText("B4, C5, D5")).toBeDefined();
@@ -803,6 +932,56 @@ describe("PracticeCoachClient", () => {
     expect(screen.getByText("E4")).toBeDefined();
     expect(screen.getByText("Match ratio")).toBeDefined();
     expect(screen.getByText("25%")).toBeDefined();
+  });
+
+  test("reference exercise result shows guitar tab source and parsed notes", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(tabReferenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Reference exercise")).toBeDefined();
+    });
+    expect(screen.getByText("Source")).toBeDefined();
+    expect(screen.getByText("Guitar tab")).toBeDefined();
+    expect(
+      screen.getByText(
+        "The tab was converted into a simple expected note sequence before comparison.",
+      ),
+    ).toBeDefined();
+    expect(screen.getAllByText("Expected notes").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("E2, G2, A2, B2, C3")).toBeDefined();
+    expect(screen.getByText("40%")).toBeDefined();
+  });
+
+  test("tab reference warnings render in the reference exercise section", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(invalidTabReferenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Reference exercise")).toBeDefined();
+    });
+    expect(screen.getByText("Guitar tab")).toBeDefined();
+    expect(
+      screen.getAllByText(/Chords are not supported yet/).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   test("invalid reference exercise warnings render in the result", async () => {

@@ -52,6 +52,7 @@ export default function PracticeCoachClient({
   const [practiceFocus, setPracticeFocus] = useState<PracticeFocus>("general");
   const [practiceDescription, setPracticeDescription] = useState("");
   const [expectedNotes, setExpectedNotes] = useState("");
+  const [expectedTab, setExpectedTab] = useState("");
   const [analysis, setAnalysis] =
     useState<PracticeAudioAnalysisResponse | null>(null);
   const [practiceComparison, setPracticeComparison] =
@@ -104,6 +105,10 @@ export default function PracticeCoachClient({
       if (trimmedExpectedNotes) {
         request.expected_notes = trimmedExpectedNotes;
       }
+      const trimmedExpectedTab = expectedTab.trim();
+      if (trimmedExpectedTab) {
+        request.expected_tab = trimmedExpectedTab;
+      }
 
       const nextAnalysis = await analyzeAudio(request);
       setAnalysis(nextAnalysis);
@@ -148,9 +153,11 @@ export default function PracticeCoachClient({
           <PracticeSetup
             error={error}
             expectedNotes={expectedNotes}
+            expectedTab={expectedTab}
             isLoading={isLoading}
             onDescriptionChange={setPracticeDescription}
             onExpectedNotesChange={setExpectedNotes}
+            onExpectedTabChange={setExpectedTab}
             onFileChange={setSelectedFile}
             onFocusChange={setPracticeFocus}
             onSubmit={handleSubmit}
@@ -181,9 +188,11 @@ export default function PracticeCoachClient({
 function PracticeSetup({
   error,
   expectedNotes,
+  expectedTab,
   isLoading,
   onDescriptionChange,
   onExpectedNotesChange,
+  onExpectedTabChange,
   onFileChange,
   onFocusChange,
   onSubmit,
@@ -193,9 +202,11 @@ function PracticeSetup({
 }: {
   error: string;
   expectedNotes: string;
+  expectedTab: string;
   isLoading: boolean;
   onDescriptionChange: (value: string) => void;
   onExpectedNotesChange: (value: string) => void;
+  onExpectedTabChange: (value: string) => void;
   onFileChange: (file: File | null) => void;
   onFocusChange: (focus: PracticeFocus) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -275,7 +286,32 @@ function PracticeSetup({
             rows={3}
             value={expectedNotes}
           />
-          <ExpectedNotesHelpPanel />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium" htmlFor="expected_tab">
+            Expected tab
+          </label>
+          <p className="text-xs text-neutral-600">
+            Optional. Paste a short single-note guitar tab in standard tuning.
+            Use this instead of Expected notes.
+          </p>
+          <textarea
+            className="min-h-32 w-full rounded-md border border-neutral-300 px-3 py-2 font-mono text-sm"
+            id="expected_tab"
+            name="expected_tab"
+            onChange={(event) => onExpectedTabChange(event.target.value)}
+            placeholder={
+              "e|----------------|\nB|----------------|\nG|----------------|\nD|----------------|\nA|-----0-2-3------|\nE|-0-3------------|"
+            }
+            rows={6}
+            value={expectedTab}
+          />
+          <p className="text-xs text-neutral-600">
+            Use one reference format at a time. If both are filled, Expected
+            notes will be used first.
+          </p>
+          <ReferenceExerciseHelpPanel />
         </div>
 
         <div className="space-y-2">
@@ -318,21 +354,22 @@ function PracticeSetup({
   );
 }
 
-function ExpectedNotesHelpPanel() {
+function ReferenceExerciseHelpPanel() {
   return (
     <aside className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
       <div className="space-y-1">
-        <h4 className="font-semibold">How to use expected notes</h4>
+        <h4 className="font-semibold">How to use reference exercises</h4>
         <p className="text-neutral-700">
-          Enter a simple note sequence you are trying to play. The coach
-          compares detected notes from your recording to your own exercise.
+          You can enter either expected notes or a short single-note guitar tab.
+          The coach compares detected notes from your recording to your own
+          exercise.
         </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <h5 className="text-xs font-semibold uppercase text-neutral-500">
-            Good examples
+            Good expected notes examples
           </h5>
           <ul className="list-disc space-y-1 pl-5">
             <li>A4 B4 C5 D5</li>
@@ -343,15 +380,44 @@ function ExpectedNotesHelpPanel() {
 
         <div className="space-y-2">
           <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Good tab example
+          </h5>
+          <pre className="overflow-x-auto rounded border border-neutral-200 bg-white p-2 text-xs">
+{`e|----------------|
+B|----------------|
+G|----------------|
+D|----------------|
+A|-----0-2-3------|
+E|-0-3------------|`}
+          </pre>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Supported tab format
+          </h5>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>6-line guitar tab</li>
+            <li>standard tuning</li>
+            <li>single-note melodies</li>
+            <li>frets 0-24</li>
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
             Not supported yet
           </h5>
           <ul className="list-disc space-y-1 pl-5">
-            <li>tabs</li>
             <li>chords</li>
             <li>strumming patterns</li>
             <li>song names</li>
             <li>rhythm notation</li>
             <li>full song comparison</li>
+            <li>bends, slides, hammer-ons, pull-offs</li>
+            <li>alternate tunings or capo</li>
           </ul>
         </div>
       </div>
@@ -684,20 +750,39 @@ function ReferenceExerciseResult({
     ...(referenceExercise?.warnings ?? []),
     ...comparison.warnings,
   ]);
+  const referenceSource = referenceExercise?.source ?? "notes";
+  const parsedExpectedNotes = referenceExercise?.expected_notes ?? [];
 
   return (
     <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
       <h2 className="text-xl font-semibold">Reference exercise</h2>
       <p className="text-sm text-neutral-700">{comparison.summary}</p>
 
+      {referenceSource === "tab" ? (
+        <p className="text-sm text-neutral-700">
+          The tab was converted into a simple expected note sequence before
+          comparison.
+        </p>
+      ) : null}
+
       {referenceExercise && !referenceExercise.valid ? (
         <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          Some expected notes were not recognized. Use notes like A4, C#5, or
-          E3.
+          {referenceSource === "tab"
+            ? "Some expected notes or tab syntax were not recognized. Use notes like A4, C#5, or E3, or a six-line single-note tab."
+            : "Some expected notes were not recognized. Use notes like A4, C#5, or E3."}
         </p>
       ) : null}
 
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field label="Source" value={formatReferenceSource(referenceSource)} />
+        <Field
+          label="Expected notes"
+          value={
+            parsedExpectedNotes.length > 0
+              ? parsedExpectedNotes.join(", ")
+              : "Not available"
+          }
+        />
         <Field
           label="Matched notes"
           value={`${comparison.matched_count} of ${comparison.expected_count}`}
@@ -1015,6 +1100,20 @@ function formatMatchRatio(matchRatio: number | null): string {
   }
 
   return `${Math.round(matchRatio * 100)}%`;
+}
+
+function formatReferenceSource(
+  source: NonNullable<
+    NonNullable<PracticeAudioAnalysisResponse["reference_exercise"]>["source"]
+  >,
+): string {
+  if (source === "tab") {
+    return "Guitar tab";
+  }
+  if (source === "notes") {
+    return "Expected notes";
+  }
+  return "None";
 }
 
 function dedupe(items: string[]): string[] {

@@ -11,6 +11,7 @@ export type PracticeAudioRequest = {
   practice_focus?: PracticeFocus;
   practice_description?: string;
   expected_notes?: string;
+  expected_tab?: string;
 };
 
 export type PracticeContext = {
@@ -94,6 +95,8 @@ export type NoteEvent = {
 export type ReferenceExercise = {
   expected_notes_raw: string | null;
   expected_notes: string[];
+  expected_tab_raw?: string | null;
+  source?: "notes" | "tab" | "none";
   valid: boolean;
   warnings: string[];
 };
@@ -181,6 +184,11 @@ export async function analyzePracticeAudio(
   const expectedNotes = request.expected_notes?.trim();
   if (expectedNotes) {
     formData.append("expected_notes", expectedNotes);
+  }
+
+  const expectedTab = request.expected_tab?.trim();
+  if (expectedTab) {
+    formData.append("expected_tab", expectedTab);
   }
 
   const response = await fetcher(
