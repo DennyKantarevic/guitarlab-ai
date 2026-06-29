@@ -107,6 +107,69 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
   ],
 };
 
+const referenceResponse: PracticeAudioAnalysisResponse = {
+  ...successfulResponse,
+  reference_exercise: {
+    expected_notes_raw: "A4 B4 C5 D5",
+    expected_notes: ["A4", "B4", "C5", "D5"],
+    valid: true,
+    warnings: [],
+  },
+  reference_comparison: {
+    enabled: true,
+    valid: true,
+    matched_count: 1,
+    missed_count: 3,
+    extra_count: 1,
+    expected_count: 4,
+    detected_count: 2,
+    match_ratio: 0.25,
+    summary:
+      "Compared with your expected exercise, the coach found 1 of 4 notes in order.",
+    matches: [
+      {
+        expected_note: "A4",
+        detected_note: "A4",
+        expected_index: 0,
+        detected_index: 0,
+        confidence: 0.82,
+      },
+    ],
+    misses: [
+      { expected_note: "B4", expected_index: 1 },
+      { expected_note: "C5", expected_index: 2 },
+      { expected_note: "D5", expected_index: 3 },
+    ],
+    extras: [
+      {
+        detected_note: "E4",
+        detected_index: 1,
+        confidence: 0.7,
+      },
+    ],
+    warnings: [],
+  },
+};
+
+const invalidReferenceResponse: PracticeAudioAnalysisResponse = {
+  ...referenceResponse,
+  reference_exercise: {
+    expected_notes_raw: "A4 Bb4",
+    expected_notes: ["A4"],
+    valid: false,
+    warnings: [
+      "Unsupported expected note 'Bb4'. Use notes like A4 or C#5; flats, chords, tabs, durations, and rhythm values are not supported.",
+    ],
+  },
+  reference_comparison: {
+    ...referenceResponse.reference_comparison,
+    valid: false,
+    warnings: [
+      "Unsupported expected note 'Bb4'. Use notes like A4 or C#5; flats, chords, tabs, durations, and rhythm values are not supported.",
+    ],
+  },
+};
+
 beforeEach(() => {
   Object.defineProperty(window, "localStorage", {
     configurable: true,
@@ -235,6 +298,19 @@ describe("PracticeCoachClient", () => {
     ).toBeDefined();
   });
 
+  test("renders expected notes input with reference exercise helper text", () => {
+    render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    const expectedNotesInput = screen.getByLabelText("Expected notes");
+    expect(expectedNotesInput).toBeDefined();
+    expect(
+      screen.getByText(
+        "Optional. Enter a simple note sequence like A4 B4 C5 D5. This compares detected notes to your own exercise, not a song database.",
+      ),
+    ).toBeDefined();
+    expect(expectedNotesInput.getAttribute("placeholder")).toBe("A4 B4 C5 D5");
+  });
+
   test("selecting Timing and rhythm and entering a description sends practice context", async () => {
     const audioFile = new File(["wav-bytes"], "practice.wav", {
       type: "audio/wav",
@@ -259,6 +335,55 @@ describe("PracticeCoachClient", () => {
         audio_file: audioFile,
         practice_focus: "timing",
         practice_description: "Working on eighth-note alternate picking",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("entering expected notes sends them with the upload request", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(referenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected notes"), {
+      target: { value: "  A4 B4 C5 D5  " },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_notes: "A4 B4 C5 D5",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("empty expected notes are omitted from the upload request", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected notes"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
       } satisfies PracticeAudioRequest);
     });
   });
@@ -615,6 +740,99 @@ describe("PracticeCoachClient", () => {
         "Play the same phrase slower and make each note start cleanly.",
       ),
     ).toBeDefined();
+  });
+
+  test("reference exercise result renders when comparison is enabled", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(referenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Reference exercise")).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "Compared with your expected exercise, the coach found 1 of 4 notes in order.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByText("Matched notes")).toBeDefined();
+    expect(screen.getByText("1 of 4")).toBeDefined();
+    expect(screen.getByText("Missed notes")).toBeDefined();
+    expect(screen.getByText("B4, C5, D5")).toBeDefined();
+    expect(screen.getByText("Extra detected notes")).toBeDefined();
+    expect(screen.getByText("E4")).toBeDefined();
+    expect(screen.getByText("Match ratio")).toBeDefined();
+    expect(screen.getByText("25%")).toBeDefined();
+  });
+
+  test("invalid reference exercise warnings render in the result", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(invalidReferenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Reference exercise")).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "Some expected notes were not recognized. Use notes like A4, C#5, or E3.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getAllByText(/Unsupported expected note 'Bb4'/).length,
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  test("reference exercise section is hidden when comparison is disabled", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue({
+      ...successfulResponse,
+      reference_comparison: {
+        enabled: false,
+        valid: true,
+        matched_count: 0,
+        missed_count: 0,
+        extra_count: 0,
+        expected_count: 0,
+        detected_count: 0,
+        match_ratio: null,
+        summary: "No reference exercise was provided.",
+        matches: [],
+        misses: [],
+        extras: [],
+        warnings: [],
+      },
+    } satisfies PracticeAudioAnalysisResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Coach feedback")).toBeDefined();
+    });
+    expect(screen.queryByText("Reference exercise")).toBeNull();
   });
 
   test("pitch analysis renders when present", async () => {

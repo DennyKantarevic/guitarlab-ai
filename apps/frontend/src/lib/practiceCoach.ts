@@ -10,6 +10,7 @@ export type PracticeAudioRequest = {
   audio_file: File;
   practice_focus?: PracticeFocus;
   practice_description?: string;
+  expected_notes?: string;
 };
 
 export type PracticeContext = {
@@ -90,6 +91,48 @@ export type NoteEvent = {
   confidence: number;
 };
 
+export type ReferenceExercise = {
+  expected_notes_raw: string | null;
+  expected_notes: string[];
+  valid: boolean;
+  warnings: string[];
+};
+
+export type ReferenceMatch = {
+  expected_note: string;
+  detected_note: string;
+  expected_index: number;
+  detected_index: number;
+  confidence: number;
+};
+
+export type ReferenceMiss = {
+  expected_note: string;
+  expected_index: number;
+};
+
+export type ReferenceExtra = {
+  detected_note: string;
+  detected_index: number;
+  confidence: number;
+};
+
+export type ReferenceComparison = {
+  enabled: boolean;
+  valid: boolean;
+  matched_count: number;
+  missed_count: number;
+  extra_count: number;
+  expected_count: number;
+  detected_count: number;
+  match_ratio: number | null;
+  summary: string;
+  matches: ReferenceMatch[];
+  misses: ReferenceMiss[];
+  extras: ReferenceExtra[];
+  warnings: string[];
+};
+
 export type PracticeAudioAnalysisResponse = {
   filename: string;
   duration_seconds: number;
@@ -109,6 +152,8 @@ export type PracticeAudioAnalysisResponse = {
   coach_feedback?: CoachFeedback | null;
   pitch_analysis?: PitchAnalysis | null;
   note_events?: NoteEvent[] | null;
+  reference_exercise?: ReferenceExercise | null;
+  reference_comparison?: ReferenceComparison | null;
 };
 
 type FetchLike = (
@@ -131,6 +176,11 @@ export async function analyzePracticeAudio(
   const description = request.practice_description?.trim();
   if (description) {
     formData.append("practice_description", description);
+  }
+
+  const expectedNotes = request.expected_notes?.trim();
+  if (expectedNotes) {
+    formData.append("expected_notes", expectedNotes);
   }
 
   const response = await fetcher(

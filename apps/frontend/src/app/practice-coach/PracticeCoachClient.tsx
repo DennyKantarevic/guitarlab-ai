@@ -51,6 +51,7 @@ export default function PracticeCoachClient({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [practiceFocus, setPracticeFocus] = useState<PracticeFocus>("general");
   const [practiceDescription, setPracticeDescription] = useState("");
+  const [expectedNotes, setExpectedNotes] = useState("");
   const [analysis, setAnalysis] =
     useState<PracticeAudioAnalysisResponse | null>(null);
   const [practiceComparison, setPracticeComparison] =
@@ -99,6 +100,10 @@ export default function PracticeCoachClient({
       if (trimmedDescription) {
         request.practice_description = trimmedDescription;
       }
+      const trimmedExpectedNotes = expectedNotes.trim();
+      if (trimmedExpectedNotes) {
+        request.expected_notes = trimmedExpectedNotes;
+      }
 
       const nextAnalysis = await analyzeAudio(request);
       setAnalysis(nextAnalysis);
@@ -142,8 +147,10 @@ export default function PracticeCoachClient({
         <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start">
           <PracticeSetup
             error={error}
+            expectedNotes={expectedNotes}
             isLoading={isLoading}
             onDescriptionChange={setPracticeDescription}
+            onExpectedNotesChange={setExpectedNotes}
             onFileChange={setSelectedFile}
             onFocusChange={setPracticeFocus}
             onSubmit={handleSubmit}
@@ -173,8 +180,10 @@ export default function PracticeCoachClient({
 
 function PracticeSetup({
   error,
+  expectedNotes,
   isLoading,
   onDescriptionChange,
+  onExpectedNotesChange,
   onFileChange,
   onFocusChange,
   onSubmit,
@@ -183,8 +192,10 @@ function PracticeSetup({
   selectedFile,
 }: {
   error: string;
+  expectedNotes: string;
   isLoading: boolean;
   onDescriptionChange: (value: string) => void;
+  onExpectedNotesChange: (value: string) => void;
   onFileChange: (file: File | null) => void;
   onFocusChange: (focus: PracticeFocus) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -246,6 +257,25 @@ function PracticeSetup({
             />
           </div>
         </section>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium" htmlFor="expected_notes">
+            Expected notes
+          </label>
+          <p className="text-xs text-neutral-600">
+            Optional. Enter a simple note sequence like A4 B4 C5 D5. This
+            compares detected notes to your own exercise, not a song database.
+          </p>
+          <textarea
+            className="min-h-20 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            id="expected_notes"
+            name="expected_notes"
+            onChange={(event) => onExpectedNotesChange(event.target.value)}
+            placeholder="A4 B4 C5 D5"
+            rows={3}
+            value={expectedNotes}
+          />
+        </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-medium" htmlFor="audio_file">
@@ -330,6 +360,8 @@ function LatestResult({
           feedback={analysis.coach_feedback}
         />
       ) : null}
+
+      <ReferenceExerciseResult analysis={analysis} />
 
       {comparison ? <PracticeComparisonResult comparison={comparison} /> : null}
     </section>
@@ -582,6 +614,63 @@ function PracticeComparisonResult({
             />
           ) : null}
         </dl>
+      ) : null}
+    </section>
+  );
+}
+
+function ReferenceExerciseResult({
+  analysis,
+}: {
+  analysis: PracticeAudioAnalysisResponse;
+}) {
+  const referenceExercise = analysis.reference_exercise;
+  const comparison = analysis.reference_comparison;
+
+  if (!comparison?.enabled) {
+    return null;
+  }
+
+  const missedNotes = comparison.misses.map((miss) => miss.expected_note);
+  const extraNotes = comparison.extras.map((extra) => extra.detected_note);
+  const warnings = dedupe([
+    ...(referenceExercise?.warnings ?? []),
+    ...comparison.warnings,
+  ]);
+
+  return (
+    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+      <h2 className="text-xl font-semibold">Reference exercise</h2>
+      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+
+      {referenceExercise && !referenceExercise.valid ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          Some expected notes were not recognized. Use notes like A4, C#5, or
+          E3.
+        </p>
+      ) : null}
+
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Matched notes"
+          value={`${comparison.matched_count} of ${comparison.expected_count}`}
+        />
+        <Field
+          label="Missed notes"
+          value={missedNotes.length > 0 ? missedNotes.join(", ") : "None"}
+        />
+        <Field
+          label="Extra detected notes"
+          value={extraNotes.length > 0 ? extraNotes.join(", ") : "None"}
+        />
+        <Field
+          label="Match ratio"
+          value={formatMatchRatio(comparison.match_ratio)}
+        />
+      </dl>
+
+      {warnings.length > 0 ? (
+        <ListSection title="Reference warnings" items={warnings} />
       ) : null}
     </section>
   );
@@ -871,6 +960,18 @@ function formatScoreChange(scoreChange: number | null): string {
   }
 
   return scoreChange > 0 ? `+${scoreChange}` : String(scoreChange);
+}
+
+function formatMatchRatio(matchRatio: number | null): string {
+  if (matchRatio === null) {
+    return "Not available";
+  }
+
+  return `${Math.round(matchRatio * 100)}%`;
+}
+
+function dedupe(items: string[]): string[] {
+  return Array.from(new Set(items));
 }
 
 function ListSection({
