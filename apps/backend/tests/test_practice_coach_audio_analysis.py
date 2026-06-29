@@ -22,6 +22,9 @@ REQUIRED_FIELDS = {
     "valid",
     "errors",
     "practice_metrics",
+    "recording_quality",
+    "segment_analysis",
+    "coach_feedback",
 }
 
 PRACTICE_METRIC_FIELDS = {
@@ -33,6 +36,35 @@ PRACTICE_METRIC_FIELDS = {
     "brightness_level",
     "attack_activity",
     "recommendations",
+}
+
+RECORDING_QUALITY_FIELDS = {
+    "peak_amplitude",
+    "clipped_sample_ratio",
+    "silence_ratio",
+    "quality_level",
+    "warnings",
+}
+
+SEGMENT_FIELDS = {
+    "segment_index",
+    "start_seconds",
+    "end_seconds",
+    "duration_seconds",
+    "onset_count",
+    "onset_density_per_second",
+    "rms_energy_mean",
+    "spectral_centroid_mean",
+    "energy_level",
+    "brightness_level",
+    "attack_activity",
+}
+
+COACH_FEEDBACK_FIELDS = {
+    "summary",
+    "strengths",
+    "focus_areas",
+    "next_steps",
 }
 
 
@@ -64,6 +96,35 @@ def make_sine_wave_bytes(
         for sample_index in range(sample_count):
             sample = math.sin(2 * math.pi * frequency * sample_index / sample_rate)
             frames.extend(int(sample * 32767 * 0.35).to_bytes(2, "little", signed=True))
+        wav_file.writeframes(bytes(frames))
+
+    buffer.seek(0)
+    return buffer.read()
+
+
+def make_pulsed_sine_wave_bytes(
+    duration_seconds=6.0,
+    sample_rate=22050,
+    frequency=440.0,
+):
+    sample_count = int(duration_seconds * sample_rate)
+    buffer = io.BytesIO()
+
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+        frames = bytearray()
+        for sample_index in range(sample_count):
+            time_seconds = sample_index / sample_rate
+            pulse_position = time_seconds % 0.5
+            envelope = max(0.0, 1.0 - (pulse_position / 0.12))
+            sample = (
+                math.sin(2 * math.pi * frequency * time_seconds)
+                * envelope
+                * 0.45
+            )
+            frames.extend(int(sample * 32767).to_bytes(2, "little", signed=True))
         wav_file.writeframes(bytes(frames))
 
     buffer.seek(0)
@@ -114,6 +175,29 @@ def test_valid_generated_sine_wave_returns_audio_features():
     assert metrics["attack_activity"] in {"sparse", "moderate", "busy"}
     assert isinstance(metrics["recommendations"], list)
 
+    quality = analysis["recording_quality"]
+    assert set(quality) == RECORDING_QUALITY_FIELDS
+    assert isinstance(quality["peak_amplitude"], (int, float))
+    assert isinstance(quality["clipped_sample_ratio"], (int, float))
+    assert isinstance(quality["silence_ratio"], (int, float))
+    assert quality["quality_level"] in {"poor", "usable", "good"}
+    assert isinstance(quality["warnings"], list)
+
+    segments = analysis["segment_analysis"]
+    assert len(segments) == 1
+    assert set(segments[0]) == SEGMENT_FIELDS
+    assert segments[0]["segment_index"] == 0
+    assert segments[0]["energy_level"] in {"low", "medium", "high"}
+    assert segments[0]["brightness_level"] in {"dark", "balanced", "bright"}
+    assert segments[0]["attack_activity"] in {"sparse", "moderate", "busy"}
+
+    feedback = analysis["coach_feedback"]
+    assert set(feedback) == COACH_FEEDBACK_FIELDS
+    assert isinstance(feedback["summary"], str)
+    assert isinstance(feedback["strengths"], list)
+    assert isinstance(feedback["focus_areas"], list)
+    assert isinstance(feedback["next_steps"], list)
+
 
 def test_unsupported_extension_returns_clear_error():
     response = post_audio(
@@ -131,6 +215,9 @@ def test_unsupported_extension_returns_clear_error():
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Unsupported audio format. Only .wav files are supported."]
     assert analysis["practice_metrics"] is None
+    assert analysis["recording_quality"] is None
+    assert analysis["segment_analysis"] is None
+    assert analysis["coach_feedback"] is None
 
 
 def test_empty_file_returns_clear_error():
@@ -149,6 +236,9 @@ def test_empty_file_returns_clear_error():
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Empty audio file."]
     assert analysis["practice_metrics"] is None
+    assert analysis["recording_quality"] is None
+    assert analysis["segment_analysis"] is None
+    assert analysis["coach_feedback"] is None
 
 
 def test_missing_file_returns_clear_error():
@@ -159,6 +249,9 @@ def test_missing_file_returns_clear_error():
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Missing audio file."]
     assert analysis["practice_metrics"] is None
+    assert analysis["recording_quality"] is None
+    assert analysis["segment_analysis"] is None
+    assert analysis["coach_feedback"] is None
 
 
 def test_invalid_wav_returns_clear_decode_error():
@@ -177,6 +270,9 @@ def test_invalid_wav_returns_clear_decode_error():
     assert analysis["valid"] is False
     assert analysis["errors"] == ["Could not decode audio file."]
     assert analysis["practice_metrics"] is None
+    assert analysis["recording_quality"] is None
+    assert analysis["segment_analysis"] is None
+    assert analysis["coach_feedback"] is None
 
 
 def test_endpoint_response_contains_no_llm_or_agent_references():
@@ -224,3 +320,29 @@ def test_practice_metrics_are_deterministic_for_same_generated_audio():
     assert first_response.json()["practice_metrics"] == second_response.json()[
         "practice_metrics"
     ]
+    assert first_response.json()["coach_feedback"] == second_response.json()[
+        "coach_feedback"
+    ]
+
+
+def test_longer_generated_audio_returns_multiple_segments():
+    response = post_audio(
+        {
+            "audio_file": (
+                "long-practice.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=11.0),
+                "audio/wav",
+            )
+        }
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is True
+    assert len(analysis["segment_analysis"]) == 3
+    assert analysis["segment_analysis"][0]["start_seconds"] == 0
+    assert analysis["segment_analysis"][0]["end_seconds"] == 5
+    assert analysis["segment_analysis"][1]["start_seconds"] == 5
+    assert analysis["segment_analysis"][1]["end_seconds"] == 10
+    assert analysis["segment_analysis"][2]["start_seconds"] == 10
+    assert analysis["segment_analysis"][2]["duration_seconds"] > 0

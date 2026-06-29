@@ -29,6 +29,34 @@ const successfulResponse: PracticeAudioAnalysisResponse = {
     attack_activity: "moderate",
     recommendations: ["Record at least a few seconds for better analysis."],
   },
+  recording_quality: {
+    peak_amplitude: 0.42,
+    clipped_sample_ratio: 0,
+    silence_ratio: 0.12,
+    quality_level: "good",
+    warnings: ["The recording is usable for testing."],
+  },
+  segment_analysis: [
+    {
+      segment_index: 0,
+      start_seconds: 0,
+      end_seconds: 3.25,
+      duration_seconds: 3.25,
+      onset_count: 8,
+      onset_density_per_second: 2.46,
+      rms_energy_mean: 0.12,
+      spectral_centroid_mean: 1800,
+      energy_level: "medium",
+      brightness_level: "balanced",
+      attack_activity: "moderate",
+    },
+  ],
+  coach_feedback: {
+    summary: "Analyzed 3.25 seconds of audio.",
+    strengths: ["The input level is strong enough to measure reliably."],
+    focus_areas: ["Keep checking consistency between sections."],
+    next_steps: ["Record another take at the same settings."],
+  },
 };
 
 afterEach(() => {
@@ -80,6 +108,66 @@ describe("PracticeCoachClient", () => {
     expect(analyzeAudio).toHaveBeenCalledWith({
       audio_file: audioFile,
     } satisfies PracticeAudioRequest);
+  });
+
+  test("recording quality renders when present", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Recording quality")).toBeDefined();
+    });
+    expect(screen.getByText("good")).toBeDefined();
+    expect(screen.getByText("The recording is usable for testing.")).toBeDefined();
+  });
+
+  test("segment analysis renders when present", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Segment analysis")).toBeDefined();
+    });
+    expect(screen.getByText("Segment 1")).toBeDefined();
+    expect(screen.getAllByText("2.46").length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("coach feedback renders summary and next steps", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Coach feedback")).toBeDefined();
+    });
+    expect(screen.getByText("Analyzed 3.25 seconds of audio.")).toBeDefined();
+    expect(screen.getByText("Record another take at the same settings.")).toBeDefined();
   });
 
   test("failed response displays an error", async () => {

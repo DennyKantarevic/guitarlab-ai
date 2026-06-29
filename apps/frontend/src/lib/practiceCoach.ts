@@ -13,6 +13,35 @@ export type PracticeMetrics = {
   recommendations: string[];
 };
 
+export type RecordingQuality = {
+  peak_amplitude: number;
+  clipped_sample_ratio: number;
+  silence_ratio: number;
+  quality_level: "poor" | "usable" | "good";
+  warnings: string[];
+};
+
+export type SegmentAnalysis = {
+  segment_index: number;
+  start_seconds: number;
+  end_seconds: number;
+  duration_seconds: number;
+  onset_count: number;
+  onset_density_per_second: number;
+  rms_energy_mean: number;
+  spectral_centroid_mean: number;
+  energy_level: "low" | "medium" | "high";
+  brightness_level: "dark" | "balanced" | "bright";
+  attack_activity: "sparse" | "moderate" | "busy";
+};
+
+export type CoachFeedback = {
+  summary: string;
+  strengths: string[];
+  focus_areas: string[];
+  next_steps: string[];
+};
+
 export type PracticeAudioAnalysisResponse = {
   filename: string;
   duration_seconds: number;
@@ -26,6 +55,9 @@ export type PracticeAudioAnalysisResponse = {
   valid: boolean;
   errors: string[];
   practice_metrics?: PracticeMetrics | null;
+  recording_quality?: RecordingQuality | null;
+  segment_analysis?: SegmentAnalysis[] | null;
+  coach_feedback?: CoachFeedback | null;
 };
 
 type FetchLike = (

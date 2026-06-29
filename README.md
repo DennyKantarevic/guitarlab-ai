@@ -5,7 +5,7 @@ GuitarLab AI is a monorepo for guitar-focused web tools.
 Current MVPs:
 
 * **Valeton GP-200 Tone Maker**: generate structured GP-200 patch JSON from a tone goal, pickup type, and connection mode.
-* **Practice Coach**: upload a `.wav` guitar recording and return deterministic audio-analysis features plus basic practice scoring metrics.
+* **Practice Coach**: upload a `.wav` guitar recording and return deterministic audio-analysis features, basic practice scoring metrics, recording-quality checks, segment analysis, and measured feedback.
 
 The project uses a Next.js TypeScript frontend and a FastAPI Python backend.
 
@@ -148,7 +148,7 @@ http://localhost:3000/practice-coach
 1. Open `http://localhost:3000/practice-coach`.
 2. Upload a `.wav` file.
 3. Click **Analyze**.
-4. Confirm the page shows audio analysis fields and `practice_metrics`.
+4. Confirm the page shows audio analysis fields, `practice_metrics`, `recording_quality`, `segment_analysis`, and `coach_feedback`.
 
 Expected displayed fields include:
 
@@ -166,6 +166,11 @@ Expected displayed fields include:
 * `practice_metrics.timing_activity_score`
 * `practice_metrics.recording_quality_score`
 * `practice_metrics.recommendations`
+* `recording_quality.quality_level`
+* `recording_quality.warnings`
+* `segment_analysis`
+* `coach_feedback.summary`
+* `coach_feedback.next_steps`
 
 ### 6. Test the backend directly with curl
 
@@ -239,6 +244,9 @@ The response should include:
 * `zero_crossing_rate_mean`
 * `analysis_warnings`
 * `practice_metrics`
+* `recording_quality`
+* `segment_analysis`
+* `coach_feedback`
 * `valid`
 * `errors`
 
@@ -254,6 +262,7 @@ Implemented:
 * Practice Coach backend endpoint at `POST /practice/analyze-audio`
 * Practice Coach `.wav` audio-analysis features
 * Practice Coach deterministic `practice_metrics` scoring
+* Practice Coach recording-quality checks, fixed-length segment analysis, and deterministic measured feedback
 
 Not implemented yet:
 
@@ -263,6 +272,8 @@ Not implemented yet:
 * pitch detection or note correctness scoring
 * riff-to-tab or tab generation
 * polished conversational coaching
+
+Practice Coach timing and activity fields are proxies from detected audio features. They are not true rhythmic accuracy, pitch accuracy, note correctness, or song/riff matching.
 
 ## Troubleshooting
 

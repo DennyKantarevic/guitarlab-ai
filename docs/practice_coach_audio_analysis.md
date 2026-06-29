@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the first backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns basic rule-based practice metrics, recording-quality checks, fixed-length segment analysis, and measured feedback. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -47,6 +47,42 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
     "recommendations": [
       "Record at least a few seconds so the coach can analyze more of your playing."
     ]
+  },
+  "recording_quality": {
+    "peak_amplitude": 0.42,
+    "clipped_sample_ratio": 0.0,
+    "silence_ratio": 0.08,
+    "quality_level": "usable",
+    "warnings": [
+      "The clip is too short for reliable feedback."
+    ]
+  },
+  "segment_analysis": [
+    {
+      "segment_index": 0,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0,
+      "duration_seconds": 1.0,
+      "onset_count": 2,
+      "onset_density_per_second": 2.0,
+      "rms_energy_mean": 0.1,
+      "spectral_centroid_mean": 440.0,
+      "energy_level": "medium",
+      "brightness_level": "dark",
+      "attack_activity": "moderate"
+    }
+  ],
+  "coach_feedback": {
+    "summary": "Analyzed 1.00 seconds of audio. Recording quality is usable, attack activity is moderate, and brightness is dark.",
+    "strengths": [
+      "The recording is usable for basic audio feedback."
+    ],
+    "focus_areas": [
+      "The clip is too short for reliable feedback."
+    ],
+    "next_steps": [
+      "Record another take at the same settings and compare the measured scores."
+    ]
   }
 }
 ```
@@ -63,6 +99,9 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `valid`: Whether analysis succeeded.
 - `errors`: Simple validation or decode errors.
 - `practice_metrics`: Basic deterministic scoring metrics for valid uploads. Invalid uploads return `practice_metrics: null`.
+- `recording_quality`: Recording setup checks for valid uploads. Invalid uploads return `recording_quality: null`.
+- `segment_analysis`: Fixed-length 5-second segment summaries for valid uploads. Invalid uploads return `segment_analysis: null`.
+- `coach_feedback`: Deterministic measured feedback for valid uploads. Invalid uploads return `coach_feedback: null`.
 
 ## Practice Metrics
 
@@ -75,12 +114,31 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `attack_activity`: `sparse`, `moderate`, or `busy`, based on onset density.
 - `recommendations`: Deterministic suggestions from the measured features.
 
+## Recording Quality
+
+- `peak_amplitude`: Maximum absolute waveform amplitude.
+- `clipped_sample_ratio`: Ratio of samples with absolute amplitude at or above `0.98`.
+- `silence_ratio`: Estimated ratio of very quiet frames.
+- `quality_level`: `poor`, `usable`, or `good`.
+- `warnings`: Deterministic setup warnings such as very quiet audio, clipping, short clips, or mostly silent recordings.
+
+## Segment Analysis
+
+The backend splits audio into 5-second segments. Clips shorter than 5 seconds return one segment, and the final segment can be shorter than 5 seconds.
+
+Each segment includes duration, onset count, onset density, mean RMS energy, mean spectral centroid, and the same `energy_level`, `brightness_level`, and `attack_activity` classifications used by `practice_metrics`.
+
+## Coach Feedback
+
+`coach_feedback` contains a summary, strengths, focus areas, and next steps. This feedback is deterministic and only uses measured audio values, recording quality, practice metrics, and segment analysis. If recording quality is poor, feedback focuses on recording setup first.
+
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
-- The endpoint returns audio features and basic deterministic practice metrics only.
+- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, and measured feedback only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
 - There is no pitch detection or note correctness scoring yet.
-- It does not provide polished coaching feedback.
+- It does not know whether the player hit the right notes or played a specific riff correctly.
+- It does not provide polished conversational coaching.
 - It does not do pitch scoring, riff-to-tab, tab generation, or `.prst` export.
 - It does not call an LLM or agent.

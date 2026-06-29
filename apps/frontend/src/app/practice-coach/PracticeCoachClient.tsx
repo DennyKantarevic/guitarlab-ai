@@ -133,6 +133,18 @@ function AnalysisResult({
       {analysis.practice_metrics ? (
         <PracticeMetrics metrics={analysis.practice_metrics} />
       ) : null}
+
+      {analysis.recording_quality ? (
+        <RecordingQuality quality={analysis.recording_quality} />
+      ) : null}
+
+      {analysis.segment_analysis ? (
+        <SegmentAnalysis segments={analysis.segment_analysis} />
+      ) : null}
+
+      {analysis.coach_feedback ? (
+        <CoachFeedback feedback={analysis.coach_feedback} />
+      ) : null}
     </section>
   );
 }
@@ -164,6 +176,86 @@ function PracticeMetrics({
         <Field label="Attack activity" value={metrics.attack_activity} />
       </dl>
       <ListSection title="Recommendations" items={metrics.recommendations} />
+    </section>
+  );
+}
+
+function RecordingQuality({
+  quality,
+}: {
+  quality: NonNullable<PracticeAudioAnalysisResponse["recording_quality"]>;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Recording quality</h2>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field label="Quality level" value={quality.quality_level} />
+        <Field label="Peak amplitude" value={quality.peak_amplitude} />
+        <Field
+          label="Clipped sample ratio"
+          value={quality.clipped_sample_ratio}
+        />
+        <Field label="Silence ratio" value={quality.silence_ratio} />
+      </dl>
+      <ListSection
+        title="Recording quality warnings"
+        items={quality.warnings}
+      />
+    </section>
+  );
+}
+
+function SegmentAnalysis({
+  segments,
+}: {
+  segments: NonNullable<PracticeAudioAnalysisResponse["segment_analysis"]>;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Segment analysis</h2>
+      <div className="space-y-4">
+        {segments.map((segment) => (
+          <section className="space-y-2" key={segment.segment_index}>
+            <h3 className="font-semibold">
+              Segment {segment.segment_index + 1}
+            </h3>
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              <Field label="Start seconds" value={segment.start_seconds} />
+              <Field label="End seconds" value={segment.end_seconds} />
+              <Field label="Duration seconds" value={segment.duration_seconds} />
+              <Field label="Onset count" value={segment.onset_count} />
+              <Field
+                label="Onset density per second"
+                value={segment.onset_density_per_second}
+              />
+              <Field label="RMS energy mean" value={segment.rms_energy_mean} />
+              <Field
+                label="Spectral centroid mean"
+                value={segment.spectral_centroid_mean}
+              />
+              <Field label="Energy level" value={segment.energy_level} />
+              <Field label="Brightness level" value={segment.brightness_level} />
+              <Field label="Attack activity" value={segment.attack_activity} />
+            </dl>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CoachFeedback({
+  feedback,
+}: {
+  feedback: NonNullable<PracticeAudioAnalysisResponse["coach_feedback"]>;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Coach feedback</h2>
+      <p className="text-sm">{feedback.summary}</p>
+      <ListSection title="Strengths" items={feedback.strengths} />
+      <ListSection title="Focus areas" items={feedback.focus_areas} />
+      <ListSection title="Next steps" items={feedback.next_steps} />
     </section>
   );
 }

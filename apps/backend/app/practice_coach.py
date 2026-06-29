@@ -20,6 +20,35 @@ class PracticeMetrics(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
 
 
+class RecordingQuality(BaseModel):
+    peak_amplitude: float
+    clipped_sample_ratio: float
+    silence_ratio: float
+    quality_level: Literal["poor", "usable", "good"]
+    warnings: list[str] = Field(default_factory=list)
+
+
+class SegmentAnalysis(BaseModel):
+    segment_index: int
+    start_seconds: float
+    end_seconds: float
+    duration_seconds: float
+    onset_count: int
+    onset_density_per_second: float
+    rms_energy_mean: float
+    spectral_centroid_mean: float
+    energy_level: Literal["low", "medium", "high"]
+    brightness_level: Literal["dark", "balanced", "bright"]
+    attack_activity: Literal["sparse", "moderate", "busy"]
+
+
+class CoachFeedback(BaseModel):
+    summary: str
+    strengths: list[str] = Field(default_factory=list)
+    focus_areas: list[str] = Field(default_factory=list)
+    next_steps: list[str] = Field(default_factory=list)
+
+
 class PracticeAudioAnalysisResponse(BaseModel):
     filename: str
     duration_seconds: float
@@ -33,6 +62,9 @@ class PracticeAudioAnalysisResponse(BaseModel):
     valid: bool
     errors: list[str] = Field(default_factory=list)
     practice_metrics: PracticeMetrics | None = None
+    recording_quality: RecordingQuality | None = None
+    segment_analysis: list[SegmentAnalysis] | None = None
+    coach_feedback: CoachFeedback | None = None
 
 
 @router.post("/practice/analyze-audio", response_model=PracticeAudioAnalysisResponse)

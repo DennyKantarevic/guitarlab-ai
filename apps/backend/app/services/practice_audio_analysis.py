@@ -7,7 +7,10 @@ import librosa
 import numpy as np
 from fastapi import UploadFile
 
+from app.services.practice_feedback import build_coach_feedback
+from app.services.practice_recording_quality import analyze_recording_quality
 from app.services.practice_scoring import score_practice_analysis
+from app.services.practice_segment_analysis import analyze_audio_segments
 
 
 SUPPORTED_AUDIO_EXTENSIONS = {".wav"}
@@ -61,6 +64,18 @@ async def analyze_uploaded_audio(audio_file: UploadFile | None) -> dict[str, Any
             "errors": [],
         }
         analysis["practice_metrics"] = score_practice_analysis(analysis)
+        analysis["recording_quality"] = analyze_recording_quality(
+            audio,
+            duration_seconds=analysis["duration_seconds"],
+            rms_energy_mean=analysis["rms_energy_mean"],
+        )
+        analysis["segment_analysis"] = analyze_audio_segments(audio, sample_rate)
+        analysis["coach_feedback"] = build_coach_feedback(
+            analysis=analysis,
+            practice_metrics=analysis["practice_metrics"],
+            recording_quality=analysis["recording_quality"],
+            segment_analysis=analysis["segment_analysis"],
+        )
         return analysis
     except Exception:
         return build_invalid_response(filename, ["Could not decode audio file."])
@@ -105,4 +120,7 @@ def build_invalid_response(filename: str, errors: list[str]) -> dict[str, Any]:
         "valid": False,
         "errors": errors,
         "practice_metrics": None,
+        "recording_quality": None,
+        "segment_analysis": None,
+        "coach_feedback": None,
     }
