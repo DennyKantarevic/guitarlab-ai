@@ -451,6 +451,20 @@ describe("PracticeCoachClient", () => {
     expect(screen.getByRole("button", { name: "Analyze" })).toBeDefined();
   });
 
+  test("uses the dark electric theme shell and action styling", () => {
+    const { container } = render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
+
+    expect(container.querySelector("main")?.className).toContain(
+      "electric-shell",
+    );
+    expect(
+      screen.getByText("Practice setup").closest("section")?.className,
+    ).toContain("panel-card");
+    expect(screen.getByRole("button", { name: "Analyze" }).className).toContain(
+      "primary-action",
+    );
+  });
+
   test("renders an empty latest result state before analysis", () => {
     render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
 

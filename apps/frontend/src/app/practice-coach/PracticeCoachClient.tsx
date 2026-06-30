@@ -149,11 +149,14 @@ export default function PracticeCoachClient({
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="electric-shell px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="max-w-3xl space-y-2">
-          <h1 className="text-3xl font-semibold">Practice Coach</h1>
-          <p className="text-sm text-neutral-600">
+          <p className="stage-kicker">GuitarLab AI</p>
+          <h1 className="page-title text-3xl sm:text-5xl">
+            Practice Coach
+          </h1>
+          <p className="page-subtitle text-sm sm:text-base">
             Upload a .wav take, choose what you are practicing, and get focused
             feedback you can act on.
           </p>
@@ -237,11 +240,11 @@ function PracticeSetup({
   selectedFile: File | null;
 }) {
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+    <section className="panel-card p-5">
       <form className="space-y-5" onSubmit={onSubmit}>
         <div className="space-y-1">
           <h2 className="text-xl font-semibold">Practice setup</h2>
-          <p className="text-sm text-neutral-600">
+          <p className="muted-copy text-sm">
             Tell the coach what to listen for, then upload a .wav take.
           </p>
         </div>
@@ -250,13 +253,13 @@ function PracticeSetup({
           <h3 className="font-semibold">What are you practicing?</h3>
           <div className="space-y-2">
             <label
-              className="block text-sm font-medium"
+              className="form-label block text-sm"
               htmlFor="practice_focus"
             >
               Practice focus
             </label>
             <select
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+              className="electric-input px-3 py-2 text-sm"
               id="practice_focus"
               name="practice_focus"
               onChange={(event) =>
@@ -274,13 +277,13 @@ function PracticeSetup({
 
           <div className="space-y-2">
             <label
-              className="block text-sm font-medium"
+              className="form-label block text-sm"
               htmlFor="practice_description"
             >
               Describe what you were trying to play
             </label>
             <textarea
-              className="min-h-28 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="electric-input min-h-28 px-3 py-2 text-sm"
               id="practice_description"
               name="practice_description"
               onChange={(event) => onDescriptionChange(event.target.value)}
@@ -291,9 +294,9 @@ function PracticeSetup({
           </div>
         </section>
 
-        <section className="space-y-1 rounded-md border border-neutral-200 bg-neutral-50 p-3">
+        <section className="panel-soft space-y-1 p-3">
           <h3 className="font-semibold">Reference inputs</h3>
-          <p className="text-xs text-neutral-600">
+          <p className="form-help text-xs">
             Practice focus and description always apply. For pitch references,
             use one of notes, tab, or chords. Strumming can be used by itself or
             alongside one pitch reference. If more than one pitch reference is
@@ -302,15 +305,15 @@ function PracticeSetup({
         </section>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="expected_notes">
+          <label className="form-label block text-sm" htmlFor="expected_notes">
             Expected notes
           </label>
-          <p className="text-xs text-neutral-600">
+          <p className="form-help text-xs">
             Optional. Enter a simple note sequence like A4 B4 C5 D5. This
             compares detected notes to your own exercise, not a song database.
           </p>
           <textarea
-            className="min-h-20 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="electric-input min-h-20 px-3 py-2 text-sm"
             id="expected_notes"
             name="expected_notes"
             onChange={(event) => onExpectedNotesChange(event.target.value)}
@@ -321,15 +324,15 @@ function PracticeSetup({
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="expected_tab">
+          <label className="form-label block text-sm" htmlFor="expected_tab">
             Expected tab
           </label>
-          <p className="text-xs text-neutral-600">
+          <p className="form-help text-xs">
             Optional. Paste a short single-note guitar tab in standard tuning.
             Use this instead of Expected notes.
           </p>
           <textarea
-            className="min-h-32 w-full rounded-md border border-neutral-300 px-3 py-2 font-mono text-sm"
+            className="electric-input min-h-32 px-3 py-2 font-mono text-sm"
             id="expected_tab"
             name="expected_tab"
             onChange={(event) => onExpectedTabChange(event.target.value)}
@@ -343,18 +346,18 @@ function PracticeSetup({
 
         <div className="space-y-2">
           <label
-            className="block text-sm font-medium"
+            className="form-label block text-sm"
             htmlFor="expected_chords"
           >
             Expected chords
           </label>
-          <p className="text-xs text-neutral-600">
+          <p className="form-help text-xs">
             Optional. Enter a simple chord progression like G C D Em. This
             checks approximate chord-tone coverage, not full chord recognition
             or strumming.
           </p>
           <textarea
-            className="min-h-20 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="electric-input min-h-20 px-3 py-2 text-sm"
             id="expected_chords"
             name="expected_chords"
             onChange={(event) => onExpectedChordsChange(event.target.value)}
@@ -366,18 +369,18 @@ function PracticeSetup({
 
         <div className="space-y-2">
           <label
-            className="block text-sm font-medium"
+            className="form-label block text-sm"
             htmlFor="expected_strumming_pattern"
           >
             Expected strumming pattern
           </label>
-          <p className="text-xs text-neutral-600">
+          <p className="form-help text-xs">
             Optional. Enter a simple pattern like D D U U D U. This checks
             approximate attack activity, not actual upstroke/downstroke
             direction.
           </p>
           <textarea
-            className="min-h-20 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="electric-input min-h-20 px-3 py-2 text-sm"
             id="expected_strumming_pattern"
             name="expected_strumming_pattern"
             onChange={(event) =>
@@ -387,7 +390,7 @@ function PracticeSetup({
             rows={3}
             value={expectedStrummingPattern}
           />
-          <p className="text-xs text-neutral-600">
+          <p className="form-help text-xs">
             D = intended downstroke, U = intended upstroke, X =
             muted/percussive stroke.
           </p>
@@ -395,26 +398,26 @@ function PracticeSetup({
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="audio_file">
+          <label className="form-label block text-sm" htmlFor="audio_file">
             WAV file
           </label>
           <input
             accept=".wav,audio/wav,audio/wave"
-            className="block w-full text-sm"
+            className="electric-file block w-full text-sm"
             id="audio_file"
             name="audio_file"
             onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
             type="file"
           />
           {selectedFile ? (
-            <p className="text-xs text-neutral-500">
+            <p className="form-help text-xs">
               Selected: {selectedFile.name}
             </p>
           ) : null}
         </div>
 
         <button
-          className="w-full rounded-md border border-neutral-900 bg-neutral-900 px-3 py-2 text-sm text-white disabled:opacity-60"
+          className="primary-action w-full px-3 py-2 text-sm"
           disabled={isLoading}
           type="submit"
         >
@@ -423,7 +426,7 @@ function PracticeSetup({
 
         {error ? (
           <div
-            className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+            className="alert-error p-3 text-sm"
             role="alert"
           >
             {error}
@@ -436,10 +439,10 @@ function PracticeSetup({
 
 function ReferenceExerciseHelpPanel() {
   return (
-    <aside className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
+    <aside className="panel-soft space-y-3 p-3 text-sm">
       <div className="space-y-1">
         <h4 className="font-semibold">How to use reference exercises</h4>
-        <p className="text-neutral-700">
+        <p className="muted-copy">
           You can enter expected notes, a short single-note guitar tab, simple
           chord names, and/or a simple strumming pattern. The coach compares
           detected notes and attacks from your recording to your own exercise.
@@ -448,7 +451,7 @@ function ReferenceExerciseHelpPanel() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Good expected notes examples
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -459,10 +462,10 @@ function ReferenceExerciseHelpPanel() {
         </div>
 
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Good tab example
           </h5>
-          <pre className="overflow-x-auto rounded border border-neutral-200 bg-white p-2 text-xs">
+          <pre className="code-panel overflow-x-auto rounded p-2 text-xs">
 {`e|----------------|
 B|----------------|
 G|----------------|
@@ -475,7 +478,7 @@ E|-0-3------------|`}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Good chord examples
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -487,7 +490,7 @@ E|-0-3------------|`}
         </div>
 
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Supported tab format
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -501,7 +504,7 @@ E|-0-3------------|`}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Supported chords
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -514,7 +517,7 @@ E|-0-3------------|`}
         </div>
 
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Good strumming examples
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -527,7 +530,7 @@ E|-0-3------------|`}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Supported strumming pattern
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -539,7 +542,7 @@ E|-0-3------------|`}
         </div>
 
         <div className="space-y-2">
-          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+          <h5 className="section-label text-xs uppercase">
             Not supported yet
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -558,7 +561,7 @@ E|-0-3------------|`}
         </div>
       </div>
 
-      <p className="text-xs text-neutral-600">
+      <p className="form-help text-xs">
         This works best for short, single-note exercises recorded clearly and
         slowly.
       </p>
@@ -577,14 +580,14 @@ function LatestResult({
 }) {
   if (!analysis) {
     return (
-      <section className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+      <section className="panel-card-strong p-5">
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">Latest result</h2>
-          <p className="text-sm text-neutral-600">
+          <p className="muted-copy text-sm">
             Choose a focus, upload a .wav take, and run the coach to see your
             score and next steps here.
           </p>
-          <div className="rounded-md border border-dashed border-neutral-300 p-4 text-sm text-neutral-600">
+          <div className="panel-empty p-4 text-sm">
             No take analyzed yet.
           </div>
         </div>
@@ -593,10 +596,10 @@ function LatestResult({
   }
 
   return (
-    <section className="space-y-6 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+    <section className="panel-card-strong space-y-6 p-5">
       <div className="space-y-1">
         <h2 className="text-xl font-semibold">Latest result</h2>
-        <p className="text-sm text-neutral-600">{analysis.filename}</p>
+        <p className="muted-copy text-sm">{analysis.filename}</p>
       </div>
 
       {analysis.practice_metrics ? (
@@ -637,9 +640,11 @@ function ScoreSummary({
   return (
     <section className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4">
-          <div className="text-sm text-neutral-500">Your score</div>
-          <div className="text-4xl font-semibold">{metrics.overall_score}</div>
+        <div className="panel-soft p-4">
+          <div className="stage-kicker">Your score</div>
+          <div className="text-5xl font-bold text-white">
+            {metrics.overall_score}
+          </div>
         </div>
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <Field
@@ -678,7 +683,7 @@ function ScoreSummary({
       {analysis.coach_feedback?.score_explanation ? (
         <section className="space-y-1">
           <h3 className="font-semibold">What this means</h3>
-          <p className="text-sm text-neutral-700">
+          <p className="muted-copy text-sm">
             {analysis.coach_feedback.score_explanation}
           </p>
         </section>
@@ -793,9 +798,9 @@ function CoachFeedback({
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Coach feedback</h2>
       {context ? <PracticeContextSummary context={context} /> : null}
-      <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4">
+      <div className="panel-soft p-4">
         <h3 className="font-semibold">{feedback.headline}</h3>
-        <p className="mt-2 text-sm text-neutral-700">{feedback.summary}</p>
+        <p className="muted-copy mt-2 text-sm">{feedback.summary}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <ListSection title="What went well" items={feedback.what_went_well} />
@@ -834,7 +839,7 @@ function PracticeComparisonResult({
   comparison: PracticeComparison;
 }) {
   return (
-    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+    <section className="panel-soft space-y-3 p-4">
       <h2 className="text-xl font-semibold">
         Progress compared to last similar session
       </h2>
@@ -892,19 +897,19 @@ function ReferenceExerciseResult({
   const parsedExpectedNotes = referenceExercise?.expected_notes ?? [];
 
   return (
-    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+    <section className="panel-soft space-y-3 p-4">
       <h2 className="text-xl font-semibold">Reference exercise</h2>
-      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <p className="muted-copy text-sm">{comparison.summary}</p>
 
       {referenceSource === "tab" ? (
-        <p className="text-sm text-neutral-700">
+        <p className="muted-copy text-sm">
           The tab was converted into a simple expected note sequence before
           comparison.
         </p>
       ) : null}
 
       {referenceExercise && !referenceExercise.valid ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        <p className="alert-warning p-3 text-sm">
           {referenceSource === "tab"
             ? "Some expected notes or tab syntax were not recognized. Use notes like A4, C#5, or E3, or a six-line single-note tab."
             : "Some expected notes were not recognized. Use notes like A4, C#5, or E3."}
@@ -964,16 +969,16 @@ function ChordExerciseResult({
   ]);
 
   return (
-    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+    <section className="panel-soft space-y-3 p-4">
       <h2 className="text-xl font-semibold">Chord exercise</h2>
-      <p className="text-sm text-neutral-700">{comparison.summary}</p>
-      <p className="text-sm text-neutral-700">
+      <p className="muted-copy text-sm">{comparison.summary}</p>
+      <p className="muted-copy text-sm">
         This checks approximate chord-tone coverage only, not full chord
         recognition or strumming.
       </p>
 
       {referenceExercise && !referenceExercise.valid ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        <p className="alert-warning p-3 text-sm">
           Some chord names were not recognized. Try simple symbols like G, C, D,
           Em, Am7, or Gsus4.
         </p>
@@ -1000,7 +1005,7 @@ function ChordExerciseResult({
           <ul className="space-y-2 text-sm">
             {comparison.chords.map((chord) => (
               <li
-                className="rounded border border-neutral-200 bg-white p-3"
+                className="code-panel rounded p-3"
                 key={chord.symbol}
               >
                 <div className="font-medium">
@@ -1039,15 +1044,15 @@ function StrummingPatternResult({
   ]);
 
   return (
-    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+    <section className="panel-soft space-y-3 p-4">
       <h2 className="text-xl font-semibold">Strumming pattern</h2>
-      <p className="text-sm text-neutral-700">{comparison.summary}</p>
-      <p className="text-sm text-neutral-700">
+      <p className="muted-copy text-sm">{comparison.summary}</p>
+      <p className="muted-copy text-sm">
         This checks attack activity only, not stroke direction.
       </p>
 
       {strummingPattern && !strummingPattern.valid ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        <p className="alert-warning p-3 text-sm">
           Some strumming symbols were not recognized. Use D, U, and X, separated
           by spaces.
         </p>
@@ -1095,8 +1100,8 @@ function TechnicalDetails({
   analysis: PracticeAudioAnalysisResponse;
 }) {
   return (
-    <details className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
-      <summary className="cursor-pointer text-xl font-semibold text-neutral-900">
+    <details className="panel-card p-5">
+      <summary className="cursor-pointer text-xl font-semibold text-white">
         Technical details
       </summary>
 
@@ -1220,7 +1225,7 @@ function PitchAnalysis({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-neutral-500">No detected notes.</p>
+          <p className="form-help text-sm">No detected notes.</p>
         )}
       </section>
     </section>
@@ -1254,7 +1259,7 @@ function NoteEvents({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-neutral-500">No note events detected.</p>
+        <p className="form-help text-sm">No note events detected.</p>
       )}
     </section>
   );
@@ -1320,7 +1325,7 @@ function ReferenceComparisonDetails({
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Reference comparison details</h2>
-      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <p className="muted-copy text-sm">{comparison.summary}</p>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <Field
           label="Reference comparison enabled"
@@ -1356,7 +1361,7 @@ function ChordComparisonDetails({
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Chord comparison details</h2>
-      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <p className="muted-copy text-sm">{comparison.summary}</p>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <Field
           label="Chord comparison enabled"
@@ -1422,7 +1427,7 @@ function StrummingComparisonDetails({
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Strumming comparison details</h2>
-      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <p className="muted-copy text-sm">{comparison.summary}</p>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <Field
           label="Strumming comparison enabled"
@@ -1473,17 +1478,17 @@ function PracticeHistory({
   const stats = summarizePracticeHistory(sessions);
 
   return (
-    <section className="space-y-4 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+    <section className="panel-card space-y-4 p-5">
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">Practice history</h2>
-        <p className="text-sm text-neutral-600">
+        <p className="muted-copy text-sm">
           Practice history is stored locally in this browser. Audio files are
           not saved.
         </p>
       </div>
 
       {!hasMounted ? (
-        <p className="text-sm text-neutral-500">
+        <p className="form-help text-sm">
           Practice history loads in this browser after the page opens.
         </p>
       ) : (
@@ -1514,7 +1519,7 @@ function PracticeHistory({
           </dl>
 
           <button
-            className="rounded-md border border-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
+            className="secondary-action px-3 py-2 text-sm"
             disabled={sessions.length === 0}
             onClick={onClearHistory}
             type="button"
@@ -1526,7 +1531,7 @@ function PracticeHistory({
             <ul className="grid gap-3 text-sm lg:grid-cols-2">
               {sessions.map((session) => (
                 <li
-                  className="space-y-1 rounded-md border border-neutral-200 p-3"
+                  className="panel-soft space-y-1 p-3"
                   key={session.id}
                 >
                   <div>
@@ -1558,7 +1563,7 @@ function PracticeHistory({
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-neutral-500">
+            <p className="form-help text-sm">
               No saved practice sessions yet.
             </p>
           )}
@@ -1571,8 +1576,8 @@ function PracticeHistory({
 function Field({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <dt className="text-neutral-500">{label}</dt>
-      <dd>{value}</dd>
+      <dt className="data-label">{label}</dt>
+      <dd className="text-white">{value}</dd>
     </div>
   );
 }
@@ -1693,7 +1698,7 @@ function ListSection({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-neutral-500">{emptyText}</p>
+        <p className="form-help text-sm">{emptyText}</p>
       )}
     </section>
   );

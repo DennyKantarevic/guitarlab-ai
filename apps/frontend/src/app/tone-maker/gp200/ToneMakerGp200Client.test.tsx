@@ -39,7 +39,7 @@ afterEach(() => {
 
 describe("ToneMakerGp200Client", () => {
   test("renders tone goal, pickup type, and all connection mode fields", () => {
-    render(<ToneMakerGp200Client createPatch={vi.fn()} />);
+    const { container } = render(<ToneMakerGp200Client createPatch={vi.fn()} />);
 
     expect(screen.getByLabelText("Tone goal")).toBeDefined();
     expect(screen.getByLabelText("Pickup type")).toBeDefined();
@@ -48,6 +48,12 @@ describe("ToneMakerGp200Client", () => {
     expect(screen.getByLabelText("Guitar amp input")).toBeDefined();
     expect(screen.getByLabelText("FX return")).toBeDefined();
     expect(screen.getByLabelText("Four cable method")).toBeDefined();
+    expect(container.querySelector("main")?.className).toContain(
+      "electric-shell",
+    );
+    expect(screen.getByRole("button", { name: "Generate patch" }).className).toContain(
+      "primary-action",
+    );
   });
 
   test("shows loading state and renders the returned patch card", async () => {
