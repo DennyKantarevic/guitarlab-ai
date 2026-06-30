@@ -304,6 +304,48 @@ const invalidChordReferenceResponse: PracticeAudioAnalysisResponse = {
   },
 };
 
+const strummingResponse: PracticeAudioAnalysisResponse = {
+  ...successfulResponse,
+  strumming_pattern: {
+    expected_pattern_raw: "D D U U D U",
+    strokes: ["D", "D", "U", "U", "D", "U"],
+    valid: true,
+    warnings: [],
+  },
+  strumming_comparison: {
+    enabled: true,
+    valid: true,
+    expected_stroke_count: 6,
+    detected_attack_count: 6,
+    count_difference: 0,
+    attack_match_level: "good",
+    spacing_level: "steady",
+    summary:
+      "The recording had about the right number of clear attacks for the expected strumming pattern. This checks approximate attack activity only, not upstroke/downstroke direction.",
+    warnings: [],
+  },
+};
+
+const invalidStrummingResponse: PracticeAudioAnalysisResponse = {
+  ...strummingResponse,
+  strumming_pattern: {
+    ...strummingResponse.strumming_pattern,
+    valid: false,
+    warnings: [
+      "Unsupported strumming symbol 'Q'. Use D, U, or X separated by spaces, commas, hyphens, or new lines.",
+    ],
+  },
+  strumming_comparison: {
+    ...strummingResponse.strumming_comparison,
+    valid: false,
+    attack_match_level: "close",
+    spacing_level: "somewhat_uneven",
+    warnings: [
+      "Unsupported strumming symbol 'Q'. Use D, U, or X separated by spaces, commas, hyphens, or new lines.",
+    ],
+  },
+};
+
 beforeEach(() => {
   Object.defineProperty(window, "localStorage", {
     configurable: true,
@@ -432,7 +474,7 @@ describe("PracticeCoachClient", () => {
     ).toBeDefined();
   });
 
-  test("renders expected notes, expected tab, and expected chords inputs with reference exercise helper text", () => {
+  test("renders expected notes, expected tab, expected chords, and expected strumming inputs with reference exercise helper text", () => {
     render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
 
     const expectedNotesInput = screen.getByLabelText("Expected notes");
@@ -461,9 +503,26 @@ describe("PracticeCoachClient", () => {
         "Optional. Enter a simple chord progression like G C D Em. This checks approximate chord-tone coverage, not full chord recognition or strumming.",
       ),
     ).toBeDefined();
+    const expectedStrummingInput = screen.getByLabelText(
+      "Expected strumming pattern",
+    );
+    expect(expectedStrummingInput).toBeDefined();
+    expect(expectedStrummingInput.getAttribute("placeholder")).toBe(
+      "D D U U D U",
+    );
     expect(
       screen.getByText(
-        "Use one reference format at a time. If more than one is filled, notes are used first, then tab, then chords.",
+        "Optional. Enter a simple pattern like D D U U D U. This checks approximate attack activity, not actual upstroke/downstroke direction.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "D = intended downstroke, U = intended upstroke, X = muted/percussive stroke.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Notes, tab, and chords are pitch references. Strumming is an attack reference and can be used alongside one pitch reference. For pitch references, notes are used first, then tab, then chords.",
       ),
     ).toBeDefined();
   });
@@ -474,7 +533,7 @@ describe("PracticeCoachClient", () => {
     expect(screen.getByText("How to use reference exercises")).toBeDefined();
     expect(
       screen.getByText(
-        "You can enter one reference format: expected notes, a short single-note guitar tab, or simple chord names. The coach compares detected notes from your recording to your own exercise.",
+        "You can enter expected notes, a short single-note guitar tab, simple chord names, and/or a simple strumming pattern. The coach compares detected notes and attacks from your recording to your own exercise.",
       ),
     ).toBeDefined();
     expect(screen.getByText("A4 B4 C5 D5")).toBeDefined();
@@ -495,10 +554,26 @@ describe("PracticeCoachClient", () => {
     expect(screen.getByText("maj7 and m7 chords")).toBeDefined();
     expect(screen.getByText("sus2/sus4 chords")).toBeDefined();
     expect(screen.getByText("power chords")).toBeDefined();
-    expect(screen.getByText("strumming patterns")).toBeDefined();
+    expect(screen.getByText("Good strumming examples")).toBeDefined();
+    expect(screen.getByText("D D U U D U")).toBeDefined();
+    expect(screen.getByText("D-D-U-U-D-U")).toBeDefined();
+    expect(screen.getByText("D X D U")).toBeDefined();
+    expect(screen.getByText("Supported strumming pattern")).toBeDefined();
+    expect(screen.getByText("D and U are intended stroke labels")).toBeDefined();
+    expect(screen.getByText("X is muted/percussive stroke")).toBeDefined();
+    expect(
+      screen.getByText("checks approximate attack activity"),
+    ).toBeDefined();
+    expect(
+      screen.getByText("does not detect exact up/down direction"),
+    ).toBeDefined();
+    expect(screen.getByText("exact rhythm accuracy")).toBeDefined();
+    expect(screen.getByText("beat alignment")).toBeDefined();
+    expect(screen.getByText("full strumming transcription")).toBeDefined();
     expect(screen.getByText("song names")).toBeDefined();
     expect(screen.getByText("rhythm notation")).toBeDefined();
     expect(screen.getByText("full song comparison")).toBeDefined();
+    expect(screen.getByText("copyrighted tab/chord/pattern lookup")).toBeDefined();
     expect(screen.getByText("slash chords")).toBeDefined();
     expect(screen.getByText("add/extended chords")).toBeDefined();
     expect(screen.getByText("full polyphonic chord recognition")).toBeDefined();
@@ -514,6 +589,9 @@ describe("PracticeCoachClient", () => {
     expect(setupText).not.toContain("enter nirvana riffs");
     expect(setupText).not.toContain("checks rhythm accuracy");
     expect(setupText).not.toContain("checks strumming accuracy");
+    expect(setupText).not.toContain("detects exact up/down direction");
+    expect(setupText).not.toContain("detected your stroke direction");
+    expect(setupText).not.toContain("your rhythm was accurate");
     expect(setupText).not.toContain("perfect chord detection");
     expect(setupText).not.toContain("proves whether you played correctly");
   });
@@ -702,6 +780,84 @@ describe("PracticeCoachClient", () => {
     });
   });
 
+  test("entering expected strumming pattern sends it with the upload request", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(strummingResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected strumming pattern"), {
+      target: { value: "  D D U U D U  " },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_strumming_pattern: "D D U U D U",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("empty expected strumming pattern is omitted from the upload request", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected strumming pattern"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("strumming can be submitted alongside expected chords without frontend blocking", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(strummingResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected chords"), {
+      target: { value: "G C D Em" },
+    });
+    fireEvent.change(screen.getByLabelText("Expected strumming pattern"), {
+      target: { value: "D D U U D U" },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_chords: "G C D Em",
+        expected_strumming_pattern: "D D U U D U",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
   test("multiple reference fields can be submitted without frontend blocking", async () => {
     const audioFile = new File(["wav-bytes"], "practice.wav", {
       type: "audio/wav",
@@ -721,6 +877,9 @@ describe("PracticeCoachClient", () => {
     fireEvent.change(screen.getByLabelText("Expected chords"), {
       target: { value: "G C D Em" },
     });
+    fireEvent.change(screen.getByLabelText("Expected strumming pattern"), {
+      target: { value: "D D U U D U" },
+    });
     fireEvent.change(screen.getByLabelText("WAV file"), {
       target: { files: [audioFile] },
     });
@@ -733,6 +892,7 @@ describe("PracticeCoachClient", () => {
         expected_notes: "A4 B4",
         expected_tab: expectedTab,
         expected_chords: "G C D Em",
+        expected_strumming_pattern: "D D U U D U",
       } satisfies PracticeAudioRequest);
     });
   });
@@ -1243,6 +1403,77 @@ describe("PracticeCoachClient", () => {
       screen.getAllByText(/Unsupported chord 'Bb'/).length,
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Chord warnings")).toBeDefined();
+  });
+
+  test("strumming pattern section renders comparison results", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(strummingResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Strumming pattern")).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "The recording had about the right number of clear attacks for the expected strumming pattern. This checks approximate attack activity only, not upstroke/downstroke direction.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText("This checks attack activity only, not stroke direction."),
+    ).toBeDefined();
+    expect(screen.getByText("Expected strokes")).toBeDefined();
+    expect(screen.getByText("Detected attacks")).toBeDefined();
+    expect(screen.getByText("Count difference")).toBeDefined();
+    expect(screen.getByText("Attack match")).toBeDefined();
+    expect(screen.getByText("Good")).toBeDefined();
+    expect(screen.getByText("Spacing")).toBeDefined();
+    expect(screen.getByText("Steady")).toBeDefined();
+    expect(screen.getByText("Expected pattern")).toBeDefined();
+    expect(screen.getAllByText("D D U U D U").length).toBeGreaterThanOrEqual(1);
+
+    const resultText = screen.getByText("Strumming pattern").closest("section")
+      ?.textContent?.toLowerCase() ?? "";
+    expect(resultText).not.toContain("your downstrokes were correct");
+    expect(resultText).not.toContain("your upstrokes were correct");
+    expect(resultText).not.toContain("your rhythm was accurate");
+    expect(resultText).not.toContain("the app detected your stroke direction");
+  });
+
+  test("strumming warnings and invalid strumming guidance render in the result", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(invalidStrummingResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Strumming pattern")).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "Some strumming symbols were not recognized. Use D, U, and X, separated by spaces.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getAllByText(/Unsupported strumming symbol 'Q'/).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Strumming warnings")).toBeDefined();
+    expect(screen.getByText("Close")).toBeDefined();
+    expect(screen.getByText("Somewhat uneven")).toBeDefined();
   });
 
   test("invalid reference exercise warnings render in the result", async () => {

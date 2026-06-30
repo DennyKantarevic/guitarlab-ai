@@ -13,6 +13,7 @@ export type PracticeAudioRequest = {
   expected_notes?: string;
   expected_tab?: string;
   expected_chords?: string;
+  expected_strumming_pattern?: string;
 };
 
 export type PracticeContext = {
@@ -168,6 +169,25 @@ export type ChordComparison = {
   warnings: string[];
 };
 
+export type StrummingPattern = {
+  expected_pattern_raw: string | null;
+  strokes: string[];
+  valid: boolean;
+  warnings: string[];
+};
+
+export type StrummingComparison = {
+  enabled: boolean;
+  valid: boolean;
+  expected_stroke_count: number;
+  detected_attack_count: number;
+  count_difference: number | null;
+  attack_match_level: "good" | "close" | "low" | "too_many" | "unavailable";
+  spacing_level: "steady" | "somewhat_uneven" | "uneven" | "unavailable";
+  summary: string;
+  warnings: string[];
+};
+
 export type PracticeAudioAnalysisResponse = {
   filename: string;
   duration_seconds: number;
@@ -190,6 +210,8 @@ export type PracticeAudioAnalysisResponse = {
   reference_exercise?: ReferenceExercise | null;
   reference_comparison?: ReferenceComparison | null;
   chord_comparison?: ChordComparison | null;
+  strumming_pattern?: StrummingPattern | null;
+  strumming_comparison?: StrummingComparison | null;
 };
 
 type FetchLike = (
@@ -227,6 +249,11 @@ export async function analyzePracticeAudio(
   const expectedChords = request.expected_chords?.trim();
   if (expectedChords) {
     formData.append("expected_chords", expectedChords);
+  }
+
+  const expectedStrummingPattern = request.expected_strumming_pattern?.trim();
+  if (expectedStrummingPattern) {
+    formData.append("expected_strumming_pattern", expectedStrummingPattern);
   }
 
   const response = await fetcher(

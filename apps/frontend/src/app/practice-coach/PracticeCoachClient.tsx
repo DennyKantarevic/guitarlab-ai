@@ -54,6 +54,7 @@ export default function PracticeCoachClient({
   const [expectedNotes, setExpectedNotes] = useState("");
   const [expectedTab, setExpectedTab] = useState("");
   const [expectedChords, setExpectedChords] = useState("");
+  const [expectedStrummingPattern, setExpectedStrummingPattern] = useState("");
   const [analysis, setAnalysis] =
     useState<PracticeAudioAnalysisResponse | null>(null);
   const [practiceComparison, setPracticeComparison] =
@@ -114,6 +115,10 @@ export default function PracticeCoachClient({
       if (trimmedExpectedChords) {
         request.expected_chords = trimmedExpectedChords;
       }
+      const trimmedExpectedStrummingPattern = expectedStrummingPattern.trim();
+      if (trimmedExpectedStrummingPattern) {
+        request.expected_strumming_pattern = trimmedExpectedStrummingPattern;
+      }
 
       const nextAnalysis = await analyzeAudio(request);
       setAnalysis(nextAnalysis);
@@ -159,11 +164,13 @@ export default function PracticeCoachClient({
             error={error}
             expectedChords={expectedChords}
             expectedNotes={expectedNotes}
+            expectedStrummingPattern={expectedStrummingPattern}
             expectedTab={expectedTab}
             isLoading={isLoading}
             onDescriptionChange={setPracticeDescription}
             onExpectedChordsChange={setExpectedChords}
             onExpectedNotesChange={setExpectedNotes}
+            onExpectedStrummingPatternChange={setExpectedStrummingPattern}
             onExpectedTabChange={setExpectedTab}
             onFileChange={setSelectedFile}
             onFocusChange={setPracticeFocus}
@@ -196,11 +203,13 @@ function PracticeSetup({
   error,
   expectedChords,
   expectedNotes,
+  expectedStrummingPattern,
   expectedTab,
   isLoading,
   onDescriptionChange,
   onExpectedChordsChange,
   onExpectedNotesChange,
+  onExpectedStrummingPatternChange,
   onExpectedTabChange,
   onFileChange,
   onFocusChange,
@@ -212,11 +221,13 @@ function PracticeSetup({
   error: string;
   expectedChords: string;
   expectedNotes: string;
+  expectedStrummingPattern: string;
   expectedTab: string;
   isLoading: boolean;
   onDescriptionChange: (value: string) => void;
   onExpectedChordsChange: (value: string) => void;
   onExpectedNotesChange: (value: string) => void;
+  onExpectedStrummingPatternChange: (value: string) => void;
   onExpectedTabChange: (value: string) => void;
   onFileChange: (file: File | null) => void;
   onFocusChange: (focus: PracticeFocus) => void;
@@ -341,9 +352,39 @@ function PracticeSetup({
             rows={3}
             value={expectedChords}
           />
+        </div>
+
+        <div className="space-y-2">
+          <label
+            className="block text-sm font-medium"
+            htmlFor="expected_strumming_pattern"
+          >
+            Expected strumming pattern
+          </label>
           <p className="text-xs text-neutral-600">
-            Use one reference format at a time. If more than one is filled,
-            notes are used first, then tab, then chords.
+            Optional. Enter a simple pattern like D D U U D U. This checks
+            approximate attack activity, not actual upstroke/downstroke
+            direction.
+          </p>
+          <textarea
+            className="min-h-20 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            id="expected_strumming_pattern"
+            name="expected_strumming_pattern"
+            onChange={(event) =>
+              onExpectedStrummingPatternChange(event.target.value)
+            }
+            placeholder="D D U U D U"
+            rows={3}
+            value={expectedStrummingPattern}
+          />
+          <p className="text-xs text-neutral-600">
+            D = intended downstroke, U = intended upstroke, X =
+            muted/percussive stroke.
+          </p>
+          <p className="text-xs text-neutral-600">
+            Notes, tab, and chords are pitch references. Strumming is an attack
+            reference and can be used alongside one pitch reference. For pitch
+            references, notes are used first, then tab, then chords.
           </p>
           <ReferenceExerciseHelpPanel />
         </div>
@@ -394,9 +435,9 @@ function ReferenceExerciseHelpPanel() {
       <div className="space-y-1">
         <h4 className="font-semibold">How to use reference exercises</h4>
         <p className="text-neutral-700">
-          You can enter one reference format: expected notes, a short
-          single-note guitar tab, or simple chord names. The coach compares
-          detected notes from your recording to your own exercise.
+          You can enter expected notes, a short single-note guitar tab, simple
+          chord names, and/or a simple strumming pattern. The coach compares
+          detected notes and attacks from your recording to your own exercise.
         </p>
       </div>
 
@@ -469,13 +510,41 @@ E|-0-3------------|`}
 
         <div className="space-y-2">
           <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Good strumming examples
+          </h5>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>D D U U D U</li>
+            <li>D-D-U-U-D-U</li>
+            <li>D X D U</li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Supported strumming pattern
+          </h5>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>D and U are intended stroke labels</li>
+            <li>X is muted/percussive stroke</li>
+            <li>checks approximate attack activity</li>
+            <li>does not detect exact up/down direction</li>
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
             Not supported yet
           </h5>
           <ul className="list-disc space-y-1 pl-5">
-            <li>strumming patterns</li>
+            <li>exact rhythm accuracy</li>
+            <li>beat alignment</li>
+            <li>full strumming transcription</li>
             <li>song names</li>
             <li>rhythm notation</li>
             <li>full song comparison</li>
+            <li>copyrighted tab/chord/pattern lookup</li>
             <li>slash chords</li>
             <li>add/extended chords</li>
             <li>alternate tunings or capo</li>
@@ -538,6 +607,7 @@ function LatestResult({
 
       <ReferenceExerciseResult analysis={analysis} />
       <ChordExerciseResult analysis={analysis} />
+      <StrummingPatternResult analysis={analysis} />
 
       {comparison ? <PracticeComparisonResult comparison={comparison} /> : null}
     </section>
@@ -946,6 +1016,74 @@ function ChordExerciseResult({
   );
 }
 
+function StrummingPatternResult({
+  analysis,
+}: {
+  analysis: PracticeAudioAnalysisResponse;
+}) {
+  const strummingPattern = analysis.strumming_pattern;
+  const comparison = analysis.strumming_comparison;
+
+  if (!comparison?.enabled) {
+    return null;
+  }
+
+  const warnings = dedupe([
+    ...(strummingPattern?.warnings ?? []),
+    ...comparison.warnings,
+  ]);
+
+  return (
+    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+      <h2 className="text-xl font-semibold">Strumming pattern</h2>
+      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <p className="text-sm text-neutral-700">
+        This checks attack activity only, not stroke direction.
+      </p>
+
+      {strummingPattern && !strummingPattern.valid ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          Some strumming symbols were not recognized. Use D, U, and X, separated
+          by spaces.
+        </p>
+      ) : null}
+
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Expected strokes"
+          value={comparison.expected_stroke_count}
+        />
+        <Field
+          label="Detected attacks"
+          value={comparison.detected_attack_count}
+        />
+        <Field
+          label="Count difference"
+          value={formatScoreChange(comparison.count_difference)}
+        />
+        <Field
+          label="Attack match"
+          value={formatAttackMatchLevel(comparison.attack_match_level)}
+        />
+        <Field
+          label="Spacing"
+          value={formatSpacingLevel(comparison.spacing_level)}
+        />
+        {strummingPattern?.strokes.length ? (
+          <Field
+            label="Expected pattern"
+            value={strummingPattern.strokes.join(" ")}
+          />
+        ) : null}
+      </dl>
+
+      {warnings.length > 0 ? (
+        <ListSection title="Strumming warnings" items={warnings} />
+      ) : null}
+    </section>
+  );
+}
+
 function TechnicalDetails({
   analysis,
 }: {
@@ -1259,6 +1397,41 @@ function formatReferenceSource(
 
 function formatChordStatus(status: string): string {
   return status;
+}
+
+function formatAttackMatchLevel(
+  level: NonNullable<
+    NonNullable<
+      PracticeAudioAnalysisResponse["strumming_comparison"]
+    >["attack_match_level"]
+  >,
+): string {
+  const labels = {
+    good: "Good",
+    close: "Close",
+    low: "Fewer attacks than expected",
+    too_many: "More attacks than expected",
+    unavailable: "Not available",
+  } satisfies Record<typeof level, string>;
+
+  return labels[level];
+}
+
+function formatSpacingLevel(
+  level: NonNullable<
+    NonNullable<
+      PracticeAudioAnalysisResponse["strumming_comparison"]
+    >["spacing_level"]
+  >,
+): string {
+  const labels = {
+    steady: "Steady",
+    somewhat_uneven: "Somewhat uneven",
+    uneven: "Uneven",
+    unavailable: "Not available",
+  } satisfies Record<typeof level, string>;
+
+  return labels[level];
 }
 
 function formatToneList(tones: string[]): string {
