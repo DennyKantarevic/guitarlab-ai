@@ -7,6 +7,7 @@ import librosa
 import numpy as np
 from fastapi import UploadFile
 
+from app.services.practice_chord_parser import compare_expected_chords
 from app.services.practice_feedback import build_coach_feedback
 from app.services.practice_note_events import extract_note_events
 from app.services.practice_pitch_analysis import analyze_pitch
@@ -39,6 +40,7 @@ async def analyze_uploaded_audio(
     practice_description: str | None = None,
     expected_notes: str | None = None,
     expected_tab: str | None = None,
+    expected_chords: str | None = None,
 ) -> dict[str, Any]:
     if audio_file is None:
         return build_invalid_response("", ["Missing audio file."])
@@ -111,8 +113,13 @@ async def analyze_uploaded_audio(
         analysis["reference_exercise"] = build_reference_exercise(
             expected_notes_raw=expected_notes,
             expected_tab_raw=expected_tab,
+            expected_chords_raw=expected_chords,
         )
         analysis["reference_comparison"] = compare_reference_notes(
+            analysis["reference_exercise"],
+            analysis["note_events"],
+        )
+        analysis["chord_comparison"] = compare_expected_chords(
             analysis["reference_exercise"],
             analysis["note_events"],
         )
@@ -126,6 +133,7 @@ async def analyze_uploaded_audio(
             note_events=analysis["note_events"],
             reference_exercise=analysis["reference_exercise"],
             reference_comparison=analysis["reference_comparison"],
+            chord_comparison=analysis["chord_comparison"],
         )
         return analysis
     except Exception:
@@ -202,4 +210,5 @@ def build_invalid_response(filename: str, errors: list[str]) -> dict[str, Any]:
         "note_events": None,
         "reference_exercise": None,
         "reference_comparison": None,
+        "chord_comparison": None,
     }

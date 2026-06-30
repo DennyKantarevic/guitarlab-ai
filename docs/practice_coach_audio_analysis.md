@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns a clear score, coach-facing feedback, practical next steps, rule-based practice metrics, recording-quality checks, fixed-length segment analysis, a narrow monophonic pitch-analysis foundation, approximate monophonic note events, and optional user-provided reference exercise comparison. The frontend prioritizes the score and coaching feedback while keeping technical metrics in a secondary details section. It can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns a clear score, coach-facing feedback, practical next steps, rule-based practice metrics, recording-quality checks, fixed-length segment analysis, a narrow monophonic pitch-analysis foundation, approximate monophonic note events, optional user-provided reference exercise comparison, and optional chord-tone coverage comparison. The frontend prioritizes the score and coaching feedback while keeping technical metrics in a secondary details section. It can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -17,10 +17,15 @@ Use `multipart/form-data` with one required file field and optional practice con
 - `practice_description`: optional free-text note about what the user is practicing. The backend trims whitespace and caps this at 300 characters.
 - `expected_notes`: optional user-provided reference exercise, such as `A4 B4 C5 D5`. Spaces, commas, and new lines are accepted as separators.
 - `expected_tab`: optional user-provided six-line single-note guitar tab. This is converted into expected note names before reference comparison.
+- `expected_chords`: optional user-provided chord progression, such as `G C D Em`. Spaces, commas, and new lines are accepted as separators.
 
 `expected_notes` supports scientific pitch notation with sharps and a required octave number: `C`, `C#`, `D`, `D#`, `E`, `F`, `F#`, `G`, `G#`, `A`, `A#`, `B`, followed by an octave. Examples: `A4`, `C#5`, `E3`. Flats such as `Bb4`, chords, rhythm values, and durations are not supported.
 
-`expected_tab` supports basic six-line standard-tuning guitar tab only. Lines should be ordered `e|`, `B|`, `G|`, `D|`, `A|`, `E|`. Frets `0` through `24` are supported, including multi-digit frets such as `10` and `12`. The parser is single-note only for now and does not support chords, strumming patterns, bends, slides, hammer-ons, pull-offs, mutes, alternate tunings, capo, rhythm notation, song lookup, copyrighted tab lookup, or tab generation. If both `expected_notes` and `expected_tab` are provided, `expected_notes` is used and `expected_tab` is ignored with a warning.
+`expected_tab` supports basic six-line standard-tuning guitar tab only. Lines should be ordered `e|`, `B|`, `G|`, `D|`, `A|`, `E|`. Frets `0` through `24` are supported, including multi-digit frets such as `10` and `12`. The parser is single-note only for now and does not support chords, strumming patterns, bends, slides, hammer-ons, pull-offs, mutes, alternate tunings, capo, rhythm notation, song lookup, copyrighted tab lookup, or tab generation.
+
+`expected_chords` supports simple sharp-name chord symbols: major triads (`G`), minor triads (`Em`), dominant sevenths (`G7`), major sevenths (`Cmaj7`), minor sevenths (`Am7`), suspended chords (`Dsus2`, `Dsus4`), and power chords (`E5`). Flats such as `Bb`, slash chords, add chords, extended chords, diminished/augmented chords, chord voicings, fret positions, strumming patterns, rhythm notation, capo, alternate tuning, song lookup, and copyrighted chord/tab lookup are not supported.
+
+Reference input priority is: `expected_notes`, then `expected_tab`, then `expected_chords`. Lower-priority inputs are ignored with a warning when a higher-priority reference input is present.
 
 Example:
 
@@ -43,6 +48,14 @@ G|----------------|
 D|----------------|
 A|-----0-2-3------|
 E|-0-3------------|"
+```
+
+Chord example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
+  -F "audio_file=@practice.wav" \
+  -F "expected_chords=G C D Em"
 ```
 
 ## Response Fields
@@ -161,6 +174,8 @@ E|-0-3------------|"
     "expected_notes_raw": "A4 B4 C5 D5",
     "expected_notes": ["A4", "B4", "C5", "D5"],
     "expected_tab_raw": null,
+    "expected_chords_raw": null,
+    "expected_chords": [],
     "source": "notes",
     "valid": true,
     "warnings": []
@@ -191,6 +206,18 @@ E|-0-3------------|"
       }
     ],
     "extras": [],
+    "warnings": []
+  },
+  "chord_comparison": {
+    "enabled": false,
+    "valid": true,
+    "expected_count": 0,
+    "detected_note_count": 0,
+    "matched_chord_count": 0,
+    "partial_chord_count": 0,
+    "missed_chord_count": 0,
+    "summary": "No chord exercise was provided.",
+    "chords": [],
     "warnings": []
   }
 }
@@ -290,16 +317,18 @@ This is not tab generation, note correctness scoring, chord detection, or riff/s
 
 ## Reference Exercise Comparison
 
-If `expected_notes` is provided, the backend parses it as a simple user-provided monophonic exercise and compares it against detected `note_events` in order. If `expected_notes` is missing and `expected_tab` is provided, the backend converts the tab into expected note names first, then uses the same comparison.
+If `expected_notes` is provided, the backend parses it as a simple user-provided monophonic exercise and compares it against detected `note_events` in order. If `expected_notes` is missing and `expected_tab` is provided, the backend converts the tab into expected note names first, then uses the same comparison. If notes and tab are both missing and `expected_chords` is provided, the backend parses chord names and uses `chord_comparison` instead of note-by-note reference comparison.
 
 `reference_exercise` includes:
 
 - `expected_notes_raw`: Trimmed raw input, or `null` when no exercise was provided.
 - `expected_notes`: Supported notes parsed from `expected_notes` or converted from `expected_tab`, capped at the first 50 supported notes.
 - `expected_tab_raw`: Trimmed raw tab input, or `null` when no tab was provided.
-- `source`: `notes`, `tab`, or `none`.
-- `valid`: `false` when unsupported note tokens or unsupported tab syntax were included.
-- `warnings`: Clear parse warnings for unsupported input such as flats, chords, tab techniques, rhythm values, or durations.
+- `expected_chords_raw`: Trimmed raw chord input, or `null` when no chord progression was provided.
+- `expected_chords`: Supported chord symbols with root, quality, and pitch-class tones.
+- `source`: `notes`, `tab`, `chords`, or `none`.
+- `valid`: `false` when unsupported note tokens, tab syntax, or chord symbols were included.
+- `warnings`: Clear parse warnings for unsupported input such as flats, chords in tab, tab techniques, unsupported chord symbols, rhythm values, or durations.
 
 `reference_comparison` includes:
 
@@ -317,6 +346,25 @@ If `expected_notes` is provided, the backend parses it as a simple user-provided
 
 This comparison checks exact detected note names only, including octave. It does not compare rhythm, duration, timing correctness, song correctness, strumming accuracy, or tab accuracy. It is intended for simple user-provided exercises like `A4 B4 C5 D5` or a short single-note tab.
 
+## Chord Comparison
+
+If `expected_chords` is provided and no higher-priority reference input is present, the backend parses each supported chord into pitch-class tones and compares those tones against detected `note_events`.
+
+`chord_comparison` includes:
+
+- `enabled`: `true` only when `expected_chords` is the active reference source.
+- `valid`: `false` when unsupported chord symbols were included.
+- `expected_count`: Number of supported expected chords compared.
+- `detected_note_count`: Number of unique detected pitch classes available for comparison.
+- `matched_chord_count`: Number of chords where at least two tones were detected, or all tones for power chords.
+- `partial_chord_count`: Number of chords where one expected tone was detected.
+- `missed_chord_count`: Number of chords where no expected tones were detected.
+- `summary`: Short user-facing explanation.
+- `chords`: Per-chord tone coverage with expected tones, detected tones, matched tones, missing tones, and `matched`, `partial`, or `missed` status.
+- `warnings`: Parse or comparison warnings.
+
+This is approximate chord-tone coverage only. It is not full polyphonic chord recognition, strumming accuracy, rhythm checking, song correctness, or a copyrighted chord lookup.
+
 ## Frontend Practice History
 
 The Practice Coach page stores compact successful analysis summaries in browser `localStorage` so recent scores can be compared over time. It keeps only summary fields such as filename, scores, quality level, attack activity, and one or more next steps.
@@ -326,13 +374,16 @@ Audio files, waveform data, and full backend responses are not saved. History st
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
-- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, approximate note events, and optional user-provided reference exercise comparison only.
+- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, approximate note events, optional user-provided reference exercise comparison, and optional chord-tone coverage comparison only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
 - Pitch estimates and note events are approximate and work best on clean single-note recordings.
 - Reference comparison uses a user-provided simple note sequence or short single-note tab only.
 - Reference comparison does not perform song recognition or copyrighted tab lookup.
 - Reference comparison does not score rhythm correctness yet.
 - Tab parsing is standard tuning only and does not support chords, strumming patterns, bends, slides, mutes, alternate tunings, or capo.
+- Chord comparison checks approximate chord-tone coverage only.
+- Chord comparison does not perform full polyphonic chord recognition, strumming checking, rhythm checking, song lookup, or copyrighted chord/tab lookup.
+- Chord parsing does not support flats, slash chords, add chords, extended chords, diminished/augmented chords, voicings, alternate tunings, capo, or fret positions.
 - There is no note correctness scoring yet.
 - There is no chord detection or polyphonic pitch detection.
 - It does not know whether the player hit the right notes or played a specific riff correctly.

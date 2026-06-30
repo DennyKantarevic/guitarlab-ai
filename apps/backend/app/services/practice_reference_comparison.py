@@ -1,6 +1,7 @@
 import re
 from typing import Any, Mapping
 
+from app.services.practice_chord_parser import parse_expected_chords
 from app.services.practice_tab_parser import parse_expected_tab
 
 
@@ -54,38 +55,68 @@ def build_reference_exercise(
     *,
     expected_notes_raw: str | None,
     expected_tab_raw: str | None,
+    expected_chords_raw: str | None,
 ) -> dict[str, Any]:
     parsed_notes = parse_expected_notes(expected_notes_raw)
     parsed_tab = parse_expected_tab(expected_tab_raw)
+    parsed_chords = parse_expected_chords(expected_chords_raw)
 
     if parsed_notes["expected_notes_raw"] is not None:
         warnings = list(parsed_notes["warnings"])
         if parsed_tab["expected_tab_raw"] is not None:
             warnings.append("expected_tab was ignored because expected_notes was provided.")
+        if parsed_chords["expected_chords_raw"] is not None:
+            warnings.append(
+                "expected_chords was ignored because expected_notes was provided."
+            )
 
         return {
             "expected_notes_raw": parsed_notes["expected_notes_raw"],
             "expected_notes": parsed_notes["expected_notes"],
             "expected_tab_raw": parsed_tab["expected_tab_raw"],
+            "expected_chords_raw": parsed_chords["expected_chords_raw"],
+            "expected_chords": [],
             "source": "notes",
             "valid": parsed_notes["valid"],
             "warnings": warnings,
         }
 
     if parsed_tab["expected_tab_raw"] is not None:
+        warnings = list(parsed_tab["warnings"])
+        if parsed_chords["expected_chords_raw"] is not None:
+            warnings.append(
+                "expected_chords was ignored because expected_tab was provided."
+            )
+
         return {
             "expected_notes_raw": None,
             "expected_notes": parsed_tab["expected_notes"],
             "expected_tab_raw": parsed_tab["expected_tab_raw"],
+            "expected_chords_raw": parsed_chords["expected_chords_raw"],
+            "expected_chords": [],
             "source": "tab",
             "valid": parsed_tab["valid"],
-            "warnings": parsed_tab["warnings"],
+            "warnings": warnings,
+        }
+
+    if parsed_chords["expected_chords_raw"] is not None:
+        return {
+            "expected_notes_raw": None,
+            "expected_notes": [],
+            "expected_tab_raw": None,
+            "expected_chords_raw": parsed_chords["expected_chords_raw"],
+            "expected_chords": parsed_chords["expected_chords"],
+            "source": "chords",
+            "valid": parsed_chords["valid"],
+            "warnings": parsed_chords["warnings"],
         }
 
     return {
         "expected_notes_raw": None,
         "expected_notes": [],
         "expected_tab_raw": None,
+        "expected_chords_raw": None,
+        "expected_chords": [],
         "source": "none",
         "valid": True,
         "warnings": [],
@@ -101,11 +132,15 @@ def compare_reference_notes(
     reference_warnings = list(reference_exercise.get("warnings") or [])
     reference_valid = bool(reference_exercise.get("valid", False))
 
-    if source == "none":
+    if source in {"none", "chords"}:
         return build_empty_comparison(
             enabled=False,
             valid=True,
-            summary="No reference exercise was provided.",
+            summary=(
+                "No reference exercise was provided."
+                if source == "none"
+                else "Reference note comparison is disabled for chord exercises."
+            ),
             warnings=[],
         )
 

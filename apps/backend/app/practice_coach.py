@@ -98,9 +98,18 @@ class ReferenceExercise(BaseModel):
     expected_notes_raw: str | None
     expected_notes: list[str] = Field(default_factory=list)
     expected_tab_raw: str | None = None
-    source: Literal["notes", "tab", "none"]
+    expected_chords_raw: str | None = None
+    expected_chords: list["ExpectedChord"] = Field(default_factory=list)
+    source: Literal["notes", "tab", "chords", "none"]
     valid: bool
     warnings: list[str] = Field(default_factory=list)
+
+
+class ExpectedChord(BaseModel):
+    symbol: str
+    root: str
+    quality: str
+    tones: list[str] = Field(default_factory=list)
 
 
 class ReferenceMatch(BaseModel):
@@ -138,6 +147,28 @@ class ReferenceComparison(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class ChordComparisonItem(BaseModel):
+    symbol: str
+    expected_tones: list[str] = Field(default_factory=list)
+    detected_tones: list[str] = Field(default_factory=list)
+    matched_tones: list[str] = Field(default_factory=list)
+    missing_tones: list[str] = Field(default_factory=list)
+    status: Literal["matched", "partial", "missed"]
+
+
+class ChordComparison(BaseModel):
+    enabled: bool
+    valid: bool
+    expected_count: int
+    detected_note_count: int
+    matched_chord_count: int
+    partial_chord_count: int
+    missed_chord_count: int
+    summary: str
+    chords: list[ChordComparisonItem] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class PracticeAudioAnalysisResponse(BaseModel):
     filename: str
     duration_seconds: float
@@ -159,6 +190,7 @@ class PracticeAudioAnalysisResponse(BaseModel):
     note_events: list[NoteEvent] | None = None
     reference_exercise: ReferenceExercise | None = None
     reference_comparison: ReferenceComparison | None = None
+    chord_comparison: ChordComparison | None = None
 
 
 @router.post("/practice/analyze-audio", response_model=PracticeAudioAnalysisResponse)
@@ -168,6 +200,7 @@ async def analyze_practice_audio(
     practice_description: str | None = Form(default=None),
     expected_notes: str | None = Form(default=None),
     expected_tab: str | None = Form(default=None),
+    expected_chords: str | None = Form(default=None),
 ) -> PracticeAudioAnalysisResponse:
     return PracticeAudioAnalysisResponse.model_validate(
         await analyze_uploaded_audio(
@@ -176,5 +209,6 @@ async def analyze_practice_audio(
             practice_description=practice_description,
             expected_notes=expected_notes,
             expected_tab=expected_tab,
+            expected_chords=expected_chords,
         )
     )

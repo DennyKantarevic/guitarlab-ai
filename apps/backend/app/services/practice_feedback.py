@@ -12,6 +12,7 @@ def build_coach_feedback(
     note_events: list[Mapping[str, Any]] | None = None,
     reference_exercise: Mapping[str, Any] | None = None,
     reference_comparison: Mapping[str, Any] | None = None,
+    chord_comparison: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     quality_level = recording_quality["quality_level"]
     overall_score = int(practice_metrics["overall_score"])
@@ -151,6 +152,25 @@ def build_coach_feedback(
                 coach_notes.append(
                     "The expected exercise includes unsupported note names, so reference feedback is incomplete."
                 )
+
+    if chord_comparison is not None and chord_comparison.get("enabled"):
+        if chord_comparison.get("valid"):
+            coach_notes.append(
+                f"Compared with your chord exercise, the coach found chord tones for {chord_comparison['matched_chord_count']} of {chord_comparison['expected_count']} expected chords."
+            )
+            coach_notes.append(
+                "This checks approximate chord-tone coverage only, not strumming or rhythm."
+            )
+            if int(chord_comparison.get("missed_chord_count", 0)) > 0 or int(
+                chord_comparison.get("partial_chord_count", 0)
+            ) > 0:
+                next_practice_steps.append(
+                    "Several expected chord tones were not detected clearly. Try recording slowly with clean note separation."
+                )
+        else:
+            coach_notes.append(
+                "The chord exercise includes unsupported chord symbols, so chord-tone feedback is incomplete."
+            )
 
     if not work_on:
         work_on.append(

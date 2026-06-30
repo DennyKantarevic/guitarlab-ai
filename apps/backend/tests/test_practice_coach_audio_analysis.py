@@ -7,6 +7,11 @@ import wave
 import httpx
 
 from app.main import app
+from app.services.practice_chord_parser import (
+    chord_symbol_to_tones,
+    compare_expected_chords,
+    parse_expected_chords,
+)
 from app.services.practice_feedback import build_coach_feedback
 from app.services.practice_tab_parser import parse_expected_tab
 
@@ -32,6 +37,7 @@ REQUIRED_FIELDS = {
     "practice_context",
     "reference_exercise",
     "reference_comparison",
+    "chord_comparison",
 }
 
 PRACTICE_METRIC_FIELDS = {
@@ -116,6 +122,8 @@ REFERENCE_EXERCISE_FIELDS = {
     "expected_notes_raw",
     "expected_notes",
     "expected_tab_raw",
+    "expected_chords_raw",
+    "expected_chords",
     "source",
     "valid",
     "warnings",
@@ -154,6 +162,35 @@ REFERENCE_EXTRA_FIELDS = {
     "detected_note",
     "detected_index",
     "confidence",
+}
+
+EXPECTED_CHORD_FIELDS = {
+    "symbol",
+    "root",
+    "quality",
+    "tones",
+}
+
+CHORD_COMPARISON_FIELDS = {
+    "enabled",
+    "valid",
+    "expected_count",
+    "detected_note_count",
+    "matched_chord_count",
+    "partial_chord_count",
+    "missed_chord_count",
+    "summary",
+    "chords",
+    "warnings",
+}
+
+CHORD_COMPARISON_ITEM_FIELDS = {
+    "symbol",
+    "expected_tones",
+    "detected_tones",
+    "matched_tones",
+    "missing_tones",
+    "status",
 }
 
 
@@ -324,6 +361,8 @@ def test_valid_generated_sine_wave_returns_audio_features():
         "expected_notes_raw": None,
         "expected_notes": [],
         "expected_tab_raw": None,
+        "expected_chords_raw": None,
+        "expected_chords": [],
         "source": "none",
         "valid": True,
         "warnings": [],
@@ -336,6 +375,13 @@ def test_valid_generated_sine_wave_returns_audio_features():
     assert reference_comparison["matched_count"] == 0
     assert reference_comparison["expected_count"] == 0
     assert reference_comparison["summary"] == "No reference exercise was provided."
+
+    chord_comparison = analysis["chord_comparison"]
+    assert set(chord_comparison) == CHORD_COMPARISON_FIELDS
+    assert chord_comparison["enabled"] is False
+    assert chord_comparison["valid"] is True
+    assert chord_comparison["expected_count"] == 0
+    assert chord_comparison["summary"] == "No chord exercise was provided."
 
     pitch = analysis["pitch_analysis"]
     assert set(pitch) == PITCH_ANALYSIS_FIELDS
@@ -968,6 +1014,135 @@ E|----|
     assert any("Chords are not supported" in warning for warning in parsed["warnings"])
 
 
+def test_expected_chords_parse_space_separated_progression():
+    parsed = parse_expected_chords("G C D Em")
+
+    assert parsed["valid"] is True
+    assert [chord["symbol"] for chord in parsed["expected_chords"]] == [
+        "G",
+        "C",
+        "D",
+        "Em",
+    ]
+    assert parsed["warnings"] == []
+
+
+def test_expected_chords_parse_comma_separated_progression():
+    parsed = parse_expected_chords("G, C, D, Em")
+
+    assert parsed["valid"] is True
+    assert [chord["symbol"] for chord in parsed["expected_chords"]] == [
+        "G",
+        "C",
+        "D",
+        "Em",
+    ]
+
+
+def test_expected_chords_parse_newline_separated_progression():
+    parsed = parse_expected_chords("G\nC\nD\nEm")
+
+    assert parsed["valid"] is True
+    assert [chord["symbol"] for chord in parsed["expected_chords"]] == [
+        "G",
+        "C",
+        "D",
+        "Em",
+    ]
+
+
+def test_chord_symbol_to_tones_supports_basic_qualities():
+    assert chord_symbol_to_tones("G") == {
+        "symbol": "G",
+        "root": "G",
+        "quality": "major",
+        "tones": ["G", "B", "D"],
+    }
+    assert chord_symbol_to_tones("Em") == {
+        "symbol": "Em",
+        "root": "E",
+        "quality": "minor",
+        "tones": ["E", "G", "B"],
+    }
+    assert chord_symbol_to_tones("G7") == {
+        "symbol": "G7",
+        "root": "G",
+        "quality": "dominant_seventh",
+        "tones": ["G", "B", "D", "F"],
+    }
+    assert chord_symbol_to_tones("Cmaj7") == {
+        "symbol": "Cmaj7",
+        "root": "C",
+        "quality": "major_seventh",
+        "tones": ["C", "E", "G", "B"],
+    }
+    assert chord_symbol_to_tones("Am7") == {
+        "symbol": "Am7",
+        "root": "A",
+        "quality": "minor_seventh",
+        "tones": ["A", "C", "E", "G"],
+    }
+    assert chord_symbol_to_tones("Gsus2") == {
+        "symbol": "Gsus2",
+        "root": "G",
+        "quality": "sus2",
+        "tones": ["G", "A", "D"],
+    }
+    assert chord_symbol_to_tones("Gsus4") == {
+        "symbol": "Gsus4",
+        "root": "G",
+        "quality": "sus4",
+        "tones": ["G", "C", "D"],
+    }
+    assert chord_symbol_to_tones("E5") == {
+        "symbol": "E5",
+        "root": "E",
+        "quality": "power",
+        "tones": ["E", "B"],
+    }
+
+
+def test_invalid_chord_returns_warning_and_invalid_result():
+    parsed = parse_expected_chords("G Bb Cadd9")
+
+    assert parsed["valid"] is False
+    assert [chord["symbol"] for chord in parsed["expected_chords"]] == ["G"]
+    assert any("Bb" in warning for warning in parsed["warnings"])
+    assert any("Cadd9" in warning for warning in parsed["warnings"])
+
+
+def test_chord_comparison_matches_detected_pitch_classes():
+    reference = {
+        "source": "chords",
+        "valid": True,
+        "expected_chords": [
+            chord_symbol_to_tones("G"),
+            chord_symbol_to_tones("Em"),
+        ],
+        "warnings": [],
+    }
+    comparison = compare_expected_chords(
+        reference,
+        [
+            {"note": "G3"},
+            {"note": "B3"},
+            {"note": "D4"},
+            {"note": "E4"},
+        ],
+    )
+
+    assert comparison["enabled"] is True
+    assert comparison["valid"] is True
+    assert comparison["expected_count"] == 2
+    assert comparison["detected_note_count"] == 4
+    assert comparison["matched_chord_count"] == 2
+    assert comparison["partial_chord_count"] == 0
+    assert comparison["missed_chord_count"] == 0
+    assert set(comparison["chords"][0]) == CHORD_COMPARISON_ITEM_FIELDS
+    assert comparison["chords"][0]["symbol"] == "G"
+    assert comparison["chords"][0]["status"] == "matched"
+
+
 def test_expected_notes_parses_space_separated_notes():
     response = post_audio(
         {
@@ -985,6 +1160,8 @@ def test_expected_notes_parses_space_separated_notes():
     assert reference["expected_notes_raw"] == "A4 B4 C5 D5"
     assert reference["expected_notes"] == ["A4", "B4", "C5", "D5"]
     assert reference["expected_tab_raw"] is None
+    assert reference["expected_chords_raw"] is None
+    assert reference["expected_chords"] == []
     assert reference["source"] == "notes"
     assert reference["valid"] is True
     assert reference["warnings"] == []
@@ -1090,18 +1267,25 @@ def test_expected_notes_take_priority_when_expected_tab_is_also_provided():
         data={
             "expected_notes": "A4",
             "expected_tab": "e|----|\nB|----|\nG|----|\nD|----|\nA|----|\nE|0---|",
+            "expected_chords": "G C D",
         },
     )
 
     assert response.status_code == 200
-    reference = response.json()["reference_exercise"]
+    analysis = response.json()
+    reference = analysis["reference_exercise"]
     assert reference["source"] == "notes"
     assert reference["expected_notes"] == ["A4"]
     assert reference["expected_tab_raw"] is not None
+    assert reference["expected_chords_raw"] == "G C D"
     assert any("expected_tab was ignored" in warning for warning in reference["warnings"])
+    assert any(
+        "expected_chords was ignored" in warning for warning in reference["warnings"]
+    )
+    assert analysis["chord_comparison"]["enabled"] is False
 
 
-def test_expected_tab_is_used_when_expected_notes_are_missing():
+def test_expected_tab_takes_priority_over_expected_chords_when_notes_are_missing():
     response = post_audio(
         {
             "audio_file": (
@@ -1112,6 +1296,7 @@ def test_expected_tab_is_used_when_expected_notes_are_missing():
         },
         data={
             "expected_tab": "e|----|\nB|----|\nG|----|\nD|----|\nA|----|\nE|0---|",
+            "expected_chords": "G C D",
         },
     )
 
@@ -1119,7 +1304,55 @@ def test_expected_tab_is_used_when_expected_notes_are_missing():
     analysis = response.json()
     assert analysis["reference_exercise"]["source"] == "tab"
     assert analysis["reference_exercise"]["expected_notes"] == ["E2"]
+    assert analysis["reference_exercise"]["expected_chords_raw"] == "G C D"
+    assert any(
+        "expected_chords was ignored"
+        in warning
+        for warning in analysis["reference_exercise"]["warnings"]
+    )
     assert analysis["reference_comparison"]["enabled"] is True
+    assert analysis["chord_comparison"]["enabled"] is False
+
+
+def test_expected_chords_is_used_when_notes_and_tab_are_missing():
+    response = post_audio(
+        {
+            "audio_file": (
+                "chord-reference.wav",
+                make_sine_wave_bytes(duration_seconds=2.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_chords": "A E5"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    reference = analysis["reference_exercise"]
+    assert reference["source"] == "chords"
+    assert reference["expected_notes"] == []
+    assert reference["expected_chords_raw"] == "A E5"
+    assert reference["expected_chords"] == [
+        {
+            "symbol": "A",
+            "root": "A",
+            "quality": "major",
+            "tones": ["A", "C#", "E"],
+        },
+        {
+            "symbol": "E5",
+            "root": "E",
+            "quality": "power",
+            "tones": ["E", "B"],
+        },
+    ]
+    assert set(reference["expected_chords"][0]) == EXPECTED_CHORD_FIELDS
+    assert analysis["reference_comparison"]["enabled"] is False
+    chord_comparison = analysis["chord_comparison"]
+    assert chord_comparison["enabled"] is True
+    assert chord_comparison["valid"] is True
+    assert chord_comparison["expected_count"] == 2
+    assert chord_comparison["partial_chord_count"] >= 1
 
 
 def test_invalid_expected_tab_does_not_crash_analysis():
@@ -1143,6 +1376,64 @@ def test_invalid_expected_tab_does_not_crash_analysis():
     assert analysis["reference_exercise"]["warnings"]
     assert analysis["reference_comparison"]["enabled"] is True
     assert analysis["reference_comparison"]["valid"] is False
+
+
+def test_invalid_expected_chord_returns_warning_without_failing_audio():
+    response = post_audio(
+        {
+            "audio_file": (
+                "invalid-chord.wav",
+                make_sine_wave_bytes(duration_seconds=1.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_chords": "G Bb Cadd9"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is True
+    assert analysis["reference_exercise"]["source"] == "chords"
+    assert analysis["reference_exercise"]["valid"] is False
+    assert [chord["symbol"] for chord in analysis["reference_exercise"]["expected_chords"]] == [
+        "G"
+    ]
+    assert any(
+        "Bb" in warning for warning in analysis["reference_exercise"]["warnings"]
+    )
+    assert any(
+        "Cadd9" in warning for warning in analysis["reference_exercise"]["warnings"]
+    )
+    assert analysis["chord_comparison"]["enabled"] is True
+    assert analysis["chord_comparison"]["valid"] is False
+
+
+def test_chord_comparison_summary_is_conversational_and_safe():
+    response = post_audio(
+        {
+            "audio_file": (
+                "safe-chord.wav",
+                make_sine_wave_bytes(duration_seconds=2.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_chords": "A E"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    summary = analysis["chord_comparison"]["summary"]
+    feedback_text = serialize_feedback(analysis["coach_feedback"])
+    combined_text = f"{summary} {feedback_text}".lower()
+
+    assert summary
+    assert "chord tones" in combined_text
+    assert "played the chord correctly" not in combined_text
+    assert "strumming accuracy" not in combined_text
+    assert "rhythm accuracy" not in combined_text
+    assert "full chord recognition" not in combined_text
+    assert "song correctness" not in combined_text
+    assert "played the song correctly" not in combined_text
 
 
 def test_matching_a4_reference_against_generated_a4_audio_counts_match():
@@ -1255,6 +1546,27 @@ def test_invalid_upload_does_not_return_successful_reference_comparison():
     assert analysis["valid"] is False
     assert analysis["reference_exercise"] is None
     assert analysis["reference_comparison"] is None
+    assert analysis["chord_comparison"] is None
+
+
+def test_invalid_upload_does_not_return_successful_chord_comparison():
+    response = post_audio(
+        {
+            "audio_file": (
+                "broken-chord.wav",
+                b"not-really-a-wav",
+                "audio/wav",
+            )
+        },
+        data={"expected_chords": "G C D"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is False
+    assert analysis["reference_exercise"] is None
+    assert analysis["reference_comparison"] is None
+    assert analysis["chord_comparison"] is None
 
 
 def serialize_feedback(feedback):
