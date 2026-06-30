@@ -38,6 +38,8 @@ REQUIRED_FIELDS = {
     "reference_exercise",
     "reference_comparison",
     "chord_comparison",
+    "strumming_pattern",
+    "strumming_comparison",
 }
 
 PRACTICE_METRIC_FIELDS = {
@@ -191,6 +193,25 @@ CHORD_COMPARISON_ITEM_FIELDS = {
     "matched_tones",
     "missing_tones",
     "status",
+}
+
+STRUMMING_PATTERN_FIELDS = {
+    "expected_pattern_raw",
+    "strokes",
+    "valid",
+    "warnings",
+}
+
+STRUMMING_COMPARISON_FIELDS = {
+    "enabled",
+    "valid",
+    "expected_stroke_count",
+    "detected_attack_count",
+    "count_difference",
+    "attack_match_level",
+    "spacing_level",
+    "summary",
+    "warnings",
 }
 
 
@@ -383,6 +404,26 @@ def test_valid_generated_sine_wave_returns_audio_features():
     assert chord_comparison["expected_count"] == 0
     assert chord_comparison["summary"] == "No chord exercise was provided."
 
+    strumming_pattern = analysis["strumming_pattern"]
+    assert set(strumming_pattern) == STRUMMING_PATTERN_FIELDS
+    assert strumming_pattern == {
+        "expected_pattern_raw": None,
+        "strokes": [],
+        "valid": True,
+        "warnings": [],
+    }
+
+    strumming_comparison = analysis["strumming_comparison"]
+    assert set(strumming_comparison) == STRUMMING_COMPARISON_FIELDS
+    assert strumming_comparison["enabled"] is False
+    assert strumming_comparison["valid"] is True
+    assert strumming_comparison["expected_stroke_count"] == 0
+    assert strumming_comparison["detected_attack_count"] == 0
+    assert strumming_comparison["count_difference"] is None
+    assert strumming_comparison["attack_match_level"] == "unavailable"
+    assert strumming_comparison["spacing_level"] == "unavailable"
+    assert strumming_comparison["summary"] == "No strumming pattern was provided."
+
     pitch = analysis["pitch_analysis"]
     assert set(pitch) == PITCH_ANALYSIS_FIELDS
     assert pitch["enabled"] is True
@@ -430,6 +471,8 @@ def test_unsupported_extension_returns_clear_error():
     assert analysis["practice_context"] is None
     assert analysis["reference_exercise"] is None
     assert analysis["reference_comparison"] is None
+    assert analysis["strumming_pattern"] is None
+    assert analysis["strumming_comparison"] is None
 
 
 def test_empty_file_returns_clear_error():
@@ -456,6 +499,8 @@ def test_empty_file_returns_clear_error():
     assert analysis["practice_context"] is None
     assert analysis["reference_exercise"] is None
     assert analysis["reference_comparison"] is None
+    assert analysis["strumming_pattern"] is None
+    assert analysis["strumming_comparison"] is None
 
 
 def test_missing_file_returns_clear_error():
@@ -474,6 +519,8 @@ def test_missing_file_returns_clear_error():
     assert analysis["practice_context"] is None
     assert analysis["reference_exercise"] is None
     assert analysis["reference_comparison"] is None
+    assert analysis["strumming_pattern"] is None
+    assert analysis["strumming_comparison"] is None
 
 
 def test_invalid_wav_returns_clear_decode_error():
@@ -500,6 +547,8 @@ def test_invalid_wav_returns_clear_decode_error():
     assert analysis["practice_context"] is None
     assert analysis["reference_exercise"] is None
     assert analysis["reference_comparison"] is None
+    assert analysis["strumming_pattern"] is None
+    assert analysis["strumming_comparison"] is None
 
 
 def test_endpoint_response_contains_no_llm_or_agent_references():
@@ -1436,6 +1485,262 @@ def test_chord_comparison_summary_is_conversational_and_safe():
     assert "played the song correctly" not in combined_text
 
 
+def test_strumming_pattern_parses_space_separated_pattern():
+    response = post_audio(
+        {
+            "audio_file": (
+                "space-strum.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D D U U D U"},
+    )
+
+    assert response.status_code == 200
+    pattern = response.json()["strumming_pattern"]
+    assert set(pattern) == STRUMMING_PATTERN_FIELDS
+    assert pattern["expected_pattern_raw"] == "D D U U D U"
+    assert pattern["strokes"] == ["D", "D", "U", "U", "D", "U"]
+    assert pattern["valid"] is True
+    assert pattern["warnings"] == []
+
+
+def test_strumming_pattern_parses_comma_separated_pattern():
+    response = post_audio(
+        {
+            "audio_file": (
+                "comma-strum.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D, D, U, U, D, U"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["strumming_pattern"]["strokes"] == [
+        "D",
+        "D",
+        "U",
+        "U",
+        "D",
+        "U",
+    ]
+
+
+def test_strumming_pattern_parses_hyphen_separated_pattern():
+    response = post_audio(
+        {
+            "audio_file": (
+                "hyphen-strum.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D-D-U-U-D-U"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["strumming_pattern"]["strokes"] == [
+        "D",
+        "D",
+        "U",
+        "U",
+        "D",
+        "U",
+    ]
+
+
+def test_strumming_pattern_parses_newline_separated_pattern():
+    response = post_audio(
+        {
+            "audio_file": (
+                "newline-strum.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D\nD\nU\nU\nD\nU"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["strumming_pattern"]["strokes"] == [
+        "D",
+        "D",
+        "U",
+        "U",
+        "D",
+        "U",
+    ]
+
+
+def test_strumming_pattern_normalizes_lowercase_and_supports_muted_strokes():
+    response = post_audio(
+        {
+            "audio_file": (
+                "lowercase-strum.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "d x u"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["strumming_pattern"]["strokes"] == ["D", "X", "U"]
+
+
+def test_invalid_strumming_symbols_return_warning_without_failing_audio():
+    response = post_audio(
+        {
+            "audio_file": (
+                "invalid-strum.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D Q U"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is True
+    assert analysis["strumming_pattern"]["valid"] is False
+    assert analysis["strumming_pattern"]["strokes"] == ["D", "U"]
+    assert any("Q" in warning for warning in analysis["strumming_pattern"]["warnings"])
+    assert analysis["strumming_comparison"]["enabled"] is True
+    assert analysis["strumming_comparison"]["valid"] is False
+
+
+def test_expected_strumming_pattern_alone_enables_strumming_comparison():
+    response = post_audio(
+        {
+            "audio_file": (
+                "strumming-only.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D D U U D U"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    comparison = analysis["strumming_comparison"]
+    assert set(comparison) == STRUMMING_COMPARISON_FIELDS
+    assert comparison["enabled"] is True
+    assert comparison["valid"] is True
+    assert comparison["expected_stroke_count"] == 6
+    assert comparison["detected_attack_count"] == analysis["onset_count"]
+    assert comparison["count_difference"] == analysis["onset_count"] - 6
+    assert comparison["attack_match_level"] in {
+        "good",
+        "close",
+        "low",
+        "too_many",
+        "unavailable",
+    }
+    assert comparison["spacing_level"] in {
+        "steady",
+        "somewhat_uneven",
+        "uneven",
+        "unavailable",
+    }
+    assert isinstance(comparison["summary"], str)
+    assert comparison["summary"]
+
+
+def test_expected_chords_and_strumming_pattern_can_both_return_comparisons():
+    response = post_audio(
+        {
+            "audio_file": (
+                "chord-strumming.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={
+            "expected_chords": "A E",
+            "expected_strumming_pattern": "D D U U D U",
+        },
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["reference_exercise"]["source"] == "chords"
+    assert analysis["chord_comparison"]["enabled"] is True
+    assert analysis["strumming_comparison"]["enabled"] is True
+
+
+def test_expected_notes_and_strumming_pattern_can_both_return_comparisons():
+    response = post_audio(
+        {
+            "audio_file": (
+                "note-strumming.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0, frequency=440.0),
+                "audio/wav",
+            )
+        },
+        data={
+            "expected_notes": "A4",
+            "expected_strumming_pattern": "D D U U D U",
+        },
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["reference_exercise"]["source"] == "notes"
+    assert analysis["reference_comparison"]["enabled"] is True
+    assert analysis["strumming_comparison"]["enabled"] is True
+
+
+def test_strumming_comparison_summary_and_feedback_are_conversational_and_safe():
+    response = post_audio(
+        {
+            "audio_file": (
+                "safe-strumming.wav",
+                make_pulsed_sine_wave_bytes(duration_seconds=3.0),
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D D U U D U"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    summary = analysis["strumming_comparison"]["summary"]
+    feedback_text = serialize_feedback(analysis["coach_feedback"])
+    combined_text = f"{summary} {feedback_text}".lower()
+
+    assert summary
+    assert "attack" in combined_text
+    assert "your downstrokes were correct" not in combined_text
+    assert "your upstrokes were correct" not in combined_text
+    assert "strumming pattern was played correctly" not in combined_text
+    assert "rhythm was accurate" not in combined_text
+    assert "detects exact strumming direction" not in combined_text
+
+
+def test_invalid_upload_does_not_return_successful_strumming_comparison():
+    response = post_audio(
+        {
+            "audio_file": (
+                "broken-strumming.wav",
+                b"not-really-a-wav",
+                "audio/wav",
+            )
+        },
+        data={"expected_strumming_pattern": "D D U U D U"},
+    )
+
+    assert response.status_code == 200
+    analysis = response.json()
+    assert analysis["valid"] is False
+    assert analysis["strumming_pattern"] is None
+    assert analysis["strumming_comparison"] is None
+
+
 def test_matching_a4_reference_against_generated_a4_audio_counts_match():
     response = post_audio(
         {
@@ -1547,6 +1852,8 @@ def test_invalid_upload_does_not_return_successful_reference_comparison():
     assert analysis["reference_exercise"] is None
     assert analysis["reference_comparison"] is None
     assert analysis["chord_comparison"] is None
+    assert analysis["strumming_pattern"] is None
+    assert analysis["strumming_comparison"] is None
 
 
 def test_invalid_upload_does_not_return_successful_chord_comparison():
@@ -1567,6 +1874,8 @@ def test_invalid_upload_does_not_return_successful_chord_comparison():
     assert analysis["reference_exercise"] is None
     assert analysis["reference_comparison"] is None
     assert analysis["chord_comparison"] is None
+    assert analysis["strumming_pattern"] is None
+    assert analysis["strumming_comparison"] is None
 
 
 def serialize_feedback(feedback):

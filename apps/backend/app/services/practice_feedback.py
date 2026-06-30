@@ -13,6 +13,7 @@ def build_coach_feedback(
     reference_exercise: Mapping[str, Any] | None = None,
     reference_comparison: Mapping[str, Any] | None = None,
     chord_comparison: Mapping[str, Any] | None = None,
+    strumming_comparison: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     quality_level = recording_quality["quality_level"]
     overall_score = int(practice_metrics["overall_score"])
@@ -121,6 +122,39 @@ def build_coach_feedback(
         next_practice_steps.append(
             "Try keeping your picking intensity more consistent between sections."
         )
+
+    if strumming_comparison is not None and strumming_comparison.get("enabled"):
+        if strumming_comparison.get("valid"):
+            attack_match_level = str(strumming_comparison.get("attack_match_level"))
+            if attack_match_level == "good":
+                coach_notes.append(
+                    "For the strumming pattern, the recording had about the right number of clear attacks."
+                )
+            elif attack_match_level == "low":
+                coach_notes.append(
+                    "The strumming comparison detected fewer attacks than expected, so focus on making each stroke clear."
+                )
+                next_practice_steps.append(
+                    "Practice the strumming pattern slower and make each attack start cleanly."
+                )
+            elif attack_match_level == "too_many":
+                coach_notes.append(
+                    "The strumming comparison detected more attacks than expected, so simplify the motion and isolate the intended strokes."
+                )
+                next_practice_steps.append(
+                    "Loop the pattern slowly with a metronome and keep the extra string noise controlled."
+                )
+            else:
+                coach_notes.append(
+                    "The strumming comparison gives an approximate read of attack activity for the expected pattern."
+                )
+            coach_notes.append(
+                "This checks attack timing only, not whether strokes were downstrokes or upstrokes."
+            )
+        else:
+            coach_notes.append(
+                "The strumming pattern includes unsupported symbols, so strumming feedback is incomplete."
+            )
 
     if reference_comparison is not None and reference_comparison.get("enabled"):
         reference_source = str((reference_exercise or {}).get("source", "notes"))

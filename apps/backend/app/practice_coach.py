@@ -169,6 +169,25 @@ class ChordComparison(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class StrummingPattern(BaseModel):
+    expected_pattern_raw: str | None
+    strokes: list[Literal["D", "U", "X"]] = Field(default_factory=list)
+    valid: bool
+    warnings: list[str] = Field(default_factory=list)
+
+
+class StrummingComparison(BaseModel):
+    enabled: bool
+    valid: bool
+    expected_stroke_count: int
+    detected_attack_count: int
+    count_difference: int | None
+    attack_match_level: Literal["good", "close", "low", "too_many", "unavailable"]
+    spacing_level: Literal["steady", "somewhat_uneven", "uneven", "unavailable"]
+    summary: str
+    warnings: list[str] = Field(default_factory=list)
+
+
 class PracticeAudioAnalysisResponse(BaseModel):
     filename: str
     duration_seconds: float
@@ -191,6 +210,8 @@ class PracticeAudioAnalysisResponse(BaseModel):
     reference_exercise: ReferenceExercise | None = None
     reference_comparison: ReferenceComparison | None = None
     chord_comparison: ChordComparison | None = None
+    strumming_pattern: StrummingPattern | None = None
+    strumming_comparison: StrummingComparison | None = None
 
 
 @router.post("/practice/analyze-audio", response_model=PracticeAudioAnalysisResponse)
@@ -201,6 +222,7 @@ async def analyze_practice_audio(
     expected_notes: str | None = Form(default=None),
     expected_tab: str | None = Form(default=None),
     expected_chords: str | None = Form(default=None),
+    expected_strumming_pattern: str | None = Form(default=None),
 ) -> PracticeAudioAnalysisResponse:
     return PracticeAudioAnalysisResponse.model_validate(
         await analyze_uploaded_audio(
@@ -210,5 +232,6 @@ async def analyze_practice_audio(
             expected_notes=expected_notes,
             expected_tab=expected_tab,
             expected_chords=expected_chords,
+            expected_strumming_pattern=expected_strumming_pattern,
         )
     )

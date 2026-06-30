@@ -18,6 +18,10 @@ from app.services.practice_reference_comparison import (
 )
 from app.services.practice_scoring import score_practice_analysis
 from app.services.practice_segment_analysis import analyze_audio_segments
+from app.services.practice_strumming_comparison import (
+    compare_strumming_pattern,
+    parse_expected_strumming_pattern,
+)
 
 
 SUPPORTED_AUDIO_EXTENSIONS = {".wav"}
@@ -41,6 +45,7 @@ async def analyze_uploaded_audio(
     expected_notes: str | None = None,
     expected_tab: str | None = None,
     expected_chords: str | None = None,
+    expected_strumming_pattern: str | None = None,
 ) -> dict[str, Any]:
     if audio_file is None:
         return build_invalid_response("", ["Missing audio file."])
@@ -74,6 +79,10 @@ async def analyze_uploaded_audio(
             return build_invalid_response(filename, ["Empty audio file."])
 
         onset_frames = librosa.onset.onset_detect(y=audio, sr=sample_rate)
+        onset_times_seconds = [
+            float(value)
+            for value in librosa.frames_to_time(onset_frames, sr=sample_rate)
+        ]
         tempo_bpm = estimate_tempo(audio, sample_rate, len(onset_frames))
 
         analysis = {
@@ -123,6 +132,14 @@ async def analyze_uploaded_audio(
             analysis["reference_exercise"],
             analysis["note_events"],
         )
+        analysis["strumming_pattern"] = parse_expected_strumming_pattern(
+            expected_strumming_pattern
+        )
+        analysis["strumming_comparison"] = compare_strumming_pattern(
+            analysis["strumming_pattern"],
+            onset_times_seconds,
+            analysis["onset_count"],
+        )
         analysis["coach_feedback"] = build_coach_feedback(
             analysis=analysis,
             practice_metrics=analysis["practice_metrics"],
@@ -134,6 +151,7 @@ async def analyze_uploaded_audio(
             reference_exercise=analysis["reference_exercise"],
             reference_comparison=analysis["reference_comparison"],
             chord_comparison=analysis["chord_comparison"],
+            strumming_comparison=analysis["strumming_comparison"],
         )
         return analysis
     except Exception:
@@ -211,4 +229,6 @@ def build_invalid_response(filename: str, errors: list[str]) -> dict[str, Any]:
         "reference_exercise": None,
         "reference_comparison": None,
         "chord_comparison": None,
+        "strumming_pattern": None,
+        "strumming_comparison": None,
     }

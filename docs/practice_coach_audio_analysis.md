@@ -1,6 +1,6 @@
 # Practice Coach Audio Analysis
 
-This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns a clear score, coach-facing feedback, practical next steps, rule-based practice metrics, recording-quality checks, fixed-length segment analysis, a narrow monophonic pitch-analysis foundation, approximate monophonic note events, optional user-provided reference exercise comparison, and optional chord-tone coverage comparison. The frontend prioritizes the score and coaching feedback while keeping technical metrics in a secondary details section. It can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
+This is the backend foundation for the AI Guitar Practice Coach. It extracts deterministic audio features from an uploaded `.wav` file and returns a clear score, coach-facing feedback, practical next steps, rule-based practice metrics, recording-quality checks, fixed-length segment analysis, a narrow monophonic pitch-analysis foundation, approximate monophonic note events, optional user-provided reference exercise comparison, optional chord-tone coverage comparison, and optional strumming attack-activity comparison. The frontend prioritizes the score and coaching feedback while keeping technical metrics in a secondary details section. It can store compact recent score summaries in browser `localStorage`, but the backend does not persist practice history. It is not full coaching yet.
 
 No LLM calls or agents are used.
 
@@ -18,6 +18,7 @@ Use `multipart/form-data` with one required file field and optional practice con
 - `expected_notes`: optional user-provided reference exercise, such as `A4 B4 C5 D5`. Spaces, commas, and new lines are accepted as separators.
 - `expected_tab`: optional user-provided six-line single-note guitar tab. This is converted into expected note names before reference comparison.
 - `expected_chords`: optional user-provided chord progression, such as `G C D Em`. Spaces, commas, and new lines are accepted as separators.
+- `expected_strumming_pattern`: optional user-provided strumming pattern, such as `D D U U D U`. Spaces, commas, hyphens, and new lines are accepted as separators.
 
 `expected_notes` supports scientific pitch notation with sharps and a required octave number: `C`, `C#`, `D`, `D#`, `E`, `F`, `F#`, `G`, `G#`, `A`, `A#`, `B`, followed by an octave. Examples: `A4`, `C#5`, `E3`. Flats such as `Bb4`, chords, rhythm values, and durations are not supported.
 
@@ -25,7 +26,9 @@ Use `multipart/form-data` with one required file field and optional practice con
 
 `expected_chords` supports simple sharp-name chord symbols: major triads (`G`), minor triads (`Em`), dominant sevenths (`G7`), major sevenths (`Cmaj7`), minor sevenths (`Am7`), suspended chords (`Dsus2`, `Dsus4`), and power chords (`E5`). Flats such as `Bb`, slash chords, add chords, extended chords, diminished/augmented chords, chord voicings, fret positions, strumming patterns, rhythm notation, capo, alternate tuning, song lookup, and copyrighted chord/tab lookup are not supported.
 
-Reference input priority is: `expected_notes`, then `expected_tab`, then `expected_chords`. Lower-priority inputs are ignored with a warning when a higher-priority reference input is present.
+`expected_strumming_pattern` supports `D`, `U`, and `X` symbols. `D` means intended downstroke, `U` means intended upstroke, and `X` means intended muted/percussive stroke. Lowercase input is normalized to uppercase, and patterns are capped at 32 supported strokes. This field is compared against detected attack/onset activity only. It does not detect whether an audio event was actually an upstroke or downstroke.
+
+Pitch-reference input priority is: `expected_notes`, then `expected_tab`, then `expected_chords`. Lower-priority pitch-reference inputs are ignored with a warning when a higher-priority reference input is present. `expected_strumming_pattern` is separate and can run alongside notes, tab, or chords.
 
 Example:
 
@@ -56,6 +59,15 @@ Chord example:
 curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
   -F "audio_file=@practice.wav" \
   -F "expected_chords=G C D Em"
+```
+
+Strumming pattern example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
+  -F "audio_file=@practice.wav" \
+  -F "expected_chords=G C D Em" \
+  -F "expected_strumming_pattern=D D U U D U"
 ```
 
 ## Response Fields
@@ -219,6 +231,23 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
     "summary": "No chord exercise was provided.",
     "chords": [],
     "warnings": []
+  },
+  "strumming_pattern": {
+    "expected_pattern_raw": "D D U U D U",
+    "strokes": ["D", "D", "U", "U", "D", "U"],
+    "valid": true,
+    "warnings": []
+  },
+  "strumming_comparison": {
+    "enabled": true,
+    "valid": true,
+    "expected_stroke_count": 6,
+    "detected_attack_count": 6,
+    "count_difference": 0,
+    "attack_match_level": "good",
+    "spacing_level": "steady",
+    "summary": "The recording had about the right number of clear attacks for the expected strumming pattern. The attack spacing looked steady for this simple check. This checks approximate attack activity only, not upstroke/downstroke direction.",
+    "warnings": []
   }
 }
 ```
@@ -243,6 +272,8 @@ curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
 - `note_events`: Approximate monophonic note events derived from stable pitch regions. Invalid uploads return `note_events: null`.
 - `reference_exercise`: Parsed user-provided expected note sequence for valid uploads. Invalid uploads return `reference_exercise: null`.
 - `reference_comparison`: Approximate comparison between `expected_notes` and detected `note_events` for valid uploads. Invalid uploads return `reference_comparison: null`.
+- `strumming_pattern`: Parsed user-provided strumming pattern for valid uploads. Invalid uploads return `strumming_pattern: null`.
+- `strumming_comparison`: Approximate comparison between expected stroke count and detected attack/onset activity. Invalid uploads return `strumming_comparison: null`.
 
 ## Practice Metrics
 
@@ -365,6 +396,31 @@ If `expected_chords` is provided and no higher-priority reference input is prese
 
 This is approximate chord-tone coverage only. It is not full polyphonic chord recognition, strumming accuracy, rhythm checking, song correctness, or a copyrighted chord lookup.
 
+## Strumming Pattern Comparison
+
+If `expected_strumming_pattern` is provided, the backend parses it as the user's intended stroke labels and compares the expected stroke count with detected audio attack/onset activity.
+
+`strumming_pattern` includes:
+
+- `expected_pattern_raw`: Trimmed raw pattern input, or `null` when no strumming pattern was provided.
+- `strokes`: Supported normalized symbols, capped at the first 32 strokes.
+- `valid`: `false` when unsupported symbols were included.
+- `warnings`: Clear parse warnings for unsupported symbols or too-long patterns.
+
+`strumming_comparison` includes:
+
+- `enabled`: `true` only when a strumming pattern was provided.
+- `valid`: `false` when unsupported pattern symbols were included.
+- `expected_stroke_count`: Number of supported `D`, `U`, or `X` strokes in the provided pattern.
+- `detected_attack_count`: Number of detected onset/attack events in the recording.
+- `count_difference`: `detected_attack_count - expected_stroke_count`, or `null` when unavailable.
+- `attack_match_level`: `good`, `close`, `low`, `too_many`, or `unavailable`.
+- `spacing_level`: `steady`, `somewhat_uneven`, `uneven`, or `unavailable`.
+- `summary`: Short user-facing explanation.
+- `warnings`: Parse or comparison warnings.
+
+This checks approximate attack activity only. It does not detect upstroke/downstroke direction, exact rhythm accuracy, strumming transcription, beat alignment, accents, rests, swing feel, song correctness, or copyrighted strumming pattern lookup.
+
 ## Frontend Practice History
 
 The Practice Coach page stores compact successful analysis summaries in browser `localStorage` so recent scores can be compared over time. It keeps only summary fields such as filename, scores, quality level, attack activity, and one or more next steps.
@@ -374,7 +430,7 @@ Audio files, waveform data, and full backend responses are not saved. History st
 ## Current Limitations
 
 - `.wav` is the only supported upload format.
-- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, approximate note events, optional user-provided reference exercise comparison, and optional chord-tone coverage comparison only.
+- The endpoint returns audio features, deterministic practice metrics, recording-quality checks, segment analysis, coach-facing feedback, basic monophonic pitch estimates, approximate note events, optional user-provided reference exercise comparison, optional chord-tone coverage comparison, and optional strumming attack-activity comparison only.
 - `timing_activity_score` is an activity proxy, not true rhythmic accuracy.
 - Pitch estimates and note events are approximate and work best on clean single-note recordings.
 - Reference comparison uses a user-provided simple note sequence or short single-note tab only.
@@ -384,6 +440,8 @@ Audio files, waveform data, and full backend responses are not saved. History st
 - Chord comparison checks approximate chord-tone coverage only.
 - Chord comparison does not perform full polyphonic chord recognition, strumming checking, rhythm checking, song lookup, or copyrighted chord/tab lookup.
 - Chord parsing does not support flats, slash chords, add chords, extended chords, diminished/augmented chords, voicings, alternate tunings, capo, or fret positions.
+- Strumming comparison checks approximate attack/onset activity only.
+- Strumming comparison does not detect upstroke/downstroke direction, full rhythm correctness, strumming transcription, exact beat alignment, song lookup, or copyrighted strumming pattern lookup.
 - There is no note correctness scoring yet.
 - There is no chord detection or polyphonic pitch detection.
 - It does not know whether the player hit the right notes or played a specific riff correctly.
