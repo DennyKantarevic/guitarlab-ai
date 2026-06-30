@@ -522,7 +522,7 @@ describe("PracticeCoachClient", () => {
     ).toBeDefined();
     expect(
       screen.getByText(
-        "Notes, tab, and chords are pitch references. Strumming is an attack reference and can be used alongside one pitch reference. For pitch references, notes are used first, then tab, then chords.",
+        "Practice focus and description always apply. For pitch references, use one of notes, tab, or chords. Strumming can be used by itself or alongside one pitch reference. If more than one pitch reference is filled, notes are used first, then tab, then chords.",
       ),
     ).toBeDefined();
   });
@@ -1268,20 +1268,20 @@ describe("PracticeCoachClient", () => {
       expect(screen.getByText("Reference exercise")).toBeDefined();
     });
     expect(
-      screen.getByText(
+      screen.getAllByText(
         "Compared with your expected exercise, the coach found 1 of 4 notes in order.",
-      ),
-    ).toBeDefined();
-    expect(screen.getByText("Matched notes")).toBeDefined();
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Matched notes").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Source")).toBeDefined();
     expect(screen.getAllByText("Expected notes").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("1 of 4")).toBeDefined();
-    expect(screen.getByText("Missed notes")).toBeDefined();
+    expect(screen.getAllByText("Missed notes").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("B4, C5, D5")).toBeDefined();
-    expect(screen.getByText("Extra detected notes")).toBeDefined();
+    expect(screen.getAllByText("Extra detected notes").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("E4")).toBeDefined();
-    expect(screen.getByText("Match ratio")).toBeDefined();
-    expect(screen.getByText("25%")).toBeDefined();
+    expect(screen.getAllByText("Match ratio").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("25%").length).toBeGreaterThanOrEqual(1);
   });
 
   test("reference exercise result shows guitar tab source and parsed notes", async () => {
@@ -1301,15 +1301,15 @@ describe("PracticeCoachClient", () => {
       expect(screen.getByText("Reference exercise")).toBeDefined();
     });
     expect(screen.getByText("Source")).toBeDefined();
-    expect(screen.getByText("Guitar tab")).toBeDefined();
+    expect(screen.getAllByText("Guitar tab").length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
         "The tab was converted into a simple expected note sequence before comparison.",
       ),
     ).toBeDefined();
     expect(screen.getAllByText("Expected notes").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("E2, G2, A2, B2, C3")).toBeDefined();
-    expect(screen.getByText("40%")).toBeDefined();
+    expect(screen.getAllByText("E2, G2, A2, B2, C3").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("40%").length).toBeGreaterThanOrEqual(1);
   });
 
   test("tab reference warnings render in the reference exercise section", async () => {
@@ -1328,7 +1328,7 @@ describe("PracticeCoachClient", () => {
     await waitFor(() => {
       expect(screen.getByText("Reference exercise")).toBeDefined();
     });
-    expect(screen.getByText("Guitar tab")).toBeDefined();
+    expect(screen.getAllByText("Guitar tab").length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getAllByText(/Chords are not supported yet/).length,
     ).toBeGreaterThanOrEqual(1);
@@ -1351,31 +1351,31 @@ describe("PracticeCoachClient", () => {
       expect(screen.getByText("Chord exercise")).toBeDefined();
     });
     expect(
-      screen.getByText(
+      screen.getAllByText(
         "The coach found chord tones for 0 of 3 expected chords. 2 chords had some expected tones detected. This checks approximate chord-tone coverage only, not strumming or rhythm.",
-      ),
-    ).toBeDefined();
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Source")).toBeDefined();
-    expect(screen.getByText("Chord progression")).toBeDefined();
+    expect(screen.getAllByText("Chord progression").length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText(
         "This checks approximate chord-tone coverage only, not full chord recognition or strumming.",
       ),
     ).toBeDefined();
-    expect(screen.getByText("Expected chord count")).toBeDefined();
-    expect(screen.getByText("Matched chords")).toBeDefined();
-    expect(screen.getByText("Partial chords")).toBeDefined();
-    expect(screen.getByText("Missed chords")).toBeDefined();
+    expect(screen.getAllByText("Expected chord count").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Matched chords").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Partial chords").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Missed chords").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("1").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Chord breakdown")).toBeDefined();
-    expect(screen.getByText("G: partial")).toBeDefined();
+    expect(screen.getAllByText("G: partial").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("found G, D").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("missing B").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("C: missed")).toBeDefined();
-    expect(screen.getByText("missing C, E, G")).toBeDefined();
+    expect(screen.getAllByText("C: missed").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("missing C, E, G").length).toBeGreaterThanOrEqual(1);
   });
 
   test("chord warnings and invalid chord guidance render in the chord exercise section", async () => {
@@ -1422,20 +1422,20 @@ describe("PracticeCoachClient", () => {
       expect(screen.getByText("Strumming pattern")).toBeDefined();
     });
     expect(
-      screen.getByText(
+      screen.getAllByText(
         "The recording had about the right number of clear attacks for the expected strumming pattern. This checks approximate attack activity only, not upstroke/downstroke direction.",
-      ),
-    ).toBeDefined();
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByText("This checks attack activity only, not stroke direction."),
     ).toBeDefined();
     expect(screen.getByText("Expected strokes")).toBeDefined();
     expect(screen.getByText("Detected attacks")).toBeDefined();
-    expect(screen.getByText("Count difference")).toBeDefined();
+    expect(screen.getAllByText("Count difference").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Attack match")).toBeDefined();
-    expect(screen.getByText("Good")).toBeDefined();
+    expect(screen.getAllByText("Good").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Spacing")).toBeDefined();
-    expect(screen.getByText("Steady")).toBeDefined();
+    expect(screen.getAllByText("Steady").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Expected pattern")).toBeDefined();
     expect(screen.getAllByText("D D U U D U").length).toBeGreaterThanOrEqual(1);
 
@@ -1472,8 +1472,8 @@ describe("PracticeCoachClient", () => {
       screen.getAllByText(/Unsupported strumming symbol 'Q'/).length,
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Strumming warnings")).toBeDefined();
-    expect(screen.getByText("Close")).toBeDefined();
-    expect(screen.getByText("Somewhat uneven")).toBeDefined();
+    expect(screen.getAllByText("Close").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Somewhat uneven").length).toBeGreaterThanOrEqual(1);
   });
 
   test("invalid reference exercise warnings render in the result", async () => {
@@ -1536,6 +1536,40 @@ describe("PracticeCoachClient", () => {
       expect(screen.getByText("Coach feedback")).toBeDefined();
     });
     expect(screen.queryByText("Reference exercise")).toBeNull();
+  });
+
+  test("technical details reveal raw reference, chord, and strumming comparison summaries", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue({
+      ...chordReferenceResponse,
+      strumming_pattern: strummingResponse.strumming_pattern,
+      strumming_comparison: strummingResponse.strumming_comparison,
+    } satisfies PracticeAudioAnalysisResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Technical details")).toBeDefined();
+    });
+    fireEvent.click(screen.getByText("Technical details"));
+
+    expect(screen.getByText("Reference exercise details")).toBeDefined();
+    expect(screen.getByText("Reference comparison details")).toBeDefined();
+    expect(screen.getByText("Chord comparison details")).toBeDefined();
+    expect(screen.getByText("Strumming pattern details")).toBeDefined();
+    expect(screen.getByText("Strumming comparison details")).toBeDefined();
+    expect(screen.getByText("Reference source")).toBeDefined();
+    expect(screen.getByText("Chord comparison enabled")).toBeDefined();
+    expect(screen.getByText("Strumming comparison enabled")).toBeDefined();
+    expect(screen.getByText("Attack match level")).toBeDefined();
+    expect(screen.getByText("Spacing level")).toBeDefined();
   });
 
   test("pitch analysis renders when present", async () => {

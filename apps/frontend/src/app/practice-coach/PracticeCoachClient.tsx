@@ -291,6 +291,16 @@ function PracticeSetup({
           </div>
         </section>
 
+        <section className="space-y-1 rounded-md border border-neutral-200 bg-neutral-50 p-3">
+          <h3 className="font-semibold">Reference inputs</h3>
+          <p className="text-xs text-neutral-600">
+            Practice focus and description always apply. For pitch references,
+            use one of notes, tab, or chords. Strumming can be used by itself or
+            alongside one pitch reference. If more than one pitch reference is
+            filled, notes are used first, then tab, then chords.
+          </p>
+        </section>
+
         <div className="space-y-2">
           <label className="block text-sm font-medium" htmlFor="expected_notes">
             Expected notes
@@ -380,11 +390,6 @@ function PracticeSetup({
           <p className="text-xs text-neutral-600">
             D = intended downstroke, U = intended upstroke, X =
             muted/percussive stroke.
-          </p>
-          <p className="text-xs text-neutral-600">
-            Notes, tab, and chords are pitch references. Strumming is an attack
-            reference and can be used alongside one pitch reference. For pitch
-            references, notes are used first, then tab, then chords.
           </p>
           <ReferenceExerciseHelpPanel />
         </div>
@@ -1148,6 +1153,28 @@ function TechnicalDetails({
         {analysis.note_events ? (
           <NoteEvents events={analysis.note_events} />
         ) : null}
+
+        {analysis.reference_exercise ? (
+          <ReferenceExerciseDetails exercise={analysis.reference_exercise} />
+        ) : null}
+
+        {analysis.reference_comparison ? (
+          <ReferenceComparisonDetails comparison={analysis.reference_comparison} />
+        ) : null}
+
+        {analysis.chord_comparison ? (
+          <ChordComparisonDetails comparison={analysis.chord_comparison} />
+        ) : null}
+
+        {analysis.strumming_pattern ? (
+          <StrummingPatternDetails pattern={analysis.strumming_pattern} />
+        ) : null}
+
+        {analysis.strumming_comparison ? (
+          <StrummingComparisonDetails
+            comparison={analysis.strumming_comparison}
+          />
+        ) : null}
       </section>
     </details>
   );
@@ -1229,6 +1256,207 @@ function NoteEvents({
       ) : (
         <p className="text-sm text-neutral-500">No note events detected.</p>
       )}
+    </section>
+  );
+}
+
+function ReferenceExerciseDetails({
+  exercise,
+}: {
+  exercise: NonNullable<PracticeAudioAnalysisResponse["reference_exercise"]>;
+}) {
+  const expectedChords = exercise.expected_chords ?? [];
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Reference exercise details</h2>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Reference source"
+          value={formatReferenceSource(exercise.source ?? "none")}
+        />
+        <Field label="Reference valid" value={formatBoolean(exercise.valid)} />
+        <Field
+          label="Expected notes raw"
+          value={exercise.expected_notes_raw ?? "Not provided"}
+        />
+        <Field
+          label="Expected notes"
+          value={
+            exercise.expected_notes.length > 0
+              ? exercise.expected_notes.join(", ")
+              : "None"
+          }
+        />
+        <Field
+          label="Expected tab"
+          value={exercise.expected_tab_raw ? "Provided" : "Not provided"}
+        />
+        <Field
+          label="Expected chords raw"
+          value={exercise.expected_chords_raw ?? "Not provided"}
+        />
+        <Field
+          label="Expected chords"
+          value={
+            expectedChords.length > 0
+              ? expectedChords.map((chord) => chord.symbol).join(", ")
+              : "None"
+          }
+        />
+      </dl>
+      <ListSection title="Reference exercise warnings" items={exercise.warnings} />
+    </section>
+  );
+}
+
+function ReferenceComparisonDetails({
+  comparison,
+}: {
+  comparison: NonNullable<
+    PracticeAudioAnalysisResponse["reference_comparison"]
+  >;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Reference comparison details</h2>
+      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Reference comparison enabled"
+          value={formatBoolean(comparison.enabled)}
+        />
+        <Field
+          label="Reference comparison valid"
+          value={formatBoolean(comparison.valid)}
+        />
+        <Field label="Matched notes" value={comparison.matched_count} />
+        <Field label="Missed notes" value={comparison.missed_count} />
+        <Field label="Extra detected notes" value={comparison.extra_count} />
+        <Field label="Expected note count" value={comparison.expected_count} />
+        <Field label="Detected note count" value={comparison.detected_count} />
+        <Field
+          label="Match ratio"
+          value={formatMatchRatio(comparison.match_ratio)}
+        />
+      </dl>
+      <ListSection
+        title="Reference comparison warnings"
+        items={comparison.warnings}
+      />
+    </section>
+  );
+}
+
+function ChordComparisonDetails({
+  comparison,
+}: {
+  comparison: NonNullable<PracticeAudioAnalysisResponse["chord_comparison"]>;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Chord comparison details</h2>
+      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Chord comparison enabled"
+          value={formatBoolean(comparison.enabled)}
+        />
+        <Field
+          label="Chord comparison valid"
+          value={formatBoolean(comparison.valid)}
+        />
+        <Field label="Expected chord count" value={comparison.expected_count} />
+        <Field
+          label="Detected note count"
+          value={comparison.detected_note_count}
+        />
+        <Field label="Matched chords" value={comparison.matched_chord_count} />
+        <Field label="Partial chords" value={comparison.partial_chord_count} />
+        <Field label="Missed chords" value={comparison.missed_chord_count} />
+      </dl>
+      {comparison.chords.length > 0 ? (
+        <ListSection
+          title="Chord statuses"
+          items={comparison.chords.map(
+            (chord) => `${chord.symbol}: ${formatChordStatus(chord.status)}`,
+          )}
+        />
+      ) : null}
+      <ListSection title="Chord comparison warnings" items={comparison.warnings} />
+    </section>
+  );
+}
+
+function StrummingPatternDetails({
+  pattern,
+}: {
+  pattern: NonNullable<PracticeAudioAnalysisResponse["strumming_pattern"]>;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Strumming pattern details</h2>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Expected pattern raw"
+          value={pattern.expected_pattern_raw ?? "Not provided"}
+        />
+        <Field label="Strumming pattern valid" value={formatBoolean(pattern.valid)} />
+        <Field
+          label="Strokes"
+          value={pattern.strokes.length > 0 ? pattern.strokes.join(" ") : "None"}
+        />
+      </dl>
+      <ListSection title="Strumming pattern warnings" items={pattern.warnings} />
+    </section>
+  );
+}
+
+function StrummingComparisonDetails({
+  comparison,
+}: {
+  comparison: NonNullable<
+    PracticeAudioAnalysisResponse["strumming_comparison"]
+  >;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">Strumming comparison details</h2>
+      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Strumming comparison enabled"
+          value={formatBoolean(comparison.enabled)}
+        />
+        <Field
+          label="Strumming comparison valid"
+          value={formatBoolean(comparison.valid)}
+        />
+        <Field
+          label="Expected stroke count"
+          value={comparison.expected_stroke_count}
+        />
+        <Field
+          label="Detected attack count"
+          value={comparison.detected_attack_count}
+        />
+        <Field
+          label="Count difference"
+          value={formatScoreChange(comparison.count_difference)}
+        />
+        <Field
+          label="Attack match level"
+          value={formatAttackMatchLevel(comparison.attack_match_level)}
+        />
+        <Field
+          label="Spacing level"
+          value={formatSpacingLevel(comparison.spacing_level)}
+        />
+      </dl>
+      <ListSection
+        title="Strumming comparison warnings"
+        items={comparison.warnings}
+      />
     </section>
   );
 }
@@ -1368,6 +1596,10 @@ function formatScoreChange(scoreChange: number | null): string {
   }
 
   return scoreChange > 0 ? `+${scoreChange}` : String(scoreChange);
+}
+
+function formatBoolean(value: boolean): string {
+  return value ? "Yes" : "No";
 }
 
 function formatMatchRatio(matchRatio: number | null): string {

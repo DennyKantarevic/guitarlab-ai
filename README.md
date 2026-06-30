@@ -180,6 +180,11 @@ Technical details remain available in the secondary section and include:
 * `pitch_analysis.estimated_frequency_hz`
 * `pitch_analysis.detected_notes`
 * `note_events`
+* `reference_exercise`
+* `reference_comparison`
+* `chord_comparison`
+* `strumming_pattern`
+* `strumming_comparison`
 
 Practice history is stored only in the current browser with `localStorage`. Uploaded audio files are not saved, and history is not sent to the backend.
 
