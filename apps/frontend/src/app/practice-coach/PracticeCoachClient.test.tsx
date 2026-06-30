@@ -219,6 +219,91 @@ const invalidTabReferenceResponse: PracticeAudioAnalysisResponse = {
   },
 };
 
+const chordReferenceResponse: PracticeAudioAnalysisResponse = {
+  ...successfulResponse,
+  reference_exercise: {
+    expected_notes_raw: null,
+    expected_notes: [],
+    expected_tab_raw: null,
+    expected_chords_raw: "G C Em",
+    expected_chords: [
+      { symbol: "G", root: "G", quality: "major", tones: ["G", "B", "D"] },
+      { symbol: "C", root: "C", quality: "major", tones: ["C", "E", "G"] },
+      { symbol: "Em", root: "E", quality: "minor", tones: ["E", "G", "B"] },
+    ],
+    source: "chords",
+    valid: true,
+    warnings: [],
+  },
+  reference_comparison: {
+    enabled: false,
+    valid: true,
+    matched_count: 0,
+    missed_count: 0,
+    extra_count: 0,
+    expected_count: 0,
+    detected_count: 0,
+    match_ratio: null,
+    summary: "Reference note comparison is disabled for chord exercises.",
+    matches: [],
+    misses: [],
+    extras: [],
+    warnings: [],
+  },
+  chord_comparison: {
+    enabled: true,
+    valid: true,
+    expected_count: 3,
+    detected_note_count: 3,
+    matched_chord_count: 0,
+    partial_chord_count: 2,
+    missed_chord_count: 1,
+    summary:
+      "The coach found chord tones for 0 of 3 expected chords. 2 chords had some expected tones detected. This checks approximate chord-tone coverage only, not strumming or rhythm.",
+    chords: [
+      {
+        symbol: "G",
+        expected_tones: ["G", "B", "D"],
+        detected_tones: ["G", "D"],
+        matched_tones: ["G", "D"],
+        missing_tones: ["B"],
+        status: "partial",
+      },
+      {
+        symbol: "C",
+        expected_tones: ["C", "E", "G"],
+        detected_tones: [],
+        matched_tones: [],
+        missing_tones: ["C", "E", "G"],
+        status: "missed",
+      },
+      {
+        symbol: "Em",
+        expected_tones: ["E", "G", "B"],
+        detected_tones: ["E", "G"],
+        matched_tones: ["E", "G"],
+        missing_tones: ["B"],
+        status: "partial",
+      },
+    ],
+    warnings: [],
+  },
+};
+
+const invalidChordReferenceResponse: PracticeAudioAnalysisResponse = {
+  ...chordReferenceResponse,
+  reference_exercise: {
+    ...chordReferenceResponse.reference_exercise,
+    valid: false,
+    warnings: ["Unsupported chord 'Bb'. Use simple sharp-note chord symbols."],
+  },
+  chord_comparison: {
+    ...chordReferenceResponse.chord_comparison,
+    valid: false,
+    warnings: ["Unsupported chord 'Bb'. Use simple sharp-note chord symbols."],
+  },
+};
+
 beforeEach(() => {
   Object.defineProperty(window, "localStorage", {
     configurable: true,
@@ -347,7 +432,7 @@ describe("PracticeCoachClient", () => {
     ).toBeDefined();
   });
 
-  test("renders expected notes and expected tab inputs with reference exercise helper text", () => {
+  test("renders expected notes, expected tab, and expected chords inputs with reference exercise helper text", () => {
     render(<PracticeCoachClient analyzeAudio={vi.fn()} />);
 
     const expectedNotesInput = screen.getByLabelText("Expected notes");
@@ -368,9 +453,17 @@ describe("PracticeCoachClient", () => {
         "Optional. Paste a short single-note guitar tab in standard tuning. Use this instead of Expected notes.",
       ),
     ).toBeDefined();
+    const expectedChordsInput = screen.getByLabelText("Expected chords");
+    expect(expectedChordsInput).toBeDefined();
+    expect(expectedChordsInput.getAttribute("placeholder")).toBe("G C D Em");
     expect(
       screen.getByText(
-        "Use one reference format at a time. If both are filled, Expected notes will be used first.",
+        "Optional. Enter a simple chord progression like G C D Em. This checks approximate chord-tone coverage, not full chord recognition or strumming.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Use one reference format at a time. If more than one is filled, notes are used first, then tab, then chords.",
       ),
     ).toBeDefined();
   });
@@ -381,7 +474,7 @@ describe("PracticeCoachClient", () => {
     expect(screen.getByText("How to use reference exercises")).toBeDefined();
     expect(
       screen.getByText(
-        "You can enter either expected notes or a short single-note guitar tab. The coach compares detected notes from your recording to your own exercise.",
+        "You can enter one reference format: expected notes, a short single-note guitar tab, or simple chord names. The coach compares detected notes from your recording to your own exercise.",
       ),
     ).toBeDefined();
     expect(screen.getByText("A4 B4 C5 D5")).toBeDefined();
@@ -392,12 +485,23 @@ describe("PracticeCoachClient", () => {
     expect(screen.getByText("standard tuning")).toBeDefined();
     expect(screen.getByText("single-note melodies")).toBeDefined();
     expect(screen.getByText("frets 0-24")).toBeDefined();
-    expect(screen.getByText("chords")).toBeDefined();
+    expect(screen.getByText("Good chord examples")).toBeDefined();
+    expect(screen.getByText("G C D Em")).toBeDefined();
+    expect(screen.getByText("Am F C G")).toBeDefined();
+    expect(screen.getByText("Cmaj7 Am7 Dm7 G7")).toBeDefined();
+    expect(screen.getByText("E5 A5 B5")).toBeDefined();
+    expect(screen.getByText("major and minor chords")).toBeDefined();
+    expect(screen.getByText("7th chords")).toBeDefined();
+    expect(screen.getByText("maj7 and m7 chords")).toBeDefined();
+    expect(screen.getByText("sus2/sus4 chords")).toBeDefined();
+    expect(screen.getByText("power chords")).toBeDefined();
     expect(screen.getByText("strumming patterns")).toBeDefined();
     expect(screen.getByText("song names")).toBeDefined();
     expect(screen.getByText("rhythm notation")).toBeDefined();
     expect(screen.getByText("full song comparison")).toBeDefined();
-    expect(screen.getByText("bends, slides, hammer-ons, pull-offs")).toBeDefined();
+    expect(screen.getByText("slash chords")).toBeDefined();
+    expect(screen.getByText("add/extended chords")).toBeDefined();
+    expect(screen.getByText("full polyphonic chord recognition")).toBeDefined();
     expect(screen.getByText("alternate tunings or capo")).toBeDefined();
     expect(
       screen.getByText(
@@ -409,6 +513,8 @@ describe("PracticeCoachClient", () => {
     expect(setupText).not.toContain("ai will recognize any song");
     expect(setupText).not.toContain("enter nirvana riffs");
     expect(setupText).not.toContain("checks rhythm accuracy");
+    expect(setupText).not.toContain("checks strumming accuracy");
+    expect(setupText).not.toContain("perfect chord detection");
     expect(setupText).not.toContain("proves whether you played correctly");
   });
 
@@ -543,6 +649,90 @@ describe("PracticeCoachClient", () => {
         practice_focus: "general",
         expected_notes: "A4 B4",
         expected_tab: expectedTab,
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("entering expected chords sends them with the upload request", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(chordReferenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected chords"), {
+      target: { value: "  G C D Em  " },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_chords: "G C D Em",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("empty expected chords are omitted from the upload request", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(successfulResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected chords"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+      } satisfies PracticeAudioRequest);
+    });
+  });
+
+  test("multiple reference fields can be submitted without frontend blocking", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(referenceResponse);
+    const expectedTab =
+      "e|----------------|\nB|----------------|\nG|----------------|\nD|----------------|\nA|-----0-2-3------|\nE|-0-3------------|";
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("Expected notes"), {
+      target: { value: "A4 B4" },
+    });
+    fireEvent.change(screen.getByLabelText("Expected tab"), {
+      target: { value: expectedTab },
+    });
+    fireEvent.change(screen.getByLabelText("Expected chords"), {
+      target: { value: "G C D Em" },
+    });
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(analyzeAudio).toHaveBeenCalledWith({
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_notes: "A4 B4",
+        expected_tab: expectedTab,
+        expected_chords: "G C D Em",
       } satisfies PracticeAudioRequest);
     });
   });
@@ -982,6 +1172,77 @@ describe("PracticeCoachClient", () => {
     expect(
       screen.getAllByText(/Chords are not supported yet/).length,
     ).toBeGreaterThanOrEqual(1);
+  });
+
+  test("chord exercise section renders chord comparison results", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(chordReferenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Chord exercise")).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "The coach found chord tones for 0 of 3 expected chords. 2 chords had some expected tones detected. This checks approximate chord-tone coverage only, not strumming or rhythm.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByText("Source")).toBeDefined();
+    expect(screen.getByText("Chord progression")).toBeDefined();
+    expect(
+      screen.getByText(
+        "This checks approximate chord-tone coverage only, not full chord recognition or strumming.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByText("Expected chord count")).toBeDefined();
+    expect(screen.getByText("Matched chords")).toBeDefined();
+    expect(screen.getByText("Partial chords")).toBeDefined();
+    expect(screen.getByText("Missed chords")).toBeDefined();
+    expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("1").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Chord breakdown")).toBeDefined();
+    expect(screen.getByText("G: partial")).toBeDefined();
+    expect(screen.getAllByText("found G, D").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("missing B").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("C: missed")).toBeDefined();
+    expect(screen.getByText("missing C, E, G")).toBeDefined();
+  });
+
+  test("chord warnings and invalid chord guidance render in the chord exercise section", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const analyzeAudio = vi.fn().mockResolvedValue(invalidChordReferenceResponse);
+
+    render(<PracticeCoachClient analyzeAudio={analyzeAudio} />);
+
+    fireEvent.change(screen.getByLabelText("WAV file"), {
+      target: { files: [audioFile] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Chord exercise")).toBeDefined();
+    });
+    expect(
+      screen.getByText(
+        "Some chord names were not recognized. Try simple symbols like G, C, D, Em, Am7, or Gsus4.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getAllByText(/Unsupported chord 'Bb'/).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Chord warnings")).toBeDefined();
   });
 
   test("invalid reference exercise warnings render in the result", async () => {

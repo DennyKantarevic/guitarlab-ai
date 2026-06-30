@@ -53,6 +53,7 @@ export default function PracticeCoachClient({
   const [practiceDescription, setPracticeDescription] = useState("");
   const [expectedNotes, setExpectedNotes] = useState("");
   const [expectedTab, setExpectedTab] = useState("");
+  const [expectedChords, setExpectedChords] = useState("");
   const [analysis, setAnalysis] =
     useState<PracticeAudioAnalysisResponse | null>(null);
   const [practiceComparison, setPracticeComparison] =
@@ -109,6 +110,10 @@ export default function PracticeCoachClient({
       if (trimmedExpectedTab) {
         request.expected_tab = trimmedExpectedTab;
       }
+      const trimmedExpectedChords = expectedChords.trim();
+      if (trimmedExpectedChords) {
+        request.expected_chords = trimmedExpectedChords;
+      }
 
       const nextAnalysis = await analyzeAudio(request);
       setAnalysis(nextAnalysis);
@@ -152,10 +157,12 @@ export default function PracticeCoachClient({
         <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start">
           <PracticeSetup
             error={error}
+            expectedChords={expectedChords}
             expectedNotes={expectedNotes}
             expectedTab={expectedTab}
             isLoading={isLoading}
             onDescriptionChange={setPracticeDescription}
+            onExpectedChordsChange={setExpectedChords}
             onExpectedNotesChange={setExpectedNotes}
             onExpectedTabChange={setExpectedTab}
             onFileChange={setSelectedFile}
@@ -187,10 +194,12 @@ export default function PracticeCoachClient({
 
 function PracticeSetup({
   error,
+  expectedChords,
   expectedNotes,
   expectedTab,
   isLoading,
   onDescriptionChange,
+  onExpectedChordsChange,
   onExpectedNotesChange,
   onExpectedTabChange,
   onFileChange,
@@ -201,10 +210,12 @@ function PracticeSetup({
   selectedFile,
 }: {
   error: string;
+  expectedChords: string;
   expectedNotes: string;
   expectedTab: string;
   isLoading: boolean;
   onDescriptionChange: (value: string) => void;
+  onExpectedChordsChange: (value: string) => void;
   onExpectedNotesChange: (value: string) => void;
   onExpectedTabChange: (value: string) => void;
   onFileChange: (file: File | null) => void;
@@ -307,9 +318,32 @@ function PracticeSetup({
             rows={6}
             value={expectedTab}
           />
+        </div>
+
+        <div className="space-y-2">
+          <label
+            className="block text-sm font-medium"
+            htmlFor="expected_chords"
+          >
+            Expected chords
+          </label>
           <p className="text-xs text-neutral-600">
-            Use one reference format at a time. If both are filled, Expected
-            notes will be used first.
+            Optional. Enter a simple chord progression like G C D Em. This
+            checks approximate chord-tone coverage, not full chord recognition
+            or strumming.
+          </p>
+          <textarea
+            className="min-h-20 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            id="expected_chords"
+            name="expected_chords"
+            onChange={(event) => onExpectedChordsChange(event.target.value)}
+            placeholder="G C D Em"
+            rows={3}
+            value={expectedChords}
+          />
+          <p className="text-xs text-neutral-600">
+            Use one reference format at a time. If more than one is filled,
+            notes are used first, then tab, then chords.
           </p>
           <ReferenceExerciseHelpPanel />
         </div>
@@ -360,9 +394,9 @@ function ReferenceExerciseHelpPanel() {
       <div className="space-y-1">
         <h4 className="font-semibold">How to use reference exercises</h4>
         <p className="text-neutral-700">
-          You can enter either expected notes or a short single-note guitar tab.
-          The coach compares detected notes from your recording to your own
-          exercise.
+          You can enter one reference format: expected notes, a short
+          single-note guitar tab, or simple chord names. The coach compares
+          detected notes from your recording to your own exercise.
         </p>
       </div>
 
@@ -396,6 +430,18 @@ E|-0-3------------|`}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Good chord examples
+          </h5>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>G C D Em</li>
+            <li>Am F C G</li>
+            <li>Cmaj7 Am7 Dm7 G7</li>
+            <li>E5 A5 B5</li>
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
             Supported tab format
           </h5>
           <ul className="list-disc space-y-1 pl-5">
@@ -405,19 +451,35 @@ E|-0-3------------|`}
             <li>frets 0-24</li>
           </ul>
         </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold uppercase text-neutral-500">
+            Supported chords
+          </h5>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>major and minor chords</li>
+            <li>7th chords</li>
+            <li>maj7 and m7 chords</li>
+            <li>sus2/sus4 chords</li>
+            <li>power chords</li>
+          </ul>
+        </div>
 
         <div className="space-y-2">
           <h5 className="text-xs font-semibold uppercase text-neutral-500">
             Not supported yet
           </h5>
           <ul className="list-disc space-y-1 pl-5">
-            <li>chords</li>
             <li>strumming patterns</li>
             <li>song names</li>
             <li>rhythm notation</li>
             <li>full song comparison</li>
-            <li>bends, slides, hammer-ons, pull-offs</li>
+            <li>slash chords</li>
+            <li>add/extended chords</li>
             <li>alternate tunings or capo</li>
+            <li>full polyphonic chord recognition</li>
           </ul>
         </div>
       </div>
@@ -475,6 +537,7 @@ function LatestResult({
       ) : null}
 
       <ReferenceExerciseResult analysis={analysis} />
+      <ChordExerciseResult analysis={analysis} />
 
       {comparison ? <PracticeComparisonResult comparison={comparison} /> : null}
     </section>
@@ -808,6 +871,81 @@ function ReferenceExerciseResult({
   );
 }
 
+function ChordExerciseResult({
+  analysis,
+}: {
+  analysis: PracticeAudioAnalysisResponse;
+}) {
+  const referenceExercise = analysis.reference_exercise;
+  const comparison = analysis.chord_comparison;
+
+  if (!comparison?.enabled) {
+    return null;
+  }
+
+  const warnings = dedupe([
+    ...(referenceExercise?.warnings ?? []),
+    ...comparison.warnings,
+  ]);
+
+  return (
+    <section className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+      <h2 className="text-xl font-semibold">Chord exercise</h2>
+      <p className="text-sm text-neutral-700">{comparison.summary}</p>
+      <p className="text-sm text-neutral-700">
+        This checks approximate chord-tone coverage only, not full chord
+        recognition or strumming.
+      </p>
+
+      {referenceExercise && !referenceExercise.valid ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          Some chord names were not recognized. Try simple symbols like G, C, D,
+          Em, Am7, or Gsus4.
+        </p>
+      ) : null}
+
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Field
+          label="Source"
+          value={formatReferenceSource(referenceExercise?.source ?? "chords")}
+        />
+        <Field label="Expected chord count" value={comparison.expected_count} />
+        <Field label="Matched chords" value={comparison.matched_chord_count} />
+        <Field label="Partial chords" value={comparison.partial_chord_count} />
+        <Field label="Missed chords" value={comparison.missed_chord_count} />
+        <Field
+          label="Detected note count"
+          value={comparison.detected_note_count}
+        />
+      </dl>
+
+      {comparison.chords.length > 0 ? (
+        <section className="space-y-2">
+          <h3 className="font-semibold">Chord breakdown</h3>
+          <ul className="space-y-2 text-sm">
+            {comparison.chords.map((chord) => (
+              <li
+                className="rounded border border-neutral-200 bg-white p-3"
+                key={chord.symbol}
+              >
+                <div className="font-medium">
+                  {chord.symbol}: {formatChordStatus(chord.status)}
+                </div>
+                <div>found {formatToneList(chord.matched_tones)}</div>
+                <div>missing {formatToneList(chord.missing_tones)}</div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {warnings.length > 0 ? (
+        <ListSection title="Chord warnings" items={warnings} />
+      ) : null}
+    </section>
+  );
+}
+
 function TechnicalDetails({
   analysis,
 }: {
@@ -1110,10 +1248,21 @@ function formatReferenceSource(
   if (source === "tab") {
     return "Guitar tab";
   }
+  if (source === "chords") {
+    return "Chord progression";
+  }
   if (source === "notes") {
     return "Expected notes";
   }
   return "None";
+}
+
+function formatChordStatus(status: string): string {
+  return status;
+}
+
+function formatToneList(tones: string[]): string {
+  return tones.length > 0 ? tones.join(", ") : "none";
 }
 
 function dedupe(items: string[]): string[] {

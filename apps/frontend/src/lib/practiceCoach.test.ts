@@ -163,6 +163,44 @@ describe("analyzePracticeAudio", () => {
     expect(body.get("expected_tab")).toBe(expectedTab);
   });
 
+  test("includes expected chords in multipart form data when provided", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        filename: "practice.wav",
+        duration_seconds: 1,
+        sample_rate: 22050,
+        tempo_bpm: null,
+        onset_count: 0,
+        rms_energy_mean: 0.1,
+        spectral_centroid_mean: 440,
+        zero_crossing_rate_mean: 0.04,
+        analysis_warnings: [],
+        valid: true,
+        errors: [],
+        practice_metrics: null,
+      }),
+    });
+
+    await analyzePracticeAudio(
+      {
+        audio_file: audioFile,
+        practice_focus: "lead_phrase",
+        expected_chords: "  G C D Em  ",
+      },
+      fetchMock,
+    );
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const body = init.body as FormData;
+    expect(body.get("audio_file")).toBe(audioFile);
+    expect(body.get("practice_focus")).toBe("lead_phrase");
+    expect(body.get("expected_chords")).toBe("G C D Em");
+  });
+
   test("omits empty expected notes from multipart form data", async () => {
     const audioFile = new File(["wav-bytes"], "practice.wav", {
       type: "audio/wav",
@@ -233,6 +271,42 @@ describe("analyzePracticeAudio", () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     const body = init.body as FormData;
     expect(body.get("expected_tab")).toBeNull();
+  });
+
+  test("omits empty expected chords from multipart form data", async () => {
+    const audioFile = new File(["wav-bytes"], "practice.wav", {
+      type: "audio/wav",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        filename: "practice.wav",
+        duration_seconds: 1,
+        sample_rate: 22050,
+        tempo_bpm: null,
+        onset_count: 0,
+        rms_energy_mean: 0.1,
+        spectral_centroid_mean: 440,
+        zero_crossing_rate_mean: 0.04,
+        analysis_warnings: [],
+        valid: true,
+        errors: [],
+        practice_metrics: null,
+      }),
+    });
+
+    await analyzePracticeAudio(
+      {
+        audio_file: audioFile,
+        practice_focus: "general",
+        expected_chords: "   ",
+      },
+      fetchMock,
+    );
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const body = init.body as FormData;
+    expect(body.get("expected_chords")).toBeNull();
   });
 
   test("uses a provided backend URL without adding JSON headers", async () => {

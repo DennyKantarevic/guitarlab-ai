@@ -12,6 +12,7 @@ export type PracticeAudioRequest = {
   practice_description?: string;
   expected_notes?: string;
   expected_tab?: string;
+  expected_chords?: string;
 };
 
 export type PracticeContext = {
@@ -96,9 +97,18 @@ export type ReferenceExercise = {
   expected_notes_raw: string | null;
   expected_notes: string[];
   expected_tab_raw?: string | null;
-  source?: "notes" | "tab" | "none";
+  expected_chords_raw?: string | null;
+  expected_chords?: ExpectedChord[];
+  source?: "notes" | "tab" | "chords" | "none";
   valid: boolean;
   warnings: string[];
+};
+
+export type ExpectedChord = {
+  symbol: string;
+  root: string;
+  quality: string;
+  tones: string[];
 };
 
 export type ReferenceMatch = {
@@ -136,6 +146,28 @@ export type ReferenceComparison = {
   warnings: string[];
 };
 
+export type ChordComparisonItem = {
+  symbol: string;
+  expected_tones: string[];
+  detected_tones: string[];
+  matched_tones: string[];
+  missing_tones: string[];
+  status: "matched" | "partial" | "missed";
+};
+
+export type ChordComparison = {
+  enabled: boolean;
+  valid: boolean;
+  expected_count: number;
+  detected_note_count: number;
+  matched_chord_count: number;
+  partial_chord_count: number;
+  missed_chord_count: number;
+  summary: string;
+  chords: ChordComparisonItem[];
+  warnings: string[];
+};
+
 export type PracticeAudioAnalysisResponse = {
   filename: string;
   duration_seconds: number;
@@ -157,6 +189,7 @@ export type PracticeAudioAnalysisResponse = {
   note_events?: NoteEvent[] | null;
   reference_exercise?: ReferenceExercise | null;
   reference_comparison?: ReferenceComparison | null;
+  chord_comparison?: ChordComparison | null;
 };
 
 type FetchLike = (
@@ -189,6 +222,11 @@ export async function analyzePracticeAudio(
   const expectedTab = request.expected_tab?.trim();
   if (expectedTab) {
     formData.append("expected_tab", expectedTab);
+  }
+
+  const expectedChords = request.expected_chords?.trim();
+  if (expectedChords) {
+    formData.append("expected_chords", expectedChords);
   }
 
   const response = await fetcher(
