@@ -1,25 +1,141 @@
 # GuitarLab AI
 
-GuitarLab AI is a guitar-focused practice and tone assistant. It combines deterministic audio analysis, structured reference exercises, and device-aware tone generation for electric guitar workflows.
+GuitarLab AI is a monorepo for guitar-focused web tools.
 
-The project is intentionally not a generic GPT wrapper. The goal is useful, explainable guitar tooling: measured audio features, clear feedback, validated device data, and honest limitations.
+Current MVPs:
 
-The frontend uses a dark electric guitar / band-inspired UI for the home page, Practice Coach, and GP-200 Tone Maker.
+* **Valeton GP-200 Tone Maker**: generate structured GP-200 patch JSON from a tone goal, pickup type, and connection mode.
+* **Practice Coach**: upload a `.wav` guitar recording and return a clear score, deterministic coach-facing feedback, practical next steps, audio-analysis features, basic practice scoring metrics, recording-quality checks, basic monophonic pitch estimates, approximate note events, and local browser practice history.
 
-## Features
+The project uses a Next.js TypeScript frontend and a FastAPI Python backend.
 
-### Practice Coach
+## Repo Structure
 
-The Practice Coach helps review a recorded `.wav` take.
+```text
+apps/
+  frontend/   Next.js frontend
+  backend/    FastAPI backend
 
-It can:
+docs/         Project notes and API docs
+```
 
-* Upload a `.wav` guitar recording.
-* Choose a practice focus and add a short description.
-* Optionally compare against expected notes, simple single-note tab, chords, or a strumming pattern.
-* Return focused coach feedback, approximate comparisons, and practical next steps.
-* Track compact practice history locally in the browser.
-* Keep raw audio metrics in a collapsed technical details section.
+## Backend Setup
+
+From the repo root:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r apps/backend/requirements.txt
+```
+
+If `.venv` setup was interrupted, recreate it:
+
+```bash
+rm -rf .venv
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r apps/backend/requirements.txt
+```
+
+## Run the Backend
+
+From the repo root, with `.venv` activated:
+
+```bash
+PYTHONPATH=apps/backend python -m uvicorn app.main:app --reload --app-dir apps/backend
+```
+
+Backend URL:
+
+```text
+http://127.0.0.1:8000
+```
+
+FastAPI docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Backend endpoints:
+
+* `POST /tone-maker/gp200`
+* `POST /practice/analyze-audio`
+
+## Run the Frontend
+
+From a second terminal:
+
+```bash
+cd apps/frontend
+npm install
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev
+```
+
+Frontend URL:
+
+```text
+http://localhost:3000
+```
+
+Pages:
+
+* GP-200 Tone Maker: `http://localhost:3000/tone-maker/gp200`
+* Practice Coach: `http://localhost:3000/practice-coach`
+
+## Running the Practice Coach
+
+### 1. Pull latest main
+
+```bash
+cd /Users/dennykantarevic/guitarlab-ai
+git checkout main
+git pull origin main
+```
+
+### 2. Install or update backend dependencies
+
+```bash
+source .venv/bin/activate
+pip install -r apps/backend/requirements.txt
+```
+
+Run this after pulling new backend features or if you see `ModuleNotFoundError: No module named 'librosa'`. The Practice Coach depends on audio-analysis packages such as `librosa`.
+
+### 3. Start the backend
+
+```bash
+PYTHONPATH=apps/backend python -m uvicorn app.main:app --reload --app-dir apps/backend
+```
+
+Backend URL:
+
+```text
+http://127.0.0.1:8000
+```
+
+API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Opening `/practice/analyze-audio` in a browser shows 404 because it is a `POST` API endpoint, not a normal webpage.
+
+### 4. Start the frontend
+
+```bash
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev --prefix apps/frontend
+```
+
+Frontend URL:
+
+```text
+http://localhost:3000
+```
 
 Practice Coach page:
 
@@ -27,189 +143,76 @@ Practice Coach page:
 http://localhost:3000/practice-coach
 ```
 
-### Valeton GP-200 Tone Maker
+### 5. Test through the website
 
-The GP-200 Tone Maker creates a deterministic patch plan for the Valeton GP-200.
+1. Open `http://localhost:3000/practice-coach`.
+2. Upload a `.wav` file.
+3. Click **Analyze**.
+4. Confirm the page shows a score, coach feedback, practice history, and a secondary Technical details section.
 
-It can:
+Expected displayed fields include:
 
-* Accept a tone goal, pickup type, and connection mode.
-* Generate a structured GP-200 patch plan.
-* Validate modules, effects, parameters, and connection-mode rules.
-* Return warnings, validation status, and dial-in instructions.
+* `practice_metrics.overall_score`
+* `recording_quality.quality_level`
+* `practice_metrics.attack_activity`
+* `coach_feedback.headline`
+* `coach_feedback.summary`
+* `coach_feedback.score_explanation`
+* `coach_feedback.what_went_well`
+* `coach_feedback.work_on`
+* `coach_feedback.next_practice_steps`
+* local Practice history score summaries
 
-GP-200 page:
+Technical details remain available in the secondary section and include:
 
-```text
-http://localhost:3000/tone-maker/gp200
-```
+* `filename`
+* `duration_seconds`
+* `sample_rate`
+* `tempo_bpm`
+* `onset_count`
+* `rms_energy_mean`
+* `spectral_centroid_mean`
+* `zero_crossing_rate_mean`
+* `practice_metrics`
+* `recording_quality`
+* `segment_analysis`
+* `pitch_analysis.estimated_note`
+* `pitch_analysis.estimated_frequency_hz`
+* `pitch_analysis.detected_notes`
+* `note_events`
 
-## Repo Structure
+Practice history is stored only in the current browser with `localStorage`. Uploaded audio files are not saved, and history is not sent to the backend.
 
-```text
-apps/
-  backend/    FastAPI backend
-  frontend/   Next.js TypeScript frontend
+Pitch and note-event analysis are narrow foundations for clean monophonic single-note `.wav` recordings. Note estimates and event timings are approximate and are not note correctness, chord detection, tab generation, or riff/song comparison.
 
-docs/         API docs, demo notes, and project support docs
-```
-
-## How to Demo the App
-
-Start the backend and frontend first. Then open:
-
-```text
-http://localhost:3000
-```
-
-### Practice Coach Demo
-
-Open:
-
-```text
-http://localhost:3000/practice-coach
-```
-
-Try this flow:
-
-1. Choose a practice focus, such as **Timing and rhythm** or **Note clarity**.
-2. Add a goal, such as `Eighth-note alternate picking`.
-3. Upload a `.wav` recording.
-4. Try one reference format:
-
-Expected notes:
-
-```text
-A4 B4 C5 D5
-```
-
-Expected tab:
-
-```text
-e|----------------|
-B|----------------|
-G|----------------|
-D|----------------|
-A|-----0-2-3------|
-E|-0-3------------|
-```
-
-Expected chords:
-
-```text
-G C D Em
-```
-
-Expected strumming:
-
-```text
-D D U U D U
-```
-
-Point out:
-
-* The main score and coach feedback.
-* Reference, chord-tone, or strumming comparison when a reference is provided.
-* Progress compared with the last similar local session.
-* Local practice history.
-* Collapsed technical details for audio metrics and raw analysis.
-
-### GP-200 Tone Maker Demo
-
-Open:
-
-```text
-http://localhost:3000/tone-maker/gp200
-```
-
-Try tone goals like:
-
-```text
-warm blues lead
-tight metal rhythm
-ambient clean worship
-```
-
-Choose a pickup type, such as:
-
-```text
-humbucker bridge
-single coil neck
-```
-
-Choose a connection mode, generate a patch, then point out:
-
-* The selected style and tone intent.
-* GP-200 module settings.
-* Warnings and validation status.
-* Dial-in instructions for manually setting up the device.
-
-## Local Setup
-
-### Backend
-
-From the repo root:
-
-```bash
-cd /path/to/guitarlab-ai
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r apps/backend/requirements.txt
-```
-
-After pulling updates, run this again with the virtual environment active:
-
-```bash
-source .venv/bin/activate
-pip install -r apps/backend/requirements.txt
-```
-
-Start the backend:
-
-```bash
-PYTHONPATH=apps/backend python -m uvicorn app.main:app --reload --app-dir apps/backend
-```
-
-Backend URLs:
-
-```text
-http://127.0.0.1:8000
-http://127.0.0.1:8000/docs
-```
-
-The backend root may show `{"detail":"Not Found"}`. That is normal because the backend does not have a homepage route.
-
-### Frontend
-
-From another terminal:
-
-```bash
-npm install --prefix apps/frontend
-NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev --prefix apps/frontend
-```
-
-Frontend URLs:
-
-```text
-http://localhost:3000
-http://localhost:3000/practice-coach
-http://localhost:3000/tone-maker/gp200
-```
-
-## Manual API Tests
-
-### Practice Coach
+### 6. Test the backend directly with curl
 
 ```bash
 curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
   -F "audio_file=@practice.wav" \
   -F "practice_focus=timing" \
-  -F "practice_description=Working on eighth-note alternate picking" \
-  -F "expected_notes=A4 B4 C5 D5"
+  -F "practice_description=Working on eighth-note alternate picking"
 ```
 
-The file must be a `.wav` file. Use a full file path if `practice.wav` is not in the current directory.
+The file must be a `.wav` file and should be located wherever the curl command is run. You can also use the full path to the file. `practice_focus` and `practice_description` are optional; supported focus values are `general`, `note_clarity`, `timing`, `speed_control`, `lead_phrase`, and `tone_recording`.
+
+## Tests and Checks
+
+Backend tests:
+
+```bash
+PYTHONPATH=apps/backend python -m pytest apps/backend/tests -v
+```
+
+Frontend checks:
+
+```bash
+npm run test --prefix apps/frontend
+npm run lint --prefix apps/frontend
+npm run build --prefix apps/frontend
+```
+
+## Manual API Tests
 
 ### GP-200 Tone Maker
 
@@ -223,72 +226,153 @@ curl -X POST http://127.0.0.1:8000/tone-maker/gp200 \
   }'
 ```
 
-## Tests and Checks
+The response should include:
 
-Backend:
-
-```bash
-PYTHONPATH=apps/backend .venv/bin/python -m pytest apps/backend/tests -v
-```
-
-Frontend:
-
-```bash
-npm run test --prefix apps/frontend
-npm run lint --prefix apps/frontend
-npm run build --prefix apps/frontend
-```
-
-## Important Limitations
+* `device`
+* `model`
+* `style`
+* `tone_intent`
+* `modules`
+* `dial_in_instructions`
+* `warnings`
+* `valid`
+* `errors`
 
 ### Practice Coach
 
-* `.wav` upload only.
-* Analysis and scoring are approximate.
-* Monophonic note detection works best on clean single-note recordings.
-* Tab support is simple six-line single-note guitar tab only.
-* Chord support checks approximate chord-tone coverage, not full chord recognition.
-* Strumming support checks attack activity, not upstroke/downstroke direction.
-* No song lookup.
-* No copyrighted tab, chord, or pattern lookup.
-* No exact rhythm scoring.
-* No note correctness scoring.
-* Practice history is local browser storage only. Audio files are not saved.
+```bash
+curl -X POST http://127.0.0.1:8000/practice/analyze-audio \
+  -F "audio_file=@practice.wav" \
+  -F "practice_focus=timing" \
+  -F "practice_description=Working on eighth-note alternate picking"
+```
 
-### GP-200 Tone Maker
+Current limitation: Practice Coach accepts `.wav` files only.
 
-* Patch generation is deterministic and profile-based.
-* The app is not connected directly to a physical GP-200.
-* The user still dials settings manually on the device.
-* Effects and modules are constrained to the current validated GP-200 profile data.
-* `.prst` export/import is not implemented yet.
+The response should include:
+
+* `filename`
+* `duration_seconds`
+* `sample_rate`
+* `tempo_bpm`
+* `onset_count`
+* `rms_energy_mean`
+* `spectral_centroid_mean`
+* `zero_crossing_rate_mean`
+* `analysis_warnings`
+* `practice_context`
+* `practice_metrics`
+* `recording_quality`
+* `segment_analysis`
+* `coach_feedback`
+* `pitch_analysis`
+* `note_events`
+* `valid`
+* `errors`
+
+## Current Status
+
+Implemented:
+
+* GP-200 frontend page at `/tone-maker/gp200`
+* GP-200 backend endpoint at `POST /tone-maker/gp200`
+* GP-200 deterministic tone intent matching, connection-mode rules, patch validation, warnings, and dial-in instructions
+* GP-200 frontend form fix so Generate Patch uses the client submit handler and does not navigate to a GET query-string URL
+* Practice Coach frontend page at `/practice-coach`
+* Practice Coach backend endpoint at `POST /practice/analyze-audio`
+* Practice Coach `.wav` audio-analysis features
+* Practice Coach deterministic `practice_metrics` scoring
+* Practice Coach recording-quality checks, fixed-length segment analysis, deterministic coach-facing feedback, and practical next steps
+* Practice Coach basic monophonic pitch estimates, note-name summaries, and approximate note events
+* Practice Coach local browser history for recent compact score summaries
+
+Not implemented yet:
+
+* LLM calls or agents
+* user accounts, authentication, database-backed history, or cross-device sync
+* final UI design
+* `.prst` export
+* note correctness scoring, chord detection, or polyphonic pitch detection
+* riff-to-tab or tab generation
+* reference song/riff comparison
+* LLM/agent-based conversational coaching
+
+Practice Coach timing/activity fields, pitch estimates, and note events are proxies from detected audio features. They are not true rhythmic accuracy, exact pitch accuracy, note correctness, or song/riff matching.
 
 ## Troubleshooting
 
-If the backend raises `ModuleNotFoundError: No module named 'librosa'`, activate the virtual environment and reinstall backend requirements:
+### Backend root shows `{"detail":"Not Found"}`
+
+That is normal. The backend does not currently have a homepage route. Use:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+or test a real endpoint with `curl`.
+
+### `ModuleNotFoundError: No module named 'librosa'`
+
+Activate the backend environment and reinstall requirements:
 
 ```bash
 source .venv/bin/activate
 pip install -r apps/backend/requirements.txt
 ```
 
-If `GET /practice/analyze-audio` returns 404, that is expected. It is a `POST` API endpoint. Use the Practice Coach page or the curl command above.
+### `GET /practice/analyze-audio` returns 404
 
-If Practice Coach upload fails, confirm the file is a `.wav`. Other audio formats are not supported yet.
+That is normal. `/practice/analyze-audio` is a `POST` API endpoint. Use the Practice Coach frontend page or the curl command above.
 
-## Project Philosophy
+### Practice Coach page does not load
 
-GuitarLab AI is built around deterministic logic first:
+Update `main`, clear the frontend build cache, and restart the dev server:
 
-* Explain what the system measured or selected.
-* Prefer structured backend data over unsupported guesses.
-* Be honest about approximate analysis.
-* Avoid fake AI claims.
-* Add LLMs or agents later only as helpers around validated data, not as unsupported analysis engines.
+```bash
+git checkout main
+git pull origin main
+rm -rf apps/frontend/.next
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000 npm run dev --prefix apps/frontend
+```
 
-## More Docs
+### Practice Coach upload fails
 
-* [Demo script](docs/demo_script.md)
-* [Practice Coach API and limitations](docs/practice_coach_audio_analysis.md)
+Make sure the file is a `.wav` file. Other formats are not supported yet.
+
+### Generate Patch changes the URL
+
+If clicking **Generate Patch** changes the URL to something like:
+
+```text
+/tone-maker/gp200?tone_goal=...
+```
+
+then the frontend form is submitting as a normal HTML GET request.
+
+The form should use `onSubmit={handleSubmit}`, call `event.preventDefault()`, and call the backend with:
+
+```text
+POST http://127.0.0.1:8000/tone-maker/gp200
+```
+
+When working correctly, the backend terminal should show:
+
+```text
+POST /tone-maker/gp200
+```
+
+### Next.js local dev origin warning
+
+Use the frontend through:
+
+```text
+http://localhost:3000
+```
+
+The frontend config allows `127.0.0.1` as a local dev origin when needed.
+
+## Docs
+
 * [GP-200 API examples](docs/gp200_api_examples.md)
 * [GP-200 backend demo status](docs/gp200_backend_demo_status.md)
+* [Practice Coach audio analysis](docs/practice_coach_audio_analysis.md)
